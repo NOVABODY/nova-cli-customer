@@ -1,11 +1,13 @@
 # Nova CLI
 
-The public Nova Fora client signs in through your browser and reads the fleet
+The customer Nova Fora client signs in through your browser and reads the fleet
 vehicles your account can access. This initial version supports two operations:
 list vehicles and read one vehicle. It does not accept passwords or service keys,
 change fleet records, or provide arbitrary API or administrator commands.
 
-**Preview:** your Nova deployment must support native browser authorization and
+**Private preview:** This repository remains private. Public release requires a separate decision.
+
+**Deployment availability:** your Nova deployment must support native browser authorization and
 allow your account to connect. Publishing this client does not enable that API
 or approve a customer rollout. Contact your Nova administrator for availability.
 
@@ -14,7 +16,7 @@ or approve a customer rollout. Contact your Nova administrator for availability.
 Requires Python 3.11 or later and a working OS credential store.
 
 ```sh
-pip install 'nova-cli @ git+https://github.com/NOVABODY/nova-cli.git'
+pip install 'nova-cli @ git+https://github.com/NOVABODY/nova-cli-customer.git'
 nova --help
 ```
 
@@ -51,7 +53,7 @@ each Nova host. `NOVA_PUBLIC_PROFILE` can select a saved public profile.
 ## Local MCP
 
 ```sh
-pip install 'nova-cli[mcp] @ git+https://github.com/NOVABODY/nova-cli.git'
+pip install 'nova-cli[mcp] @ git+https://github.com/NOVABODY/nova-cli-customer.git'
 nova-mcp --profile personal
 ```
 

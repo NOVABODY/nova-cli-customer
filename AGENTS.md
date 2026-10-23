@@ -1,4 +1,6 @@
-# Public Nova CLI
+# Customer Nova CLI
+
+Keep this repository private until the owner explicitly authorizes publication.
 
 This repository contains only the public customer client. Keep operator commands,
 password/service authentication, internal documents, private credentials and
