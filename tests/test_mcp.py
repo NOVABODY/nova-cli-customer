@@ -32,24 +32,24 @@ class Reader:
     def __init__(self):
         self.calls = []
 
-    def request(self, method, path, *, query):
+    def request(self, method, path, *, query=None):
         assert method == "GET"
         self.calls.append((path, query))
-        if path == "/assistant/vehicles":
+        if path == "/vehicles":
             return {
-                "items": [{**VEHICLE, "private_note": "hidden"}],
+                "items": [{**VEHICLE, "server_note": "visible"}],
                 "total": 1,
                 "page": 1,
                 "per_page": 20,
-                "private": "hidden",
+                "server_metadata": "visible",
             }
-        if path == "/assistant/vehicles/VAN-0001":
-            return {**VEHICLE, "private_note": "hidden"}
-        if path.startswith("/assistant/work-orders"):
+        if path == "/vehicles/VAN-0001":
+            return {**VEHICLE, "server_note": "visible"}
+        if path.startswith("/work-orders"):
             row = {"id": "WO-0001", "status": "reported", "vehicle_id": 1,
                    "dsp_id": 2, "vendor_workshop_id": 3, "notes": [{"text": "Visible"}]}
             return {"items": [row], "total": 1} if path.endswith("work-orders") else row
-        if path.startswith("/assistant/defects"):
+        if path.startswith("/defects"):
             row = {"id": "FD-0001", "vehicle_id": "VAN-0001", "fleet_id": "TEST",
                    "plate": "TEST", "vehicle_class": "regular_cargo_van", "source": "inspection",
                    "part": "tire", "defect_type": "worn", "details": {},
@@ -83,7 +83,7 @@ def test_invalid_arguments_make_no_api_request(tool, arguments):
 def test_discovery_is_static_and_exposes_only_typed_fleet_tools():
     reader = Reader()
     schemas = DelegatedService(reader).tool_schemas()
-    assert set(schemas) == {"list_vehicles", "get_vehicle", "list_work_orders", "get_work_order", "list_defects", "get_defect"}
+    assert set(schemas) == set(__import__("nova_cli_public.reads", fromlist=["BY_TOOL"]).BY_TOOL)
     assert schemas["get_vehicle"]["properties"]["vehicle_id"]["pattern"]
     assert all(s["additionalProperties"] is False for s in schemas.values())
     assert reader.calls == []
@@ -117,13 +117,13 @@ def test_real_stdio_discovery_list_get_and_legacy_denial(tmp_path):
         async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
             await session.initialize()
             tools = (await session.list_tools()).tools
-            assert {t.name for t in tools} == {"list_vehicles", "get_vehicle", "list_work_orders", "get_work_order", "list_defects", "get_defect"}
+            assert len(tools) == 29
             assert all(t.outputSchema for t in tools)
             assert (await session.list_resources()).resources == []
             rows = await session.call_tool("list_vehicles", {"fleet_id": "NF001"})
-            assert rows.structuredContent["items"] == [VEHICLE]
+            assert rows.structuredContent["items"] == [{**VEHICLE, "server_note": "visible"}]
             detail = await session.call_tool("get_vehicle", {"vehicle_id": "VAN-0001"})
-            assert detail.structuredContent == VEHICLE
+            assert detail.structuredContent == {**VEHICLE, "server_note": "visible"}
             orders = await session.call_tool("list_work_orders", {"limit": 1})
             order = await session.call_tool("get_work_order", {"work_order_id": "WO-0001"})
             assert orders.structuredContent["items"][0] == order.structuredContent

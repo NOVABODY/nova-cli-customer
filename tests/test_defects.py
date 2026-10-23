@@ -12,7 +12,7 @@ class Reader:
     def __init__(self):
         self.calls = []
 
-    def request(self, method, path, *, query):
+    def request(self, method, path, *, query=None):
         self.calls.append((method, path, query))
         row = {
             "id": "FD-0001",
@@ -41,7 +41,7 @@ def test_cli_defect_detail_preserves_server_filtered_fields(monkeypatch, capsys)
     monkeypatch.setattr(cli, "client_from_args", lambda args: reader)
     assert cli.main(["defect", "get", "FD-0001", "--json"]) == 0
     assert json.loads(capsys.readouterr().out)["notes"] == "Visible note"
-    assert reader.calls == [("GET", "/assistant/defects/FD-0001", {})]
+    assert reader.calls == [("GET", "/defects/FD-0001", None)]
 
 
 def test_defect_list_passes_customer_filters_and_pagination():

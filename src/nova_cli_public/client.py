@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import base64
 import json
-import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -13,6 +13,7 @@ from typing import Any
 from nova_cli_public import __version__, delegated
 from nova_cli_public.config import Profile
 from nova_cli_public.errors import ApiError, UsageError
+from nova_cli_public.read_routes import PUBLIC_READS, admitted_read
 from nova_cli_public.tokens import KeyringTokenStore
 
 
@@ -78,9 +79,7 @@ class ApiClient:
         raw_body: bytes | None = None,
         raw_content_type: str | None = None,
     ) -> Response:
-        customer_read = method == "GET" and re.fullmatch(
-            r"/assistant/(?:vehicles(?:/(?:VAN-)?[0-9]+)?|work-orders(?:/(?:WO-)?[0-9]+)?|defects(?:/(?:FD-)?[0-9]+)?)", path
-        )
+        customer_read = method == "GET" and (admitted_read(path) or path in PUBLIC_READS)
         token_request = method == "POST" and path == "/oauth/token" and raw_body is not None
         if not (customer_read or token_request):
             raise UsageError("This route is not available in the public CLI.")
@@ -171,6 +170,29 @@ class ApiClient:
             return base + sep + urllib.parse.urlencode(clean_query)
         return base
 
+    def connection_identity(self):
+        # This value partitions local cursors only. The server verifies authority
+        # on every request; unverified claims never grant an operation here.
+        try:
+            encoded = self.access_token.split(".")[1]
+            claims = json.loads(base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4)))
+            identity = tuple(claims[key] for key in ("iss", "sub", "tenant", "gid"))
+            if not all(isinstance(value, str) and value for value in identity):
+                raise ValueError
+            return identity
+        except (AttributeError, IndexError, KeyError, TypeError, ValueError):
+            raise UsageError(
+                "Cannot bind the file cursor to this connection. Sign in again."
+            ) from None
+
+    def public_request(self, method, path):
+        if method != "GET" or path not in PUBLIC_READS:
+            raise UsageError("This public route is not available.")
+        return self._send(method, path).body
+
+    def whoami(self):
+        return self.request("GET", "/auth/me")
+
     def refresh(self):
         return delegated.refresh(self)
 
@@ -178,9 +200,7 @@ class ApiClient:
         return delegated.logout(self)
 
     def request(self, method, path, *, query=None, retry_auth=True):
-        if method != "GET" or not re.fullmatch(
-            r"/assistant/(?:vehicles(?:/(?:VAN-)?[0-9]+)?|work-orders(?:/(?:WO-)?[0-9]+)?|defects(?:/(?:FD-)?[0-9]+)?)", path
-        ):
+        if method != "GET" or not admitted_read(path):
             raise UsageError("This command is not available in the public CLI.")
         if not self.access_token:
             self.refresh()
