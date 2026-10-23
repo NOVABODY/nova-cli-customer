@@ -27,6 +27,8 @@ DETAILS = {
                      ['remote_authorization', 'local_credentials_write'], 'nova auth refresh'),
     'auth logout': ('Delete local credentials; the server connection remains. Disconnect it in browser settings.',
                     ['local_credentials_delete'], 'nova auth logout'),
+    'defect list': ('List defects that the account can read.', ['remote_read'], 'nova defect list --open-only'),
+    'defect get': ('Read a defect.', ['remote_read'], 'nova defect get FD-0001'),
     'work-order list': ('List work orders that the account can read.', ['remote_read'], 'nova work-order list --limit 20'),
     'work-order get': ('Read a work order.', ['remote_read'], 'nova work-order get WO-0001'),
     'vehicle list': ('List active fleet vehicles that the account can read.',
@@ -78,9 +80,10 @@ def manifest(parser, selected=None):
             'input_schema': schema, 'availability': 'implemented',
             'authorization': 'not_checked', 'required_scope': None,
         }
-        if name.startswith(('vehicle ', 'work-order ')):
+        if name.startswith(('vehicle ', 'work-order ', 'defect ')):
             tool = {'vehicle list': 'list_vehicles', 'vehicle get': 'get_vehicle',
-                    'work-order list': 'list_work_orders', 'work-order get': 'get_work_order'}[name]
+                    'work-order list': 'list_work_orders', 'work-order get': 'get_work_order',
+                    'defect list': 'list_defects', 'defect get': 'get_defect'}[name]
             tool_schema = ARGUMENTS[tool].model_json_schema()
             entry['input_schema'] = {**tool_schema, 'properties': {
                 **tool_schema['properties'],
@@ -90,9 +93,10 @@ def manifest(parser, selected=None):
                          output_schema=OUTPUTS[tool].model_json_schema(), mcp_tool=tool,
                          required_scope='nova:read',
                          required_operation={'list_vehicles': 'vehicles.list.v1', 'get_vehicle': 'vehicles.get.v1',
-                                             'list_work_orders': 'work_orders.list.v1', 'get_work_order': 'work_orders.get.v1'}[tool],
-                         api={'method': 'GET', 'path': ('/assistant/vehicles' if name.startswith('vehicle ') else '/assistant/work-orders') +
-                              ({'get_vehicle': '/{vehicle_id}', 'get_work_order': '/{work_order_id}'}.get(tool, ''))})
+                                             'list_work_orders': 'work_orders.list.v1', 'get_work_order': 'work_orders.get.v1',
+                                             'list_defects': 'defects.list.v1', 'get_defect': 'defects.get.v1'}[tool],
+                         api={'method': 'GET', 'path': ('/assistant/vehicles' if name.startswith('vehicle ') else '/assistant/defects' if name.startswith('defect ') else '/assistant/work-orders') +
+                              ({'get_vehicle': '/{vehicle_id}', 'get_work_order': '/{work_order_id}', 'get_defect': '/{defect_id}'}.get(tool, ''))})
         if name in ('auth login', 'auth refresh'):
             entry['required_scope'] = 'nova:read'
         if selected is None or selected == name:

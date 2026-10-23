@@ -6,8 +6,8 @@ a claim of full CLI parity. The repository remains private.
 ## Current availability
 
 The customer client currently supports browser authorization, local profiles,
-credential refresh and local sign-out, plus vehicle and work-order list and detail reads. The
-local MCP exposes the same four read operations. Installation alone does not
+credential refresh and local sign-out, plus vehicle, work-order, and defect list and detail reads. The
+local MCP exposes the same six read operations. Installation alone does not
 enable these operations on a Nova deployment. Native browser authorization and
 customer access must be enabled there.
 
@@ -26,7 +26,7 @@ release. Additional workflows require their own reviewed native-client contracts
 “DSP” and “shop” identify the customer audience, not blanket permission for every
 member of that audience. The API checks the action and record on every request.
 The source column names the web/API owner used to verify the existing workflow.
-Vehicle reads and work-order list/detail are implemented here. Work-order reads
+Vehicle, work-order, and defect list/detail reads are implemented here. Work-order reads
 require explicit browser consent for `work_orders.list.v1` and/or
 `work_orders.get.v1`, plus API deployment support.
 
@@ -40,7 +40,7 @@ require explicit browser consent for `work_orders.list.v1` and/or
 | Inspection catalog | Vehicle-class catalog, effective DSP checklist, targets, positions and criticality. | Authorized inspectors and fleet roles | `api/inspectionCatalog.js`; `routes/dvic_template.py` |
 | Inspection draft | Start/resume/cancel own draft; checklist answers; tread depths; defects; open-defect checks; photo upload, commit and removal. | Authorized DSP/shop inspectors | `api/inspections.js`; `routes/inspections.py`; `routes/inspection_open_defect_check.py` |
 | Inspection results | Submit a complete or permitted incomplete inspection; list/detail/latest results; export. | Authorized inspectors and readers | `LatestInspections`; `api/inspections.js` |
-| Defect evidence | List/detail/catalog; create and permitted edits/deletion; comments and revisions; photos and photo history. | DSP and shop with record access | `Defects`; `api/defects.js`; `routes/defect_comments.py` |
+| Defect evidence | List/detail **implemented**, subject to deployment and `defects.list.v1` / `defects.get.v1` grants. Remaining: catalog; create and permitted edits/deletion; comments and revisions; photos and photo history. | DSP and shop with record access | `Defects`; `api/defects.js`; `routes/defect_comments.py` |
 | Defect decisions | Approval/rejection; cost decisions; record work completed outside Nova. | Authorized DSP decision makers | `Defects`; `api/client.js: defectReviews`; `routes/defect_reviews.py` |
 | Repair routing | Request detail and eligible destinations; send to shop or external provider; rental-routing decisions; cancel/defer/add defects. | Authorized DSP roles | `api/client.js: repairRequests`; `routes/repair_requests.py` |
 | Shop intake and work | Work-order list/detail **implemented**, subject to deployment and grants. Remaining: van board, export; manual intake; accept/decline/release; assignments; activity and notes. | Shop roles, per action and assignment | `WoV2Dashboard`; `api/workOrders.js`; `routes/work_orders/` |

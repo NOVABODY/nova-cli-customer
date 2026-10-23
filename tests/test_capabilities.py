@@ -22,11 +22,11 @@ def test_discovery_needs_no_profile_credentials_or_network(capsys, monkeypatch):
     assert result['full_customer_parity'] is False
     assert result['mcp']['command'] == 'nova-mcp --profile PROFILE'
     assert result['mcp']['transport'] == 'stdio'
-    assert set(result['mcp']['tools']) == {'list_vehicles', 'get_vehicle', 'list_work_orders', 'get_work_order'}
+    assert set(result['mcp']['tools']) == {'list_vehicles', 'get_vehicle', 'list_work_orders', 'get_work_order', 'list_defects', 'get_defect'}
     assert {c['command'] for c in result['commands']} == {
         'capabilities', 'profile set', 'profile use', 'profile show', 'profile remove',
         'profile list', 'auth login', 'auth status', 'auth refresh', 'auth logout',
-        'vehicle list', 'vehicle get', 'work-order list', 'work-order get',
+        'vehicle list', 'vehicle get', 'work-order list', 'work-order get', 'defect list', 'defect get',
     }
     for command in result['commands']:
         for example in command['examples']:
@@ -64,3 +64,10 @@ def test_work_order_capabilities_name_grant_and_extensible_response(capsys):
     assert entry['required_scope'] == 'nova:read'
     assert entry['output_schema']['additionalProperties'] is True
     assert entry['api']['path'] == '/assistant/work-orders/{work_order_id}'
+
+
+def test_defect_capabilities_name_grant_and_extensible_response(capsys):
+    entry, = manifest(capsys, '--command', 'defect get')['commands']
+    assert entry['required_operation'] == 'defects.get.v1'
+    assert entry['output_schema']['additionalProperties'] is True
+    assert entry['api']['path'] == '/assistant/defects/{defect_id}'

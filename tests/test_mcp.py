@@ -49,6 +49,13 @@ class Reader:
             row = {"id": "WO-0001", "status": "reported", "vehicle_id": 1,
                    "dsp_id": 2, "vendor_workshop_id": 3, "notes": [{"text": "Visible"}]}
             return {"items": [row], "total": 1} if path.endswith("work-orders") else row
+        if path.startswith("/assistant/defects"):
+            row = {"id": "FD-0001", "vehicle_id": "VAN-0001", "fleet_id": "TEST",
+                   "plate": "TEST", "vehicle_class": "regular_cargo_van", "source": "inspection",
+                   "part": "tire", "defect_type": "worn", "details": {},
+                   "reported_at": "2026-10-23T12:00:00Z", "created_at": "2026-10-23T12:00:00Z",
+                   "updated_at": "2026-10-23T12:00:00Z", "notes": "Visible"}
+            return {"items": [row], "total": 1, "page": 1, "per_page": 50} if path.endswith("defects") else row
         raise AssertionError(path)
 
 
@@ -76,7 +83,7 @@ def test_invalid_arguments_make_no_api_request(tool, arguments):
 def test_discovery_is_static_and_exposes_only_typed_fleet_tools():
     reader = Reader()
     schemas = DelegatedService(reader).tool_schemas()
-    assert set(schemas) == {"list_vehicles", "get_vehicle", "list_work_orders", "get_work_order"}
+    assert set(schemas) == {"list_vehicles", "get_vehicle", "list_work_orders", "get_work_order", "list_defects", "get_defect"}
     assert schemas["get_vehicle"]["properties"]["vehicle_id"]["pattern"]
     assert all(s["additionalProperties"] is False for s in schemas.values())
     assert reader.calls == []
@@ -110,7 +117,7 @@ def test_real_stdio_discovery_list_get_and_legacy_denial(tmp_path):
         async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
             await session.initialize()
             tools = (await session.list_tools()).tools
-            assert {t.name for t in tools} == {"list_vehicles", "get_vehicle", "list_work_orders", "get_work_order"}
+            assert {t.name for t in tools} == {"list_vehicles", "get_vehicle", "list_work_orders", "get_work_order", "list_defects", "get_defect"}
             assert all(t.outputSchema for t in tools)
             assert (await session.list_resources()).resources == []
             rows = await session.call_tool("list_vehicles", {"fleet_id": "NF001"})
@@ -121,6 +128,10 @@ def test_real_stdio_discovery_list_get_and_legacy_denial(tmp_path):
             order = await session.call_tool("get_work_order", {"work_order_id": "WO-0001"})
             assert orders.structuredContent["items"][0] == order.structuredContent
             assert order.structuredContent["notes"] == [{"text": "Visible"}]
+            defects = await session.call_tool("list_defects", {"open_only": True})
+            defect = await session.call_tool("get_defect", {"defect_id": "FD-0001"})
+            assert defects.structuredContent["items"][0] == defect.structuredContent
+            assert defect.structuredContent["notes"] == "Visible"
             assert (await session.call_tool("show_workspace", {})).isError
 
     asyncio.run(scenario())

@@ -1,8 +1,8 @@
 # Nova CLI
 
 The customer Nova Fora client signs in through your browser and reads the fleet
-vehicles and work orders your account can access. It supports list and detail
-reads for both. It does not accept passwords or service keys,
+vehicles, work orders, and defects your account can access. It supports list and
+detail reads for each. It does not accept passwords or service keys,
 change fleet records, or provide arbitrary API or administrator commands.
 
 **Private preview:** This repository remains private. Public release requires a separate decision.
@@ -58,8 +58,9 @@ nova-mcp --profile personal
 ```
 
 Configure a local MCP host to launch that command over stdio. It exposes only
-`list_vehicles`, `get_vehicle`, `list_work_orders` and `get_work_order`.
-Work-order outputs validate core identity fields and preserve additional fields
+`list_vehicles`, `get_vehicle`, `list_work_orders`, `get_work_order`,
+`list_defects`, and `get_defect`.
+Work-order and defect outputs validate core fields and preserve additional fields
 filtered by the API for your role. It shares the
 public CLI's profile, credential store and refresh lock. There is no hosted HTTP
 server, widget, password login or service-account mode in this package. Disconnect
@@ -102,7 +103,7 @@ and MCP tool references. Use `nova capabilities --command "vehicle get" --json`
 to inspect one command. Discovery is offline and requires no credentials. It
 does not claim that an account or deployment permits an operation.
 
-The CLI currently provides fleet and work-order reads. Full DSP and vendor
+The CLI currently provides fleet, work-order, and defect reads. Full DSP and vendor
 workflow parity is not yet available.
 See [customer workflow coverage](docs/CustomerParity.md) for the full inventory,
 missing workflows, browser handoffs, and implementation sequence.
@@ -124,3 +125,23 @@ each call. Existing connections do not gain access when the client is updated.
 Use `nova work-order list --help` for filters, including explicit negative flags
 such as `--no-scheduled`. Scheduling, assignments, exports and writes are not
 included. Your deployment must support the work-order assistant routes.
+
+## Defect reads
+
+Request defect access during browser consent:
+
+```sh
+nova auth login --operations "defects.list.v1 defects.get.v1"
+nova defect list --open-only --per-page 20 --page 1 --json
+nova defect list --vehicle-id VAN-0001 --date-from 2026-10-01 --date-to 2026-10-23 --json
+nova defect get FD-0001 --json
+```
+
+The operation list is the full requested grant. Include vehicle or work-order
+operation IDs to request those reads in the same connection. Without the option,
+login still requests only fleet access. A list-only grant cannot read detail.
+Use `nova defect list --help` for filters. Dates use `YYYY-MM-DD`;
+`--tz-offset-minutes` uses minutes west of UTC. The API checks current role and
+record access and returns the allowed fields. These reads include defect metadata,
+not separate photo downloads, comments, edits, or approval decisions. Existing
+connections need new consent, and the deployment must support the defect routes.
