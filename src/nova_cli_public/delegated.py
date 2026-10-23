@@ -68,7 +68,7 @@ def _token(client, fields, previous=None):
         if (
             not isinstance(body, dict)
             or body.get("token_type", "").lower() != "bearer"
-            or body.get("scope") != "nova:read"
+            or body.get("scope") not in ("nova:read", "nova:read nova:write")
             or type(body.get("expires_in")) is not int
             or not 0 < body["expires_in"] <= 300
             or any(
@@ -111,17 +111,22 @@ def status(client):
 
 
 from nova_cli_public.read_routes import READ_ROUTES
+from nova_cli_public.write_routes import WRITE_ROUTES
 
-OPERATIONS = set(READ_ROUTES.values())
+OPERATIONS = set(READ_ROUTES.values()) | set(WRITE_ROUTES.values())
 DEFAULT_OPERATIONS = "vehicles.list_full.v1 vehicles.get_full.v1"
 
 
-def browser_code(origin, timeout=180, operations=None):
+def browser_code(origin, timeout=180, operations=None, scope="nova:read"):
     operations = DEFAULT_OPERATIONS if operations is None else operations
     if operations is not None and (
         not operations.split() or not set(operations.split()) <= OPERATIONS
     ):
         raise UsageError("Unknown operation. Run nova capabilities --json.")
+    if scope not in ("nova:read", "nova:read nova:write"):
+        raise UsageError("Use nova:read or nova:read nova:write.")
+    if set(operations.split()) & set(WRITE_ROUTES.values()) and scope != "nova:read nova:write":
+        raise UsageError("Write operations require --scope 'nova:read nova:write'.")
     verifier, state = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
     challenge = (
         base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
@@ -184,7 +189,7 @@ def browser_code(origin, timeout=180, operations=None):
                     "response_type": "code",
                     "client_id": CLIENT_ID,
                     "resource": origin + "/api",
-                    "scope": "nova:read",
+                    "scope": scope,
                     "state": state,
                     "redirect_uri": redirect_uri,
                     "code_challenge": challenge,
@@ -206,15 +211,21 @@ def browser_code(origin, timeout=180, operations=None):
     return outcome["code"], verifier, redirect_uri
 
 
-def login(client, operations=None):
+def login(client, operations=None, scope="nova:read"):
+    if scope not in ("nova:read", "nova:read nova:write"):
+        raise AuthError("Use nova:read or nova:read nova:write.")
     _read(client)  # Fail before opening the browser when the configured keyring is unavailable.
     code, verifier, redirect_uri = (
-        browser_code(issuer(client.profile), operations=operations)
-        if operations is not None
+        browser_code(
+            issuer(client.profile),
+            operations=operations,
+            **({"scope": scope} if scope != "nova:read" else {}),
+        )
+        if operations is not None or scope != "nova:read"
         else browser_code(issuer(client.profile))
     )
     with profile_lock(client.profile.name):
-        _token(
+        token = _token(
             client,
             {
                 "grant_type": "authorization_code",
@@ -223,4 +234,4 @@ def login(client, operations=None):
                 "redirect_uri": redirect_uri,
             },
         )
-    return {"scope": "nova:read", "resource": issuer(client.profile) + "/api"}
+    return {"scope": token["scope"], "resource": issuer(client.profile) + "/api"}

@@ -6,6 +6,7 @@ from nova_cli_public import __version__
 from nova_cli_public.errors import UsageError
 from nova_cli_public.read_routes import READ_ROUTES
 from nova_cli_public.reads import BY_COMMAND, BY_TOOL, CustomerReadService, input_model
+from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 
 # Only effect/usage information lives here. Arguments come from the real parser;
 # fleet input/output contracts come from the same models used during execution.
@@ -146,20 +147,28 @@ def manifest(parser, selected=None):
                 tool_input_schema=input_model(operation, mcp=True).model_json_schema(),
                 output_schema=CustomerReadService(None).output_schema(tool),
                 mcp_tool=tool,
-                required_scope="nova:read" if operation["grant"] else None,
+                required_scope=operation.get("scope", "nova:read") if operation["grant"] else None,
                 required_operation=operation["grant"],
                 api_routes=[
                     {"method": "GET", "path_pattern": path}
                     for path, grant in READ_ROUTES.items()
                     if grant == operation["grant"]
+                ]
+                + [
+                    {"method": method, "path_pattern": path}
+                    for (method, path), grant in WRITE_ROUTES.items()
+                    if grant == operation["grant"]
                 ],
             )
             entry["input_schema"] = input_model(operation).model_json_schema()
-            entry["effects"] = ["remote_read"] + (
+            entry["effects"] = [operation.get("effect", "remote_read")] + (
                 ["local_file_write"]
                 if tool in ("download_defect_photos", "pull_defects", "pull_vehicle_reports")
                 else []
             )
+        if name == "upload photo":
+            entry["effects"].append("local_file_read")
+            entry["conditional_operations"] = PHOTO_COMMIT_GRANTS
         if name in ("auth login", "auth refresh"):
             entry["required_scope"] = "nova:read"
         if selected is None or selected == name:
