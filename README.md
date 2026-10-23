@@ -91,3 +91,15 @@ Tests use synthetic data and credentials. They exercise the real loopback callba
 and MCP SDK stdio, credential rotation and failure handling, route/argument
 restrictions and response projections. They do not prove customer activation or
 compatibility with every hosted assistant.
+
+## Discover capabilities
+
+Run `nova capabilities` for the full command table of contents. Agents can use
+`nova capabilities --json` for arguments, schemas, examples, effects, OAuth scopes
+and MCP tool references. Use `nova capabilities --command "vehicle get" --json`
+to inspect one command. Discovery is offline and requires no credentials. It
+does not claim that an account or deployment permits an operation.
+
+The CLI currently provides fleet reads, not full DSP or vendor workflow parity.
+See [customer workflow coverage](docs/CustomerParity.md) for the full inventory,
+missing workflows, browser handoffs, and implementation sequence.
