@@ -34,6 +34,9 @@ def build_parser():
     parser.add_argument("--version", action="version", version=f"nova-cli {__version__}")
     globals_for(parser)
     commands = parser.add_subparsers(dest="command", required=True)
+    discovery = commands.add_parser("capabilities", help="List available commands and schemas.")
+    discovery.add_argument("--command", dest="selected_command", help="Inspect one command.")
+    discovery.set_defaults(handler=cmd_capabilities)
     profiles = commands.add_parser("profile").add_subparsers(dest="action", required=True)
     create = profiles.add_parser("set")
     create.add_argument("name")
@@ -68,6 +71,13 @@ def build_parser():
 
     walk(parser)
     return parser
+
+
+def cmd_capabilities(args):
+    from nova_cli_public.capabilities import manifest, render_toc
+
+    value = manifest(build_parser(), args.selected_command)
+    return value if args.json else render_toc(value)
 
 
 def profile_from_args(args):
