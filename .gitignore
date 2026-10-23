@@ -1,0 +1,19 @@
+.venv/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.DS_Store
+
+# Local CLI state belongs in XDG dirs, but ignore accidental project-local state.
+config.json
+tokens.json
+
+# Local plugin verification outputs.
+artifacts/
+
+.env
+.env.*
