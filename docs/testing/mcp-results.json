@@ -1,0 +1,13 @@
+{
+  "source": "installed wheel",
+  "keyring": "real macOS Keychain",
+  "cases": [
+    "Installed stdio initialization, typed discovery, scoped list and get; invalid profile argument denied",
+    "CLI refresh and read use the credential rotated by MCP; existing MCP session reads again",
+    "Browser disconnect stops existing MCP session; rejected refresh clears shared credential; stdio closes cleanly"
+  ],
+  "screenshots": [
+    "cli-consent-mcp.png"
+  ],
+  "passed": true
+}

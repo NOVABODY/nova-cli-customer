@@ -1,0 +1,14 @@
+{
+  "src/nova_cli_public/__init__.py": "91447944015cec709e8aa7655f7e9d64e1e4508e7023a57fe3746911c0fc6fed",
+  "src/nova_cli_public/__main__.py": "02ec17d6d5056621efd3dc5ca2d3f1893037a3a7b17fd0087684e1a2b0042c67",
+  "src/nova_cli_public/cli.py": "d482811b9b84b54b567ce45bceaad368e5a1aa365764fddaf9b09df39f648d1d",
+  "src/nova_cli_public/client.py": "cc0129669a1fb2adc27c76e7adfa69ea4886048eb8c1efaa9c9a8b77abe93d14",
+  "src/nova_cli_public/config.py": "bb79358ea321799065e99f2158353ac464849fe602676a5a2f1a4d503bdf2a35",
+  "src/nova_cli_public/delegated.py": "dbbe1cd74dc5f368dee01626c6ced88e7c545efcd893146c6d7eb05fffe44460",
+  "src/nova_cli_public/errors.py": "77e6acc04f3d6b8d9ae9f2450601179bbf96025d13cfb5b30eedaaf3050374e2",
+  "src/nova_cli_public/fleet.py": "bfd7af2e438ee141e59c18a5d419c1da07b10f90b12d54d3e12f483f1603cb8f",
+  "src/nova_cli_public/locking.py": "89550d0d83c625ef37ac17a6b8e99683e109d0a5a5aecdf9b3e142eebcea7b9a",
+  "src/nova_cli_public/mcp.py": "f84162497ff66cc93ad688fb35960e65c355253b5deb0710cab2d00575b2eb82",
+  "src/nova_cli_public/output.py": "9dd7c3ff15f8e62ab4f6501d3ebdf87d5748d6c56af49b4a22dc55ceecf59ed0",
+  "src/nova_cli_public/tokens.py": "7e49a28d40ed5acc392d4e575fa84b6ee9363613cb6f3b9c4ba77dbcd6ce6dfd"
+}

@@ -1,0 +1,19 @@
+{
+  "successful_reads": 7,
+  "operations": {
+    "vehicles.list.v1": 4,
+    "vehicles.get.v1": 3
+  },
+  "connections": 3,
+  "all_revoked": true,
+  "per_connection_read_counts": [
+    0,
+    3,
+    4
+  ],
+  "actor_organization_client_connection_provenance_verified": true,
+  "foreign_reads_denied": true,
+  "details_allowlist_verified": true,
+  "correlation_format_verified": true,
+  "ip_and_user_agent_absent": true
+}
