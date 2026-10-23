@@ -433,7 +433,7 @@ def test_browser_requests_only_explicit_operation_grants(monkeypatch, operations
     with pytest.raises(AuthError):
         delegated.browser_code('https://nova.example', operations=operations)
     query = urllib.parse.parse_qs(urllib.parse.urlsplit(captured[0]).query)
-    assert query.get('operations') == ([operations] if operations else None)
+    assert query.get('operations') == [operations or delegated.DEFAULT_OPERATIONS]
     assert query['scope'] == ['nova:read']
 
 
@@ -453,7 +453,7 @@ def test_work_order_read_transport_is_allowed(client, path):
 
 @pytest.mark.parametrize('method,path', [
     ('POST', '/assistant/work-orders'), ('DELETE', '/assistant/work-orders/WO-0001'),
-    ('GET', '/assistant/work-orders/../vehicles'), ('GET', '/work-orders'),
+    ('GET', '/assistant/work-orders/../vehicles'), ('GET', '/work-orders/WO-1/unknown'),
     ('GET', '/assistant/work-orders/WO-1?admin=true'),
 ])
 def test_work_order_transport_denies_writes_and_path_escape(client, method, path):
@@ -472,7 +472,7 @@ def test_defect_read_transport_is_allowed(client, path):
 
 @pytest.mark.parametrize('method,path', [
     ('POST', '/assistant/defects'), ('DELETE', '/assistant/defects/FD-0001'),
-    ('GET', '/assistant/defects/../vehicles'), ('GET', '/defects'),
+    ('GET', '/assistant/defects/../vehicles'), ('GET', '/defects/FD-1/unknown'),
     ('GET', '/assistant/defects/FD-1?admin=true'),
 ])
 def test_defect_transport_denies_writes_and_path_escape(client, method, path):

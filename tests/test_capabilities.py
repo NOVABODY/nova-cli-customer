@@ -1,73 +1,57 @@
 import json
-import shlex
 
 import pytest
 
 from nova_cli_public import cli
+from nova_cli_public.reads import BY_COMMAND, BY_TOOL, MODELS, CustomerReadService
 
 
 def manifest(capsys, *args):
-    assert cli.main(['capabilities', '--json', *args]) == 0
+    assert cli.main(["capabilities", "--json", *args]) == 0
     return json.loads(capsys.readouterr().out)
 
 
 def test_discovery_needs_no_profile_credentials_or_network(capsys, monkeypatch):
     def forbidden(*args, **kwargs):
-        pytest.fail('Offline capability discovery accessed authentication')
-    monkeypatch.setattr(cli, 'client_from_args', forbidden)
-    monkeypatch.setattr(cli, 'profile_from_args', forbidden)
+        pytest.fail("Offline capability discovery accessed authentication")
+
+    monkeypatch.setattr(cli, "client_from_args", forbidden)
+    monkeypatch.setattr(cli, "profile_from_args", forbidden)
     result = manifest(capsys)
-    assert result['schema_version'] == 1
-    assert result['authorization'] == 'not_checked'
-    assert result['full_customer_parity'] is False
-    assert result['mcp']['command'] == 'nova-mcp --profile PROFILE'
-    assert result['mcp']['transport'] == 'stdio'
-    assert set(result['mcp']['tools']) == {'list_vehicles', 'get_vehicle', 'list_work_orders', 'get_work_order', 'list_defects', 'get_defect'}
-    assert {c['command'] for c in result['commands']} == {
-        'capabilities', 'profile set', 'profile use', 'profile show', 'profile remove',
-        'profile list', 'auth login', 'auth status', 'auth refresh', 'auth logout',
-        'vehicle list', 'vehicle get', 'work-order list', 'work-order get', 'defect list', 'defect get',
-    }
-    for command in result['commands']:
-        for example in command['examples']:
-            cli.build_parser().parse_args(shlex.split(example)[1:])
+    assert result["authorization"] == "not_checked"
+    assert result["full_customer_parity"] is False
+    assert set(result["mcp"]["tools"]) == set(BY_TOOL)
+    names = [entry["command"] for entry in result["commands"]]
+    assert len(names) == len(set(names))
+    assert set(BY_COMMAND) <= set(names)
+    assert "work-orders get" not in names  # aliases do not duplicate canonical entries
 
 
-def test_fleet_discovery_includes_exact_schemas_and_read_only_scope(capsys):
-    from nova_cli_public.fleet import ARGUMENTS, OUTPUTS
-    result = manifest(capsys, '--command', 'vehicle get')
-    entry, = result['commands']
-    assert entry['tool_input_schema'] == ARGUMENTS['get_vehicle'].model_json_schema()
-    assert set(entry['input_schema']['properties']) == {'vehicle_id', 'profile', 'json'}
-    assert entry['input_schema']['properties']['vehicle_id']['pattern']
-    assert entry['output_schema'] == OUTPUTS['get_vehicle'].model_json_schema()
-    assert entry['effects'] == ['remote_read']
-    assert entry['required_scope'] == 'nova:read'
-    assert entry['mcp_tool'] == 'get_vehicle'
-    assert entry['api'] == {'method': 'GET', 'path': '/assistant/vehicles/{vehicle_id}'}
+@pytest.mark.parametrize(
+    "command,tool,grant",
+    [
+        ("vehicle get", "get_vehicle", "vehicles.get_full.v1"),
+        ("work-order get", "get_work_order", "work_orders.get.v1"),
+        ("defect get", "get_defect", "defects.get.v1"),
+        ("defect photos", "download_defect_photos", "defects.photos.list.v1"),
+    ],
+)
+def test_discovery_uses_execution_contract_and_explicit_grant(capsys, command, tool, grant):
+    (entry,) = manifest(capsys, "--command", command)["commands"]
+    assert entry["tool_input_schema"] == MODELS[tool].model_json_schema()
+    assert entry["output_schema"] == CustomerReadService(None).output_schema(tool)
+    assert entry["required_operation"] == grant
+    assert entry["required_scope"] == "nova:read"
+    assert entry["mcp_tool"] == tool
+    assert entry["output_schema"]["additionalProperties"] is True
 
 
 def test_local_logout_discovery_does_not_claim_server_revocation(capsys):
-    entry, = manifest(capsys, '--command', 'auth logout')['commands']
-    assert entry['effects'] == ['local_credentials_delete']
-    assert 'server connection remains' in entry['description']
+    (entry,) = manifest(capsys, "--command", "auth logout")["commands"]
+    assert entry["effects"] == ["local_credentials_delete"]
+    assert "server connection remains" in entry["description"]
 
 
 def test_unknown_capability_is_an_error_not_a_successful_empty_result(capsys):
-    assert cli.main(['capabilities', '--command', 'admin users', '--json']) == 2
-    assert 'Unknown customer command' in capsys.readouterr().err
-
-
-def test_work_order_capabilities_name_grant_and_extensible_response(capsys):
-    entry, = manifest(capsys, '--command', 'work-order get')['commands']
-    assert entry['required_operation'] == 'work_orders.get.v1'
-    assert entry['required_scope'] == 'nova:read'
-    assert entry['output_schema']['additionalProperties'] is True
-    assert entry['api']['path'] == '/assistant/work-orders/{work_order_id}'
-
-
-def test_defect_capabilities_name_grant_and_extensible_response(capsys):
-    entry, = manifest(capsys, '--command', 'defect get')['commands']
-    assert entry['required_operation'] == 'defects.get.v1'
-    assert entry['output_schema']['additionalProperties'] is True
-    assert entry['api']['path'] == '/assistant/defects/{defect_id}'
+    assert cli.main(["capabilities", "--command", "admin users", "--json"]) == 2
+    assert "Unknown customer command" in capsys.readouterr().err

@@ -102,7 +102,7 @@ def test_removing_profile_deletes_only_public_credential_without_nested_lock(mon
     "method,path",
     [
         ("POST", "/assistant/vehicles"),
-        ("GET", "/auth/me"),
+        ("GET", "/auth/admin"),
         ("GET", "https://other.example/api/assistant/vehicles"),
         ("GET", "//other.example/assistant/vehicles"),
         ("GET", "/assistant/vehicles/../auth/me"),

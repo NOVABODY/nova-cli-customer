@@ -1,9 +1,11 @@
 # Nova CLI
 
-The customer Nova Fora client signs in through your browser and reads the fleet
-vehicles, work orders, and defects your account can access. It supports list and
-detail reads for each. It does not accept passwords or service keys,
-change fleet records, or provide arbitrary API or administrator commands.
+The customer Nova Fora client signs in through your browser and uses the existing
+customer read workflows. The CLI and local MCP share 29 named operations,
+including vehicle, work-order, defect and vehicle-report reads, photo downloads,
+cursor-based packages, notifications, search, team defaults, and health checks.
+It does not accept passwords or service keys or expose arbitrary API commands.
+Customer writes and workshop events remain pending; this is not full legacy parity.
 
 **Private preview:** This repository remains private. Public release requires a separate decision.
 
@@ -32,7 +34,7 @@ the internal installation steps.
 ```sh
 nova profile set personal --api https://YOUR_NOVA_HOST/api
 nova --profile personal auth login
-nova vehicle list --grounded --json
+nova vehicle list --status grounded --json
 nova vehicle get VAN-0001 --json
 nova auth status
 nova auth refresh
@@ -57,14 +59,24 @@ pip install 'nova-cli[mcp] @ git+https://github.com/NOVABODY/nova-cli-customer.g
 nova-mcp --profile personal
 ```
 
-Configure a local MCP host to launch that command over stdio. It exposes only
-`list_vehicles`, `get_vehicle`, `list_work_orders`, `get_work_order`,
-`list_defects`, and `get_defect`.
-Work-order and defect outputs validate core fields and preserve additional fields
-filtered by the API for your role. It shares the
-public CLI's profile, credential store and refresh lock. There is no hosted HTTP
-server, widget, password login or service-account mode in this package. Disconnect
-in Nova to deny subsequent calls, including from an already-running MCP process.
+Configure a local MCP host to launch that command over stdio. It exposes the same
+customer read handlers as the CLI through named tools. Run `nova capabilities
+--json` for the tool names and schemas. API responses retain the fields authorized
+for your role; the client does not replace full vehicle records with a projection.
+The MCP shares the public CLI's profile, credential store and refresh lock.
+
+File tools save data under the public client data directory and return local file
+paths and URIs. MCP calls allow at most 100 API reads and 10 MiB of response data;
+each response is limited to 2 MiB. Photo calls allow at most 10 defect IDs, 20
+photos and 100 MiB in total, with the existing 50 MiB limit per photo. Photos use
+signed HTTPS URLs without Nova bearer credentials. Wait calls are limited to 25
+seconds. CLI file paths, cursor options and polling controls remain available.
+
+File tools create local files and can update a local cursor. Their MCP annotations
+identify these effects. Cursors are bound to the signed-in account, organization
+and connection; a new sign-in cannot reuse another account's cursor. A failed
+file or stdout write does not advance the cursor. Disconnect in Nova to deny
+subsequent calls, including from an already-running MCP process.
 
 ## Separation from the private operator CLI
 
@@ -108,40 +120,36 @@ workflow parity is not yet available.
 See [customer workflow coverage](docs/CustomerParity.md) for the full inventory,
 missing workflows, browser handoffs, and implementation sequence.
 
-## Work-order reads
+## Consent and legacy read commands
 
-Request work-order access during browser consent:
+Fresh login requests the full vehicle read operations shown in browser consent:
+`vehicles.list_full.v1` and `vehicles.get_full.v1`. Existing connections with the
+older projected fleet grants are not upgraded. Sign in again to approve the full
+read operations. A denial can also mean that your current account cannot read
+the record; new consent does not bypass account permissions.
 
-```sh
-nova auth login --operations "vehicles.list.v1 vehicles.get.v1 work_orders.list.v1 work_orders.get.v1"
-nova work-order list --status scheduled --limit 20 --offset 0 --json
-nova work-order get WO-0001 --json
-```
-
-Without `--operations`, login requests only the existing fleet operations. A
-connection granted only `work_orders.list.v1` cannot read work-order detail.
-The API checks the connection grant, current account role, and record scope on
-each call. Existing connections do not gain access when the client is updated.
-Use `nova work-order list --help` for filters, including explicit negative flags
-such as `--no-scheduled`. Scheduling, assignments, exports and writes are not
-included. Your deployment must support the work-order assistant routes.
-
-## Defect reads
-
-Request defect access during browser consent:
+To request other reads, supply the complete operation list. For example:
 
 ```sh
-nova auth login --operations "defects.list.v1 defects.get.v1"
-nova defect list --open-only --per-page 20 --page 1 --json
-nova defect list --vehicle-id VAN-0001 --date-from 2026-10-01 --date-to 2026-10-23 --json
-nova defect get FD-0001 --json
+nova auth login --operations "vehicles.list_full.v1 vehicles.get_full.v1 work_orders.list.v1 work_orders.get.v1 defects.list.v1 defects.get.v1 defects.photos.list.v1"
+nova vehicle list --status all --dsp-id DSP-0001 --json
+nova wo get WO-0001 --json
+nova defects list --status scheduled --json
+nova defect photos FD-0001 --out ./photos
+nova defect pull --vehicle VAN-0001 --out ./defects.json
 ```
 
-The operation list is the full requested grant. Include vehicle or work-order
-operation IDs to request those reads in the same connection. Without the option,
-login still requests only fleet access. A list-only grant cannot read detail.
-Use `nova defect list --help` for filters. Dates use `YYYY-MM-DD`;
-`--tz-offset-minutes` uses minutes west of UTC. The API checks current role and
-record access and returns the allowed fields. These reads include defect metadata,
-not separate photo downloads, comments, edits, or approval decisions. Existing
-connections need new consent, and the deployment must support the defect routes.
+`wo` and `work-orders`, `defects`, and `notifications` retain the legacy aliases.
+The legacy `defect list --status` filter runs on the returned page, as before.
+Use `nova COMMAND --help` for each command's options. Capability discovery lists
+required operation IDs without granting access. A list-only grant cannot read
+record detail. Work-order waits and line-item reads use the work-order detail
+grant; package pulls use the corresponding list grant.
+
+The legacy read handlers and their behavioral tests were extracted from source
+tree `c2298bbf8b1c17e5f520dcc3aefa5ce172ab12ec`. They run entirely inside the
+public package; the private operator package is not a dependency. The shared
+registry supplies CLI registration, MCP tools and capability discovery.
+See [legacy parity](docs/LegacyCliParity.md) for the complete command ledger,
+remaining writes and events, and explicit exclusions. Your deployment must support
+the declared delegated read contracts before these operations can succeed.

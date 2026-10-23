@@ -8,7 +8,7 @@ class Reader:
     def __init__(self):
         self.calls = []
 
-    def request(self, method, path, *, query):
+    def request(self, method, path, *, query=None):
         self.calls.append((method, path, query))
         row = {
             "id": "WO-0001",
@@ -26,7 +26,7 @@ def test_cli_work_order_read_preserves_server_filtered_detail(monkeypatch, capsy
     monkeypatch.setattr(cli, "client_from_args", lambda args: reader)
     assert cli.main(["work-order", "get", "WO-0001", "--json"]) == 0
     assert "Visible note" in capsys.readouterr().out
-    assert reader.calls == [("GET", "/assistant/work-orders/WO-0001", {})]
+    assert reader.calls == [("GET", "/work-orders/WO-0001", None)]
 
 
 @pytest.mark.parametrize(

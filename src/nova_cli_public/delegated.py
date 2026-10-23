@@ -110,17 +110,14 @@ def status(client):
         return {"credential_stored": bool(_read(client)), "server_verified": False}
 
 
-OPERATIONS = {
-    "vehicles.list.v1",
-    "vehicles.get.v1",
-    "work_orders.list.v1",
-    "work_orders.get.v1",
-    "defects.list.v1",
-    "defects.get.v1",
-}
+from nova_cli_public.read_routes import READ_ROUTES
+
+OPERATIONS = set(READ_ROUTES.values())
+DEFAULT_OPERATIONS = "vehicles.list_full.v1 vehicles.get_full.v1"
 
 
 def browser_code(origin, timeout=180, operations=None):
+    operations = DEFAULT_OPERATIONS if operations is None else operations
     if operations is not None and (
         not operations.split() or not set(operations.split()) <= OPERATIONS
     ):
