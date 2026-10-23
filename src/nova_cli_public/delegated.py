@@ -110,7 +110,14 @@ def status(client):
         return {"credential_stored": bool(_read(client)), "server_verified": False}
 
 
-OPERATIONS = {"vehicles.list.v1", "vehicles.get.v1", "work_orders.list.v1", "work_orders.get.v1"}
+OPERATIONS = {
+    "vehicles.list.v1",
+    "vehicles.get.v1",
+    "work_orders.list.v1",
+    "work_orders.get.v1",
+    "defects.list.v1",
+    "defects.get.v1",
+}
 
 
 def browser_code(origin, timeout=180, operations=None):

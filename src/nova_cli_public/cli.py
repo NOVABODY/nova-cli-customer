@@ -13,7 +13,7 @@ from nova_cli_public import __version__, delegated
 from nova_cli_public.client import ApiClient
 from nova_cli_public.config import ConfigStore, require_profile_name
 from nova_cli_public.errors import ApiError, NovaCliError
-from nova_cli_public.fleet import DelegatedService, WorkOrderQuery
+from nova_cli_public.fleet import DefectQuery, DelegatedService, WorkOrderQuery
 from nova_cli_public.locking import profile_lock
 from nova_cli_public.output import emit
 from nova_cli_public.tokens import KeyringTokenStore
@@ -87,6 +87,20 @@ def build_parser():
     detail = orders.add_parser("get")
     detail.add_argument("work_order_id")
     detail.set_defaults(handler=cmd_work_order)
+
+    defects = commands.add_parser("defect").add_subparsers(dest="action", required=True)
+    listing = defects.add_parser("list")
+    for name, field in DefectQuery.model_fields.items():
+        kwargs = {"default": field.default}
+        if name in ("open_only", "include_no_shop"):
+            kwargs["action"] = argparse.BooleanOptionalAction
+        else:
+            kwargs["type"] = int if name in ("page", "per_page", "tz_offset_minutes") else str
+        listing.add_argument("--" + name.replace("_", "-"), **kwargs)
+    listing.set_defaults(handler=cmd_defect)
+    detail = defects.add_parser("get")
+    detail.add_argument("defect_id")
+    detail.set_defaults(handler=cmd_defect)
 
     def walk(current):
         for action in current._actions:
@@ -191,6 +205,17 @@ def cmd_work_order(args):
     )
     return DelegatedService(client_from_args(args)).run(
         "get_work_order" if args.action == "get" else "list_work_orders", values
+    )
+
+
+def cmd_defect(args):
+    values = (
+        {"defect_id": args.defect_id}
+        if args.action == "get"
+        else {key: getattr(args, key) for key in DefectQuery.model_fields}
+    )
+    return DelegatedService(client_from_args(args)).run(
+        "get_defect" if args.action == "get" else "list_defects", values
     )
 
 

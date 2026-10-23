@@ -79,7 +79,7 @@ class ApiClient:
         raw_content_type: str | None = None,
     ) -> Response:
         customer_read = method == "GET" and re.fullmatch(
-            r"/assistant/(?:vehicles(?:/(?:VAN-)?[0-9]+)?|work-orders(?:/(?:WO-)?[0-9]+)?)", path
+            r"/assistant/(?:vehicles(?:/(?:VAN-)?[0-9]+)?|work-orders(?:/(?:WO-)?[0-9]+)?|defects(?:/(?:FD-)?[0-9]+)?)", path
         )
         token_request = method == "POST" and path == "/oauth/token" and raw_body is not None
         if not (customer_read or token_request):
@@ -179,7 +179,7 @@ class ApiClient:
 
     def request(self, method, path, *, query=None, retry_auth=True):
         if method != "GET" or not re.fullmatch(
-            r"/assistant/(?:vehicles(?:/(?:VAN-)?[0-9]+)?|work-orders(?:/(?:WO-)?[0-9]+)?)", path
+            r"/assistant/(?:vehicles(?:/(?:VAN-)?[0-9]+)?|work-orders(?:/(?:WO-)?[0-9]+)?|defects(?:/(?:FD-)?[0-9]+)?)", path
         ):
             raise UsageError("This command is not available in the public CLI.")
         if not self.access_token:
