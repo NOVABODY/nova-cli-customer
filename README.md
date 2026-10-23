@@ -1,11 +1,12 @@
 # Nova CLI
 
 The customer Nova Fora client signs in through your browser and uses the existing
-customer read workflows. The CLI and local MCP share 29 named operations,
+customer workflows. The CLI and local MCP share 54 named operations,
 including vehicle, work-order, defect and vehicle-report reads, photo downloads,
 cursor-based packages, notifications, search, team defaults, and health checks.
 It does not accept passwords or service keys or expose arbitrary API commands.
-Customer writes and workshop events remain pending; this is not full legacy parity.
+The named customer write and photo-upload commands require explicit write consent.
+Workshop events remain pending; this is not full legacy parity.
 
 **Private preview:** This repository remains private. Public release requires a separate decision.
 
@@ -151,5 +152,34 @@ tree `c2298bbf8b1c17e5f520dcc3aefa5ce172ab12ec`. They run entirely inside the
 public package; the private operator package is not a dependency. The shared
 registry supplies CLI registration, MCP tools and capability discovery.
 See [legacy parity](docs/LegacyCliParity.md) for the complete command ledger,
-remaining writes and events, and explicit exclusions. Your deployment must support
-the declared delegated read contracts before these operations can succeed.
+remaining events and local-client work, and explicit exclusions. Your deployment must
+support the declared delegated contracts before these operations can succeed.
+
+## Customer changes and photo uploads
+
+Read-only consent is still the default. Request the combined scope and each named
+operation before using a change command. Browser consent and current account
+permissions must both allow the operation. For example:
+
+```sh
+nova auth login --scope "nova:read nova:write" --operations "work_orders.get.v1 work_orders.schedule.update.v1 uploads.presign.v1 defects.photos.create.v1"
+nova work-order schedule WO-0001 --scheduled-at 2026-10-26T09:00:00-04:00
+nova upload photo ./damage.jpg --kind defect --parent-id FD-0001 --commit
+```
+
+The upload grant permits the existing upload kinds. `--commit` needs a separate
+parent-photo operation: `defects.photos.create.v1`, `inspections.photos.create.v1`,
+or `vehicle_reports.photos.create.v1`. Signed upload requests send no Nova bearer
+token and do not follow redirects. Photos are limited to 50 MiB.
+
+Change requests are sent once. An expired cached token, a timeout, or another error
+does not trigger an automatic retry. The client can refresh before the first send.
+An `outcome_unknown` error means the response was lost; check the record before you
+try again. Business rejections retain their details, including version conflicts,
+mileage requirements, and validation failures. Existing duplicate and concurrency
+rules remain owned by each API operation.
+
+MCP exposes the same named commands and reports their write effects. It does not
+expose a generic request tool. File arguments must name files; MCP does not read
+stdin. Capability discovery shows required scopes, operation IDs, and conditional
+photo-commit grants. Discovery does not establish permission to perform a change.

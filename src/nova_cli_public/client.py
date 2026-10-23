@@ -15,6 +15,7 @@ from nova_cli_public.config import Profile
 from nova_cli_public.errors import ApiError, UsageError
 from nova_cli_public.read_routes import PUBLIC_READS, admitted_read
 from nova_cli_public.tokens import KeyringTokenStore
+from nova_cli_public.write_routes import admitted_write
 
 
 class NoRedirects(urllib.request.HTTPRedirectHandler):
@@ -81,7 +82,8 @@ class ApiClient:
     ) -> Response:
         customer_read = method == "GET" and (admitted_read(path) or path in PUBLIC_READS)
         token_request = method == "POST" and path == "/oauth/token" and raw_body is not None
-        if not (customer_read or token_request):
+        customer_write = admitted_write(method, path)
+        if not (customer_read or customer_write or token_request):
             raise UsageError("This route is not available in the public CLI.")
         if customer_read and (json_body is not None or raw_body is not None):
             raise UsageError("Reads cannot send a request body.")
@@ -135,7 +137,7 @@ class ApiClient:
             ) from exc
         except urllib.error.URLError as exc:
             raise ApiError(f"Could not reach Nova API at {self.profile.api}: {exc.reason}") from exc
-        except (TimeoutError, ConnectionError, HTTPException) as exc:
+        except (TimeoutError, ConnectionError, HTTPException, UnicodeError) as exc:
             raise ApiError("Nova API connection interrupted or timed out.") from exc
 
     def _url(
@@ -199,17 +201,48 @@ class ApiClient:
     def logout(self):
         return delegated.logout(self)
 
-    def request(self, method, path, *, query=None, retry_auth=True):
-        if method != "GET" or not admitted_read(path):
+    def put_bytes(self, url, data, *, content_type):
+        from nova_cli_public.legacy_reads import resolve_photo_url
+
+        url = resolve_photo_url(url, self)
+        request = urllib.request.Request(
+            url,
+            data=data,
+            method="PUT",
+            headers={"Content-Type": content_type, "User-Agent": f"nova-cli/{__version__}"},
+        )
+        try:
+            with self.opener.open(request, timeout=self.timeout) as response:
+                return _decode_body(response.read(), response.headers.get("Content-Type", ""))
+        except urllib.error.HTTPError as exc:
+            raise ApiError("Photo upload was rejected.", status=exc.code) from None
+        except (urllib.error.URLError, TimeoutError, ConnectionError, HTTPException, UnicodeError):
+            raise ApiError(
+                "The upload outcome is unknown. Check the record before trying again.",
+                code="outcome_unknown",
+            ) from None
+
+    def request(self, method, path, *, json_body=None, query=None, retry_auth=True):
+        mutation = admitted_write(method, path)
+        if not (mutation or (method == "GET" and admitted_read(path))):
             raise UsageError("This command is not available in the public CLI.")
         if not self.access_token:
             self.refresh()
         try:
             return self._send(
-                method, path, query=query, headers={"Authorization": f"Bearer {self.access_token}"}
+                method,
+                path,
+                json_body=json_body,
+                query=query,
+                headers={"Authorization": f"Bearer {self.access_token}"},
             ).body
         except ApiError as exc:
-            if exc.status == 401 and retry_auth:
+            if mutation and exc.status is None:
+                raise ApiError(
+                    "The change outcome is unknown. Check the record before trying again.",
+                    code="outcome_unknown",
+                ) from None
+            if not mutation and exc.status == 401 and retry_auth:
                 self.refresh()
                 return self.request(method, path, query=query, retry_auth=False)
             raise

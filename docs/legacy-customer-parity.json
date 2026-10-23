@@ -6,56 +6,56 @@
       "command": "profile set",
       "aliases": [],
       "cohort": "client setup",
-      "cli_status": "pending parity verification",
+      "cli_status": "locally verified",
       "mcp_status": "browser or local setup handoff"
     },
     {
       "command": "profile use",
       "aliases": [],
       "cohort": "client setup",
-      "cli_status": "pending parity verification",
+      "cli_status": "locally verified",
       "mcp_status": "browser or local setup handoff"
     },
     {
       "command": "profile list",
       "aliases": [],
       "cohort": "client setup",
-      "cli_status": "pending parity verification",
+      "cli_status": "locally verified",
       "mcp_status": "browser or local setup handoff"
     },
     {
       "command": "profile show",
       "aliases": [],
       "cohort": "client setup",
-      "cli_status": "pending parity verification",
+      "cli_status": "locally verified",
       "mcp_status": "browser or local setup handoff"
     },
     {
       "command": "profile remove",
       "aliases": [],
       "cohort": "client setup",
-      "cli_status": "pending parity verification",
+      "cli_status": "locally verified",
       "mcp_status": "browser or local setup handoff"
     },
     {
       "command": "auth login",
       "aliases": [],
       "cohort": "client setup",
-      "cli_status": "pending parity verification",
+      "cli_status": "locally verified",
       "mcp_status": "browser or local setup handoff"
     },
     {
       "command": "auth logout",
       "aliases": [],
       "cohort": "client setup",
-      "cli_status": "pending parity verification",
+      "cli_status": "locally verified",
       "mcp_status": "browser or local setup handoff"
     },
     {
       "command": "auth status",
       "aliases": [],
       "cohort": "client setup",
-      "cli_status": "pending parity verification",
+      "cli_status": "locally verified",
       "mcp_status": "browser or local setup handoff"
     },
     {
@@ -70,7 +70,7 @@
       "command": "auth refresh",
       "aliases": [],
       "cohort": "client setup",
-      "cli_status": "pending parity verification",
+      "cli_status": "locally verified",
       "mcp_status": "browser or local setup handoff"
     },
     {
@@ -126,8 +126,8 @@
         "wo create"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "work-order assignment get",
@@ -147,8 +147,8 @@
         "wo assignment set"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "work-order schedule",
@@ -157,8 +157,8 @@
         "wo schedule"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "work-order scheduling-defaults",
@@ -200,8 +200,8 @@
         "wo line-items update"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "work-order accept",
@@ -210,8 +210,8 @@
         "wo accept"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "work-order complete",
@@ -220,8 +220,8 @@
         "wo complete"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "work-order cancel",
@@ -230,8 +230,8 @@
         "wo cancel"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "work-order unschedule",
@@ -240,8 +240,8 @@
         "wo unschedule"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "work-order release",
@@ -250,8 +250,8 @@
         "wo release"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "work-order add-delay-reason",
@@ -260,8 +260,8 @@
         "wo add-delay-reason"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "work-order decline",
@@ -270,8 +270,8 @@
         "wo decline"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "work-order add-note",
@@ -280,8 +280,8 @@
         "wo add-note"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "work-order list-notes",
@@ -369,8 +369,8 @@
       "command": "vehicle add-note",
       "aliases": [],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "vehicle list-checkouts",
@@ -384,15 +384,15 @@
       "command": "vehicle check-out",
       "aliases": [],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "vehicle check-in",
       "aliases": [],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "vehicle-report create",
@@ -400,8 +400,8 @@
         "vehicle-reports create"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "vehicle-report list",
@@ -429,8 +429,8 @@
         "vehicle-reports resolve-vehicle"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "vehicle-report promote",
@@ -438,8 +438,8 @@
         "vehicle-reports promote"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "vehicle-report dismiss",
@@ -447,8 +447,8 @@
         "vehicle-reports dismiss"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "vehicle-report pull",
@@ -486,8 +486,8 @@
         "defects update"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "defect list-comments",
@@ -555,8 +555,8 @@
         "notifications read"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "notification read-all",
@@ -564,8 +564,8 @@
         "notifications read-all"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "notification preferences",
@@ -583,8 +583,8 @@
         "notifications update-preferences"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "notification turn-off-optional-delivery",
@@ -592,15 +592,15 @@
         "notifications turn-off-optional-delivery"
       ],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "upload photo",
       "aliases": [],
       "cohort": "writes and uploads",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     }
   ]
 }

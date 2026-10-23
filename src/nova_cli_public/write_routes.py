@@ -1,0 +1,50 @@
+"""Fixed delegated customer write routes and separately consented photo commits."""
+
+import re
+
+WRITE_ROUTES = {
+    ("POST", r"/work-orders/manual"): "work_orders.create.v1",
+    ("POST", r"/work-orders/(?:WO-)?[0-9]+/assignment"): "work_orders.assignment.update.v1",
+    ("POST", r"/work-orders/(?:WO-)?[0-9]+/schedule"): "work_orders.schedule.update.v1",
+    ("PATCH", r"/work-orders/(?:WO-)?[0-9]+/line-items/[0-9]+"): "work_orders.line_items.update.v1",
+    ("POST", r"/work-orders/(?:WO-)?[0-9]+/accept"): "work_orders.accept.v1",
+    ("POST", r"/work-orders/(?:WO-)?[0-9]+/complete"): "work_orders.complete.v1",
+    ("POST", r"/work-orders/(?:WO-)?[0-9]+/cancel"): "work_orders.cancel.v1",
+    ("POST", r"/work-orders/(?:WO-)?[0-9]+/unschedule"): "work_orders.unschedule.v1",
+    ("POST", r"/work-orders/(?:WO-)?[0-9]+/release"): "work_orders.release.v1",
+    (
+        "POST",
+        r"/work-orders/(?:WO-)?[0-9]+/defects/(?:FD-)?[0-9]+/delay-reasons",
+    ): "work_orders.delay_reasons.create.v1",
+    ("POST", r"/work-orders/(?:WO-)?[0-9]+/decline"): "work_orders.decline.v1",
+    ("POST", r"/work-orders/(?:WO-)?[0-9]+/notes"): "work_orders.notes.create.v1",
+    ("POST", r"/vehicles/(?:VAN-)?[0-9]+/notes"): "vehicles.notes.create.v1",
+    ("POST", r"/vehicles/(?:VAN-)?[0-9]+/check-out"): "vehicles.check_out.v1",
+    ("POST", r"/vehicles/(?:VAN-)?[0-9]+/check-in"): "vehicles.check_in.v1",
+    ("POST", r"/vehicle-reports"): "vehicle_reports.create.v1",
+    (
+        "POST",
+        r"/vehicle-reports/(?:VR-)?[0-9]+/resolve-vehicle",
+    ): "vehicle_reports.resolve_vehicle.v1",
+    ("POST", r"/vehicle-reports/(?:VR-)?[0-9]+/promote"): "vehicle_reports.promote.v1",
+    ("POST", r"/vehicle-reports/(?:VR-)?[0-9]+/dismiss"): "vehicle_reports.dismiss.v1",
+    ("PATCH", r"/defects/(?:FD-)?[0-9]+"): "defects.title.update.v1",
+    ("PATCH", r"/notifications/[0-9]+/read"): "notifications.mark_read.v1",
+    ("POST", r"/notifications/read-all"): "notifications.mark_all_read.v1",
+    ("PUT", r"/notifications/preferences"): "notifications.preferences.update.v1",
+    ("POST", r"/uploads/presigned"): "uploads.presign.v1",
+    ("POST", r"/defects/(?:FD-)?[0-9]+/photos"): "defects.photos.create.v1",
+    ("POST", r"/inspections/(?:INS-)?[0-9]+/photos"): "inspections.photos.create.v1",
+    ("POST", r"/vehicle-reports/(?:VR-)?[0-9]+/photos"): "vehicle_reports.photos.create.v1",
+}
+
+
+def admitted_write(method, path):
+    return any(method == verb and re.fullmatch(pattern, path) for verb, pattern in WRITE_ROUTES)
+
+
+PHOTO_COMMIT_GRANTS = {
+    "defect": "defects.photos.create.v1",
+    "inspection": "inspections.photos.create.v1",
+    "vehicle_report": "vehicle_reports.photos.create.v1",
+}

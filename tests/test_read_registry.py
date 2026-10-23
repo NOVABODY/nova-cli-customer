@@ -27,8 +27,8 @@ class Reader:
         return {"items": self.rows, "total": len(self.rows)}
 
 
-def test_registry_contains_all_29_legacy_customer_reads_and_no_writes():
-    assert len(reads.BY_COMMAND) == 29
+def test_registry_contains_29_reads_and_25_writes_without_admin_or_generic_api():
+    assert len(reads.BY_COMMAND) == 54
     assert {
         "defect photos",
         "defect pull",
@@ -39,7 +39,7 @@ def test_registry_contains_all_29_legacy_customer_reads_and_no_writes():
         "auth whoami",
     } <= reads.BY_COMMAND.keys()
     parser = cli.build_parser()
-    for command in ["admin users mfa-reset", "upload photo", "defect update", "api GET /vehicles"]:
+    for command in ["admin users mfa-reset", "api GET /vehicles"]:
         with pytest.raises(SystemExit):
             parser.parse_args(command.split())
 
@@ -229,5 +229,9 @@ def test_mcp_annotations_disclose_file_writes():
         server.request_handlers[types.ListToolsRequest](types.ListToolsRequest(method="tools/list"))
     )
     for tool in result.root.tools:
-        assert tool.annotations.readOnlyHint == (tool.name not in reads.FILE_TOOLS)
-        assert tool.annotations.idempotentHint == (tool.name not in reads.FILE_TOOLS)
+        assert tool.annotations.readOnlyHint == (
+            tool.name not in reads.FILE_TOOLS | reads.WRITE_TOOLS
+        )
+        assert tool.annotations.idempotentHint == (
+            tool.name not in reads.FILE_TOOLS | reads.WRITE_TOOLS
+        )

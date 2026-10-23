@@ -62,6 +62,9 @@ def build_parser():
         command = auth.add_parser(name)
         command.set_defaults(handler=cmd_auth)
         if name == "login":
+            command.add_argument(
+                "--scope", choices=["nova:read", "nova:read nova:write"], default="nova:read"
+            )
             command.add_argument("--operations", help="Space-separated operation IDs for consent.")
     register_commands(commands)
 
@@ -134,8 +137,12 @@ def cmd_auth(args):
     client = client_from_args(args)
     if args.action == "login":
         connection = (
-            delegated.login(client, operations=args.operations)
-            if args.operations is not None
+            delegated.login(
+                client,
+                operations=args.operations,
+                **({"scope": args.scope} if args.scope != "nova:read" else {}),
+            )
+            if args.operations is not None or args.scope != "nova:read"
             else delegated.login(client)
         )
         return {"ok": True, "profile": client.profile.name, "connection": connection}
@@ -164,7 +171,28 @@ def main(argv=None):
         message = "Invalid read arguments or response."
         code = 2
     except NovaCliError as exc:
-        # Never echo upstream response bodies or credentials.
+        # Read/auth errors stay redacted; mutation business rejections retain actionable data.
+        from nova_cli_public.reads import BY_COMMAND, WRITE_TOOLS
+
+        operation = BY_COMMAND.get(getattr(args, "read_command", ""), {})
+        mutation = operation.get("tool") in WRITE_TOOLS
+        if (
+            mutation
+            and isinstance(exc, ApiError)
+            and (exc.status in (400, 409, 422) or exc.code == "outcome_unknown")
+        ):
+            value = {
+                "ok": False,
+                "error": {"code": exc.code or "business_error", "status": exc.status},
+            }
+            if exc.code == "outcome_unknown":
+                value["error"]["message"] = (
+                    "The change outcome is unknown. Check the record before trying again."
+                )
+            else:
+                value["error"]["detail"] = exc.detail
+            print(json.dumps(value), file=sys.stderr)
+            return exc.exit_code
         message = (
             f"Nova request failed (HTTP {exc.status})." if isinstance(exc, ApiError) else str(exc)
         )
@@ -172,7 +200,8 @@ def main(argv=None):
             from nova_cli_public.reads import BY_COMMAND
 
             grant = BY_COMMAND[args.read_command]["grant"]
-            message += f' Check account access and approved operations. Request a new connection with nova auth login --operations "{grant}".'
+            scope = BY_COMMAND[args.read_command].get("scope", "nova:read")
+            message += f' Check account access and approved operations. Request a new connection with nova auth login --scope "{scope}" --operations "{grant}".'
         code = exc.exit_code
     except KeyboardInterrupt:
         message = "Interrupted."

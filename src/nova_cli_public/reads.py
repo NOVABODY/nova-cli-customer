@@ -11,12 +11,17 @@ from uuid import uuid4
 from pydantic import AfterValidator, ConfigDict, Field, create_model
 
 from nova_cli_public import legacy_reads as handlers
+from nova_cli_public import legacy_writes as write_handlers
 from nova_cli_public.config import data_dir
 from nova_cli_public.errors import ApiError, UsageError
 from nova_cli_public.read_commands import READ_COMMANDS
+from nova_cli_public.write_commands import WRITE_COMMANDS
 
-BY_COMMAND = {entry["command"]: entry for entry in READ_COMMANDS}
-BY_TOOL = {entry["tool"]: entry for entry in READ_COMMANDS}
+ALL_COMMANDS = READ_COMMANDS + WRITE_COMMANDS
+WRITE_TOOLS = {entry["tool"] for entry in WRITE_COMMANDS}
+
+BY_COMMAND = {entry["command"]: entry for entry in ALL_COMMANDS}
+BY_TOOL = {entry["tool"]: entry for entry in ALL_COMMANDS}
 ALIASES = {
     "work-order": ["work-orders", "wo"],
     "defect": ["defects"],
@@ -26,7 +31,11 @@ FILE_TOOLS = {"download_defect_photos", "pull_defects", "pull_vehicle_reports"}
 
 
 def argument_type(name):
-    return {"int": int, "float": float}.get(name) or getattr(handlers, name)
+    return (
+        {"int": int, "float": float}.get(name)
+        or getattr(handlers, name, None)
+        or getattr(write_handlers, name)
+    )
 
 
 def add_arguments(parser, entry):
@@ -51,7 +60,7 @@ def add_arguments(parser, entry):
 def register_commands(root_subparsers):
     parsers = {}
     subparsers = {(): root_subparsers}
-    for entry in READ_COMMANDS:
+    for entry in ALL_COMMANDS:
         parts = tuple(entry["command"].split())
         for depth, part in enumerate(parts):
             prefix = parts[: depth + 1]
@@ -74,7 +83,9 @@ def register_commands(root_subparsers):
                 )
         leaf = parsers[parts]
         add_arguments(leaf, entry)
-        leaf.set_defaults(handler=entry["handler"], read_command=entry["command"])
+        leaf.set_defaults(
+            handler=entry["handler"], read_command=entry["command"], **entry.get("defaults", {})
+        )
 
 
 def input_model(entry, *, mcp=False):
@@ -96,7 +107,7 @@ def input_model(entry, *, mcp=False):
             value_type = bool
         if options.get("choices"):
             value_type = Literal[tuple(options["choices"])]
-        if options.get("nargs") == "+":
+        if options.get("nargs") == "+" or options.get("action") == "append":
             value_type = (
                 list[Annotated[str, Field(pattern=r"^(?:FD-)?[0-9]+$")]]
                 if name == "defect_ids"
@@ -225,13 +236,23 @@ class CustomerReadService:
                 and options.get("type") not in (None, "int", "float")
             ):
                 values[key] = argument_type(options["type"])(str(values[key]))
+        if name in WRITE_TOOLS and any(
+            value == "-" for key, value in values.items() if key.endswith("_file")
+        ):
+            raise UsageError("MCP file arguments cannot read stdin.")
         args = argparse.Namespace(
-            **values, _client=BoundedReader(self.client), quiet=False, json=True
+            **values,
+            **entry.get("defaults", {}),
+            _client=self.client if name in WRITE_TOOLS else BoundedReader(self.client),
+            quiet=False,
+            json=True,
+            no_input=True,
         )
         if name in FILE_TOOLS:
             return self._file_result(entry, args)
         value = entry["handler"](args)
-        validate_response(name, value)
+        if name not in WRITE_TOOLS:
+            validate_response(name, value)
         return value if isinstance(value, dict) else {"items": value}
 
     def _file_result(self, entry, args):
