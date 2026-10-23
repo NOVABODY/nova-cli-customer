@@ -225,12 +225,12 @@ def require_profile_name(value: str) -> str:
 def normalize_token_store(value: str) -> str:
     token_store = value.strip().lower()
     if token_store not in TOKEN_STORES:
-        raise UsageError(f"Unsupported token store {value!r}; choose auto, keyring, or file")
+        raise UsageError(f"Unsupported token store {value!r}; choose keyring")
     return token_store
 
 
 def normalize_auth_mode(value: str) -> str:
     auth = value.strip().lower()
     if auth not in AUTH_MODES:
-        raise UsageError(f"Unsupported auth mode {value!r}; choose password, service, or delegated")
+        raise UsageError(f"Unsupported auth mode {value!r}; choose delegated")
     return auth
