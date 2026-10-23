@@ -14,7 +14,7 @@ from nova_cli_public.tokens import SERVICE_NAME
         ["admin"],
         ["api", "GET", "/vehicles"],
         ["upload"],
-        ["work-order"],
+        ["work-order", "create"],
         ["auth", "set-service-key"],
         ["auth", "login", "--email", "user@example.test"],
         ["profile", "set", "x", "--auth", "password"],

@@ -22,11 +22,11 @@ def test_discovery_needs_no_profile_credentials_or_network(capsys, monkeypatch):
     assert result['full_customer_parity'] is False
     assert result['mcp']['command'] == 'nova-mcp --profile PROFILE'
     assert result['mcp']['transport'] == 'stdio'
-    assert set(result['mcp']['tools']) == {'list_vehicles', 'get_vehicle'}
+    assert set(result['mcp']['tools']) == {'list_vehicles', 'get_vehicle', 'list_work_orders', 'get_work_order'}
     assert {c['command'] for c in result['commands']} == {
         'capabilities', 'profile set', 'profile use', 'profile show', 'profile remove',
         'profile list', 'auth login', 'auth status', 'auth refresh', 'auth logout',
-        'vehicle list', 'vehicle get',
+        'vehicle list', 'vehicle get', 'work-order list', 'work-order get',
     }
     for command in result['commands']:
         for example in command['examples']:
@@ -56,3 +56,11 @@ def test_local_logout_discovery_does_not_claim_server_revocation(capsys):
 def test_unknown_capability_is_an_error_not_a_successful_empty_result(capsys):
     assert cli.main(['capabilities', '--command', 'admin users', '--json']) == 2
     assert 'Unknown customer command' in capsys.readouterr().err
+
+
+def test_work_order_capabilities_name_grant_and_extensible_response(capsys):
+    entry, = manifest(capsys, '--command', 'work-order get')['commands']
+    assert entry['required_operation'] == 'work_orders.get.v1'
+    assert entry['required_scope'] == 'nova:read'
+    assert entry['output_schema']['additionalProperties'] is True
+    assert entry['api']['path'] == '/assistant/work-orders/{work_order_id}'

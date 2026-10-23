@@ -6,8 +6,8 @@ a claim of full CLI parity. The repository remains private.
 ## Current availability
 
 The customer client currently supports browser authorization, local profiles,
-credential refresh and local sign-out, plus vehicle list and detail reads. The
-local MCP exposes the same two vehicle operations. Installation alone does not
+credential refresh and local sign-out, plus vehicle and work-order list and detail reads. The
+local MCP exposes the same four read operations. Installation alone does not
 enable these operations on a Nova deployment. Native browser authorization and
 customer access must be enabled there.
 
@@ -26,7 +26,9 @@ release. Additional workflows require their own reviewed native-client contracts
 “DSP” and “shop” identify the customer audience, not blanket permission for every
 member of that audience. The API checks the action and record on every request.
 The source column names the web/API owner used to verify the existing workflow.
-Only the vehicle reads in the first row are implemented here.
+Vehicle reads and work-order list/detail are implemented here. Work-order reads
+require explicit browser consent for `work_orders.list.v1` and/or
+`work_orders.get.v1`, plus API deployment support.
 
 | Area | Existing customer workflow to cover | Audience | Web/API owner |
 | --- | --- | --- | --- |
@@ -41,7 +43,7 @@ Only the vehicle reads in the first row are implemented here.
 | Defect evidence | List/detail/catalog; create and permitted edits/deletion; comments and revisions; photos and photo history. | DSP and shop with record access | `Defects`; `api/defects.js`; `routes/defect_comments.py` |
 | Defect decisions | Approval/rejection; cost decisions; record work completed outside Nova. | Authorized DSP decision makers | `Defects`; `api/client.js: defectReviews`; `routes/defect_reviews.py` |
 | Repair routing | Request detail and eligible destinations; send to shop or external provider; rental-routing decisions; cancel/defer/add defects. | Authorized DSP roles | `api/client.js: repairRequests`; `routes/repair_requests.py` |
-| Shop intake and work | Van board, work-order list/detail/export; manual intake; accept/decline/release; assignments; activity and notes. | Shop roles, per action and assignment | `WoV2Dashboard`; `api/workOrders.js`; `routes/work_orders/` |
+| Shop intake and work | Work-order list/detail **implemented**, subject to deployment and grants. Remaining: van board, export; manual intake; accept/decline/release; assignments; activity and notes. | Shop roles, per action and assignment | `WoV2Dashboard`; `api/workOrders.js`; `routes/work_orders/` |
 | Shop scheduling | Schedule/unschedule; pickup requests and confirmation; batch scheduling; allowed DSP responses and rescheduling. | Shop coordinators and scoped DSP roles | `api/workOrders.js`; `routes/work_orders/pickup.py`; `routes/work_orders/schedule_batches.py` |
 | Repair execution | Line-item add/update/remove/split/defer/progress; RO records; defect move/release/reject/delay; custody and completion evidence. | Assigned shop workers and coordinators | `api/workOrders.js`; `routes/work_orders/line_items.py`; `routes/work_orders/lifecycle.py` |
 | Technician shifts | Current shift; start/end; status events with required location evidence. | Eligible shop technicians | `api/technicianShifts.js`; `routes/technician_shifts.py` |

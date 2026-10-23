@@ -45,6 +45,10 @@ class Reader:
             }
         if path == "/assistant/vehicles/VAN-0001":
             return {**VEHICLE, "private_note": "hidden"}
+        if path.startswith("/assistant/work-orders"):
+            row = {"id": "WO-0001", "status": "reported", "vehicle_id": 1,
+                   "dsp_id": 2, "vendor_workshop_id": 3, "notes": [{"text": "Visible"}]}
+            return {"items": [row], "total": 1} if path.endswith("work-orders") else row
         raise AssertionError(path)
 
 
@@ -72,7 +76,7 @@ def test_invalid_arguments_make_no_api_request(tool, arguments):
 def test_discovery_is_static_and_exposes_only_typed_fleet_tools():
     reader = Reader()
     schemas = DelegatedService(reader).tool_schemas()
-    assert set(schemas) == {"list_vehicles", "get_vehicle"}
+    assert set(schemas) == {"list_vehicles", "get_vehicle", "list_work_orders", "get_work_order"}
     assert schemas["get_vehicle"]["properties"]["vehicle_id"]["pattern"]
     assert all(s["additionalProperties"] is False for s in schemas.values())
     assert reader.calls == []
@@ -106,13 +110,17 @@ def test_real_stdio_discovery_list_get_and_legacy_denial(tmp_path):
         async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
             await session.initialize()
             tools = (await session.list_tools()).tools
-            assert {t.name for t in tools} == {"list_vehicles", "get_vehicle"}
+            assert {t.name for t in tools} == {"list_vehicles", "get_vehicle", "list_work_orders", "get_work_order"}
             assert all(t.outputSchema for t in tools)
             assert (await session.list_resources()).resources == []
             rows = await session.call_tool("list_vehicles", {"fleet_id": "NF001"})
             assert rows.structuredContent["items"] == [VEHICLE]
             detail = await session.call_tool("get_vehicle", {"vehicle_id": "VAN-0001"})
             assert detail.structuredContent == VEHICLE
+            orders = await session.call_tool("list_work_orders", {"limit": 1})
+            order = await session.call_tool("get_work_order", {"work_order_id": "WO-0001"})
+            assert orders.structuredContent["items"][0] == order.structuredContent
+            assert order.structuredContent["notes"] == [{"text": "Visible"}]
             assert (await session.call_tool("show_workspace", {})).isError
 
     asyncio.run(scenario())

@@ -110,7 +110,14 @@ def status(client):
         return {"credential_stored": bool(_read(client)), "server_verified": False}
 
 
-def browser_code(origin, timeout=180):
+OPERATIONS = {"vehicles.list.v1", "vehicles.get.v1", "work_orders.list.v1", "work_orders.get.v1"}
+
+
+def browser_code(origin, timeout=180, operations=None):
+    if operations is not None and (
+        not operations.split() or not set(operations.split()) <= OPERATIONS
+    ):
+        raise UsageError("Unknown operation. Run nova capabilities --json.")
     verifier, state = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
     challenge = (
         base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
@@ -169,6 +176,7 @@ def browser_code(origin, timeout=180):
             + "/api/oauth/authorize?"
             + urlencode(
                 {
+                    **({"operations": operations} if operations is not None else {}),
                     "response_type": "code",
                     "client_id": CLIENT_ID,
                     "resource": origin + "/api",
@@ -194,9 +202,13 @@ def browser_code(origin, timeout=180):
     return outcome["code"], verifier, redirect_uri
 
 
-def login(client):
+def login(client, operations=None):
     _read(client)  # Fail before opening the browser when the configured keyring is unavailable.
-    code, verifier, redirect_uri = browser_code(issuer(client.profile))
+    code, verifier, redirect_uri = (
+        browser_code(issuer(client.profile), operations=operations)
+        if operations is not None
+        else browser_code(issuer(client.profile))
+    )
     with profile_lock(client.profile.name):
         _token(
             client,

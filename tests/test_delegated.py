@@ -424,3 +424,39 @@ def test_removed_discovery_routes_fail_before_transport(client, path):
     with pytest.raises(UsageError):
         client.request("GET", path)
     assert not client.opener.requests
+
+
+@pytest.mark.parametrize('operations', [None, 'work_orders.list.v1'])
+def test_browser_requests_only_explicit_operation_grants(monkeypatch, operations):
+    captured = []
+    monkeypatch.setattr(delegated.webbrowser, 'open', lambda url: captured.append(url) or False)
+    with pytest.raises(AuthError):
+        delegated.browser_code('https://nova.example', operations=operations)
+    query = urllib.parse.parse_qs(urllib.parse.urlsplit(captured[0]).query)
+    assert query.get('operations') == ([operations] if operations else None)
+    assert query['scope'] == ['nova:read']
+
+
+def test_unknown_operation_is_rejected_before_browser(monkeypatch):
+    monkeypatch.setattr(delegated.webbrowser, 'open', lambda url: pytest.fail('Browser opened'))
+    with pytest.raises(UsageError):
+        delegated.browser_code('https://nova.example', operations='admin.users.list')
+
+
+@pytest.mark.parametrize('path', ['/assistant/work-orders', '/assistant/work-orders/WO-0001'])
+def test_work_order_read_transport_is_allowed(client, path):
+    client.access_token = 'opaque-access'
+    client.opener.responses = [{'id': 'WO-0001'}]
+    assert client.request('GET', path) == {'id': 'WO-0001'}
+    assert client.opener.requests[0].full_url.endswith(path)
+
+
+@pytest.mark.parametrize('method,path', [
+    ('POST', '/assistant/work-orders'), ('DELETE', '/assistant/work-orders/WO-0001'),
+    ('GET', '/assistant/work-orders/../vehicles'), ('GET', '/work-orders'),
+    ('GET', '/assistant/work-orders/WO-1?admin=true'),
+])
+def test_work_order_transport_denies_writes_and_path_escape(client, method, path):
+    with pytest.raises(UsageError):
+        client.request(method, path)
+    assert not client.opener.requests

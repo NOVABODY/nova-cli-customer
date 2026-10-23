@@ -78,14 +78,14 @@ class ApiClient:
         raw_body: bytes | None = None,
         raw_content_type: str | None = None,
     ) -> Response:
-        fleet_read = method == "GET" and re.fullmatch(
-            r"/assistant/vehicles(?:/(?:VAN-)?[0-9]+)?", path
+        customer_read = method == "GET" and re.fullmatch(
+            r"/assistant/(?:vehicles(?:/(?:VAN-)?[0-9]+)?|work-orders(?:/(?:WO-)?[0-9]+)?)", path
         )
         token_request = method == "POST" and path == "/oauth/token" and raw_body is not None
-        if not (fleet_read or token_request):
+        if not (customer_read or token_request):
             raise UsageError("This route is not available in the public CLI.")
-        if fleet_read and (json_body is not None or raw_body is not None):
-            raise UsageError("Fleet reads cannot send a request body.")
+        if customer_read and (json_body is not None or raw_body is not None):
+            raise UsageError("Reads cannot send a request body.")
         if json_body is not None and raw_body is not None:
             raise UsageError("Use only one of json_body or raw_body.")
         url = self._url(path, query)
@@ -178,7 +178,9 @@ class ApiClient:
         return delegated.logout(self)
 
     def request(self, method, path, *, query=None, retry_auth=True):
-        if method != "GET" or not re.fullmatch(r"/assistant/vehicles(?:/(?:VAN-)?[0-9]+)?", path):
+        if method != "GET" or not re.fullmatch(
+            r"/assistant/(?:vehicles(?:/(?:VAN-)?[0-9]+)?|work-orders(?:/(?:WO-)?[0-9]+)?)", path
+        ):
             raise UsageError("This command is not available in the public CLI.")
         if not self.access_token:
             self.refresh()

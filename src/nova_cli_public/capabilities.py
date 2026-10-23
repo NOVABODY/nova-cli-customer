@@ -27,6 +27,8 @@ DETAILS = {
                      ['remote_authorization', 'local_credentials_write'], 'nova auth refresh'),
     'auth logout': ('Delete local credentials; the server connection remains. Disconnect it in browser settings.',
                     ['local_credentials_delete'], 'nova auth logout'),
+    'work-order list': ('List work orders that the account can read.', ['remote_read'], 'nova work-order list --limit 20'),
+    'work-order get': ('Read a work order.', ['remote_read'], 'nova work-order get WO-0001'),
     'vehicle list': ('List active fleet vehicles that the account can read.',
                      ['remote_read'], 'nova vehicle list --page 1 --per-page 20'),
     'vehicle get': ('Read a vehicle from the fleet list.',
@@ -50,7 +52,7 @@ def argument_schema(parser):
             continue
         positional = not action.option_strings
         schema = {'type': 'integer' if action.type is int else 'string'}
-        if isinstance(action, (argparse._StoreTrueAction, argparse._StoreFalseAction)):
+        if isinstance(action, (argparse._StoreTrueAction, argparse._StoreFalseAction, argparse.BooleanOptionalAction)):
             schema = {'type': 'boolean'}
         if action.choices is not None:
             schema['enum'] = list(action.choices)
@@ -76,8 +78,9 @@ def manifest(parser, selected=None):
             'input_schema': schema, 'availability': 'implemented',
             'authorization': 'not_checked', 'required_scope': None,
         }
-        if name.startswith('vehicle '):
-            tool = 'list_vehicles' if name == 'vehicle list' else 'get_vehicle'
+        if name.startswith(('vehicle ', 'work-order ')):
+            tool = {'vehicle list': 'list_vehicles', 'vehicle get': 'get_vehicle',
+                    'work-order list': 'list_work_orders', 'work-order get': 'get_work_order'}[name]
             tool_schema = ARGUMENTS[tool].model_json_schema()
             entry['input_schema'] = {**tool_schema, 'properties': {
                 **tool_schema['properties'],
@@ -86,8 +89,10 @@ def manifest(parser, selected=None):
             entry.update(tool_input_schema=tool_schema,
                          output_schema=OUTPUTS[tool].model_json_schema(), mcp_tool=tool,
                          required_scope='nova:read',
-                         api={'method': 'GET', 'path': '/assistant/vehicles' +
-                              ('/{vehicle_id}' if tool == 'get_vehicle' else '')})
+                         required_operation={'list_vehicles': 'vehicles.list.v1', 'get_vehicle': 'vehicles.get.v1',
+                                             'list_work_orders': 'work_orders.list.v1', 'get_work_order': 'work_orders.get.v1'}[tool],
+                         api={'method': 'GET', 'path': ('/assistant/vehicles' if name.startswith('vehicle ') else '/assistant/work-orders') +
+                              ({'get_vehicle': '/{vehicle_id}', 'get_work_order': '/{work_order_id}'}.get(tool, ''))})
         if name in ('auth login', 'auth refresh'):
             entry['required_scope'] = 'nova:read'
         if selected is None or selected == name:

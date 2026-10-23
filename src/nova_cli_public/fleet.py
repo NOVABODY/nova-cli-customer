@@ -1,4 +1,4 @@
-"""Two typed fleet reads using the existing delegated ApiClient."""
+"""Typed customer reads using the existing delegated ApiClient."""
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -48,8 +48,55 @@ class AssistantVehicleList(BaseModel):
     per_page: int
 
 
-ARGUMENTS = {"list_vehicles": AssistantFleetQuery, "get_vehicle": FleetGet}
-OUTPUTS = {"list_vehicles": AssistantVehicleList, "get_vehicle": AssistantVehicle}
+class WorkOrderQuery(Arguments):
+    status: str | None = None
+    dsp_id: str | None = Field(default=None, pattern=r"^(?:[0-9]+|DSP-[0-9]+)$")
+    vendor_workshop_id: str | None = Field(default=None, pattern=r"^(?:[0-9]+|VW-[0-9]+)$")
+    vehicle_id: str | None = Field(default=None, pattern=r"^(?:[0-9]+|VAN-[0-9]+)$")
+    assigned_to_me: bool = False
+    scheduled_within_hours: int | None = Field(default=None, ge=1, le=720)
+    scheduled_from_now: bool = False
+    scheduled: bool | None = None
+    has_confirmed_pickup: bool | None = None
+    at_shop_custody: bool | None = None
+    returned_within_hours: int | None = Field(default=None, ge=1, le=720)
+    current_relationship_only: bool = False
+    limit: int = Field(default=100, ge=1, le=500)
+    offset: int = Field(default=0, ge=0)
+
+
+class WorkOrderGet(Arguments):
+    work_order_id: str = Field(pattern=r"^(?:[0-9]+|WO-[0-9]+)$")
+
+
+class WorkOrder(BaseModel):
+    # The API filters all additional fields for the authenticated role.
+    model_config = ConfigDict(strict=True, extra="allow")
+    id: str
+    status: str
+    vehicle_id: int
+    dsp_id: int
+    vendor_workshop_id: int
+
+
+class WorkOrderList(BaseModel):
+    model_config = ConfigDict(strict=True)
+    items: list[WorkOrder]
+    total: int
+
+
+ARGUMENTS = {
+    "list_vehicles": AssistantFleetQuery,
+    "get_vehicle": FleetGet,
+    "list_work_orders": WorkOrderQuery,
+    "get_work_order": WorkOrderGet,
+}
+OUTPUTS = {
+    "list_vehicles": AssistantVehicleList,
+    "get_vehicle": AssistantVehicle,
+    "list_work_orders": WorkOrderList,
+    "get_work_order": WorkOrder,
+}
 
 
 class DelegatedService:
@@ -66,12 +113,15 @@ class DelegatedService:
         if name not in ARGUMENTS:
             raise ValueError("Unknown tool")
         query = ARGUMENTS[name].model_validate(arguments)
-        is_list = name == "list_vehicles"
-        path = "/assistant/vehicles" if is_list else "/assistant/vehicles/" + query.vehicle_id
+        is_list = name.startswith("list_")
+        is_vehicle = name in ("list_vehicles", "get_vehicle")
+        path = "/assistant/vehicles" if is_vehicle else "/assistant/work-orders"
+        if not is_list:
+            path += "/" + (query.vehicle_id if is_vehicle else query.work_order_id)
         value = self.client.request(
             "GET", path, query=query.model_dump(exclude_none=True) if is_list else {}
         )
         try:
             return OUTPUTS[name].model_validate(value).model_dump()
         except ValidationError:
-            raise ResponseError("Invalid fleet response") from None
+            raise ResponseError("Invalid read response") from None

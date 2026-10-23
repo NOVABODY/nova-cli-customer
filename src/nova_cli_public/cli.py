@@ -1,4 +1,4 @@
-"""Customer CLI: browser authorization and two delegated fleet reads."""
+"""Customer CLI: browser authorization and delegated customer reads."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from nova_cli_public import __version__, delegated
 from nova_cli_public.client import ApiClient
 from nova_cli_public.config import ConfigStore, require_profile_name
 from nova_cli_public.errors import ApiError, NovaCliError
-from nova_cli_public.fleet import DelegatedService
+from nova_cli_public.fleet import DelegatedService, WorkOrderQuery
 from nova_cli_public.locking import profile_lock
 from nova_cli_public.output import emit
 from nova_cli_public.tokens import KeyringTokenStore
@@ -29,7 +29,7 @@ def globals_for(parser, *, child=False):
 
 def build_parser():
     parser = argparse.ArgumentParser(
-        prog="nova", description="Nova customer CLI. Browser sign-in and fleet reads."
+        prog="nova", description="Nova customer CLI. Browser sign-in and customer reads."
     )
     parser.add_argument("--version", action="version", version=f"nova-cli {__version__}")
     globals_for(parser)
@@ -49,7 +49,10 @@ def build_parser():
     profiles.add_parser("list").set_defaults(handler=cmd_profile)
     auth = commands.add_parser("auth").add_subparsers(dest="action", required=True)
     for name in ["login", "status", "refresh", "logout"]:
-        auth.add_parser(name).set_defaults(handler=cmd_auth)
+        command = auth.add_parser(name)
+        command.set_defaults(handler=cmd_auth)
+        if name == "login":
+            command.add_argument("--operations", help="Space-separated operation IDs for consent.")
     vehicles = commands.add_parser("vehicle").add_subparsers(dest="action", required=True)
     listing = vehicles.add_parser("list")
     listing.add_argument("--search")
@@ -61,6 +64,29 @@ def build_parser():
     detail = vehicles.add_parser("get")
     detail.add_argument("vehicle_id")
     detail.set_defaults(handler=cmd_vehicle)
+
+    orders = commands.add_parser("work-order").add_subparsers(dest="action", required=True)
+    listing = orders.add_parser("list")
+    for name, field in WorkOrderQuery.model_fields.items():
+        kwargs = {"default": field.default}
+        if name in (
+            "assigned_to_me",
+            "scheduled_from_now",
+            "scheduled",
+            "has_confirmed_pickup",
+            "at_shop_custody",
+            "current_relationship_only",
+        ):
+            kwargs["action"] = argparse.BooleanOptionalAction
+        else:
+            kwargs["type"] = (
+                str if name in ("status", "dsp_id", "vendor_workshop_id", "vehicle_id") else int
+            )
+        listing.add_argument("--" + name.replace("_", "-"), **kwargs)
+    listing.set_defaults(handler=cmd_work_order)
+    detail = orders.add_parser("get")
+    detail.add_argument("work_order_id")
+    detail.set_defaults(handler=cmd_work_order)
 
     def walk(current):
         for action in current._actions:
@@ -123,7 +149,12 @@ def cmd_profile(args):
 def cmd_auth(args):
     client = client_from_args(args)
     if args.action == "login":
-        return {"ok": True, "profile": client.profile.name, "connection": delegated.login(client)}
+        connection = (
+            delegated.login(client, operations=args.operations)
+            if args.operations is not None
+            else delegated.login(client)
+        )
+        return {"ok": True, "profile": client.profile.name, "connection": connection}
     if args.action == "status":
         return delegated.status(client)
     if args.action == "refresh":
@@ -152,13 +183,24 @@ def cmd_vehicle(args):
     return service.run("get_vehicle" if args.action == "get" else "list_vehicles", values)
 
 
+def cmd_work_order(args):
+    values = (
+        {"work_order_id": args.work_order_id}
+        if args.action == "get"
+        else {key: getattr(args, key) for key in WorkOrderQuery.model_fields}
+    )
+    return DelegatedService(client_from_args(args)).run(
+        "get_work_order" if args.action == "get" else "list_work_orders", values
+    )
+
+
 def main(argv=None):
     args = build_parser().parse_args(argv)
     try:
         emit(args.handler(args), as_json=args.json)
         return 0
     except ValidationError:
-        message = "Invalid fleet arguments or response."
+        message = "Invalid read arguments or response."
         code = 2
     except NovaCliError as exc:
         # Never echo upstream response bodies or credentials.
