@@ -6,6 +6,7 @@ import pytest
 
 from nova_cli_public import cli, delegated, legacy_reads, reads
 from nova_cli_public.errors import UsageError
+from nova_cli_public.event_commands import EVENT_LOCAL_TOOLS
 
 
 class Reader:
@@ -27,8 +28,8 @@ class Reader:
         return {"items": self.rows, "total": len(self.rows)}
 
 
-def test_registry_contains_29_reads_and_25_writes_without_admin_or_generic_api():
-    assert len(reads.BY_COMMAND) == 54
+def test_registry_contains_29_reads_25_writes_and_4_events_without_admin_or_generic_api():
+    assert len(reads.BY_COMMAND) == 58
     assert {
         "defect photos",
         "defect pull",
@@ -230,8 +231,8 @@ def test_mcp_annotations_disclose_file_writes():
     )
     for tool in result.root.tools:
         assert tool.annotations.readOnlyHint == (
-            tool.name not in reads.FILE_TOOLS | reads.WRITE_TOOLS
+            tool.name not in reads.FILE_TOOLS | reads.WRITE_TOOLS | EVENT_LOCAL_TOOLS
         )
         assert tool.annotations.idempotentHint == (
-            tool.name not in reads.FILE_TOOLS | reads.WRITE_TOOLS
+            tool.name not in reads.FILE_TOOLS | reads.WRITE_TOOLS | EVENT_LOCAL_TOOLS
         )

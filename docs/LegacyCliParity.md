@@ -34,8 +34,10 @@ browser journeys cover login, status, refresh and logout with the system credent
 The 25 mutation/upload commands passed reused payload/validation tests and shared
 CLI/MCP transport checks. Installed-client journeys verify persisted notes, shop-only
 defect titles, notifications, signed photo upload plus parent commit, foreign-record
-denial, explicit write refresh, and read-only connection denial. Remaining event
-commands are pending. These results are not a deployment claim.
+denial, explicit write refresh, and read-only connection denial. All four event commands passed the real installed CLI and stdio MCP workflow:
+head, reconciled snapshot initialization, note-triggered events, replay after
+refresh, explicit acknowledgement, and an empty subsequent poll. Durable inbox
+regressions cover output failure, expired cursors, reset and connection isolation. These results are not a deployment claim.
 Existing vehicle, work-order and defect list/get commands are included because
 matching names alone does not prove legacy options or response parity.
 Read, mutation/upload and event cohorts are independently reviewable. Browser
@@ -82,10 +84,10 @@ The machine-readable companion is [legacy-customer-parity.json](legacy-customer-
 | `work-order list-notes` | reads | Locally verified | Locally verified |
 | `work-order activity` | reads | Locally verified | Locally verified |
 | `team repair-bucket-defaults` | reads | Locally verified | Locally verified |
-| `events head` | events | Pending | Pending |
-| `events init` | events | Pending | Pending |
-| `events watch` | events | Pending | Pending |
-| `events ack` | events | Pending | Pending |
+| `events head` | events | Locally verified | Locally verified |
+| `events init` | events | Locally verified | Locally verified |
+| `events watch` | events | Locally verified | Locally verified |
+| `events ack` | events | Locally verified | Locally verified |
 | `vehicle list` | reads | Locally verified | Locally verified |
 | `vehicle get` | reads | Locally verified | Locally verified |
 | `vehicle list-notes` | reads | Locally verified | Locally verified |

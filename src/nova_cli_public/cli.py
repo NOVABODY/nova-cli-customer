@@ -13,6 +13,7 @@ from nova_cli_public import __version__, delegated
 from nova_cli_public.client import ApiClient
 from nova_cli_public.config import ConfigStore, require_profile_name
 from nova_cli_public.errors import ApiError, NovaCliError
+from nova_cli_public.events import cursor_reset_detail
 from nova_cli_public.locking import profile_lock
 from nova_cli_public.output import emit
 from nova_cli_public.reads import register_commands
@@ -176,6 +177,22 @@ def main(argv=None):
 
         operation = BY_COMMAND.get(getattr(args, "read_command", ""), {})
         mutation = operation.get("tool") in WRITE_TOOLS
+        reset = (
+            cursor_reset_detail(exc) if operation.get("tool", "").startswith("events_") else None
+        )
+        if reset:
+            print(
+                json.dumps(
+                    {
+                        "ok": False,
+                        "error": "cursor_expired",
+                        "detail": reset,
+                        "message": "Reconcile a snapshot, then run events init --reset.",
+                    }
+                ),
+                file=sys.stderr,
+            )
+            return exc.exit_code
         if (
             mutation
             and isinstance(exc, ApiError)

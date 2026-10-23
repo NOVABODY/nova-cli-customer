@@ -4,6 +4,7 @@ import argparse
 
 from nova_cli_public import __version__
 from nova_cli_public.errors import UsageError
+from nova_cli_public.event_commands import EVENT_LOCAL_TOOLS
 from nova_cli_public.read_routes import READ_ROUTES
 from nova_cli_public.reads import BY_COMMAND, BY_TOOL, CustomerReadService, input_model
 from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
@@ -166,6 +167,13 @@ def manifest(parser, selected=None):
                 if tool in ("download_defect_photos", "pull_defects", "pull_vehicle_reports")
                 else []
             )
+        if name.startswith("events "):
+            entry["effects"] = ["remote_read"] + (
+                ["local_file_write"] if entry["mcp_tool"] in EVENT_LOCAL_TOOLS else []
+            )
+            entry["mcp_execution"] = (
+                "One page per call; managed local inbox; explicit acknowledgment."
+            )
         if name == "upload photo":
             entry["effects"].append("local_file_read")
             entry["conditional_operations"] = PHOTO_COMMIT_GRANTS
@@ -181,6 +189,8 @@ def manifest(parser, selected=None):
         "executables": ["nova", "nova-cli", "nova-mcp"],
         "authorization": "not_checked",
         "full_customer_parity": False,
+        "legacy_customer_parity": True,
+        "legacy_coverage_document": "docs/LegacyCliParity.md",
         "help_command": "nova --help",
         "version_command": "nova --version",
         "authorization_note": "Offline discovery does not check the deployment, connection, role, "
