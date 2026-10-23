@@ -1,12 +1,12 @@
 # Nova CLI
 
 The customer Nova Fora client signs in through your browser and uses the existing
-customer workflows. The CLI and local MCP share 54 named operations,
+customer workflows. The CLI and local MCP share 58 named operations,
 including vehicle, work-order, defect and vehicle-report reads, photo downloads,
 cursor-based packages, notifications, search, team defaults, and health checks.
 It does not accept passwords or service keys or expose arbitrary API commands.
 The named customer write and photo-upload commands require explicit write consent.
-Workshop events remain pending; this is not full legacy parity.
+Workshop event tools provide durable delivery with explicit local acknowledgment.
 
 **Private preview:** This repository remains private. Public release requires a separate decision.
 
@@ -61,13 +61,13 @@ nova-mcp --profile personal
 ```
 
 Configure a local MCP host to launch that command over stdio. It exposes the same
-customer read handlers as the CLI through named tools. Run `nova capabilities
+customer handlers as the CLI through named tools. Run `nova capabilities
 --json` for the tool names and schemas. API responses retain the fields authorized
 for your role; the client does not replace full vehicle records with a projection.
 The MCP shares the public CLI's profile, credential store and refresh lock.
 
 File tools save data under the public client data directory and return local file
-paths and URIs. MCP calls allow at most 100 API reads and 10 MiB of response data;
+paths and URIs. Record-read MCP calls allow at most 100 API reads and 10 MiB of response data;
 each response is limited to 2 MiB. Photo calls allow at most 10 defect IDs, 20
 photos and 100 MiB in total, with the existing 50 MiB limit per photo. Photos use
 signed HTTPS URLs without Nova bearer credentials. Wait calls are limited to 25
@@ -116,8 +116,8 @@ and MCP tool references. Use `nova capabilities --command "vehicle get" --json`
 to inspect one command. Discovery is offline and requires no credentials. It
 does not claim that an account or deployment permits an operation.
 
-The CLI currently provides fleet, work-order, and defect reads. Full DSP and vendor
-workflow parity is not yet available.
+The CLI provides named customer reads, changes, uploads, and workshop events.
+The parity ledger records implementation and verification status.
 See [customer workflow coverage](docs/CustomerParity.md) for the full inventory,
 missing workflows, browser handoffs, and implementation sequence.
 
@@ -152,7 +152,7 @@ tree `c2298bbf8b1c17e5f520dcc3aefa5ce172ab12ec`. They run entirely inside the
 public package; the private operator package is not a dependency. The shared
 registry supplies CLI registration, MCP tools and capability discovery.
 See [legacy parity](docs/LegacyCliParity.md) for the complete command ledger,
-remaining events and local-client work, and explicit exclusions. Your deployment must
+verification evidence and explicit exclusions. Your deployment must
 support the declared delegated contracts before these operations can succeed.
 
 ## Customer changes and photo uploads
@@ -183,3 +183,43 @@ MCP exposes the same named commands and reports their write effects. It does not
 expose a generic request tool. File arguments must name files; MCP does not read
 stdin. Capability discovery shows required scopes, operation IDs, and conditional
 photo-commit grants. Discovery does not establish permission to perform a change.
+
+
+## Workshop events
+
+Event commands require `nova:read` and the `workshop_events.list.v1` operation.
+The account must be able to manage the selected workshop. Obtain a head cursor,
+read and reconcile the work-order snapshot, then initialize a private local inbox:
+
+```sh
+nova auth login --operations "workshop_events.list.v1 work_orders.list.v1 work_orders.get.v1"
+nova events head --vendor-workshop-id 3 --json
+# Reconcile the snapshot before saving its bootstrap cursor.
+nova events init --vendor-workshop-id 3 --state-file ./events.sqlite --after CURSOR --snapshot-reconciled
+nova events watch --vendor-workshop-id 3 --state-file ./events.sqlite
+nova events ack --vendor-workshop-id 3 --state-file ./events.sqlite EVENT_CURSOR
+```
+
+`watch` emits NDJSON. Each page and resume cursor are committed together before
+output. A failed output can therefore leave the cursor advanced with the accepted
+events still pending; restart to replay them. Acknowledge each event only after
+processing it. Events are invalidation signals; use the record tools to read the
+current state. Empty long polls produce no output. `--once` reads one page without
+retrying; continuous watch retries transient read failures up to five times.
+`--max-pending` stops new reads until accepted events are acknowledged.
+
+The inbox is bound to the API, profile, account, organization, connection, and
+workshop. Token refresh retains it; a new login requires a new inbox. Current
+server access is checked before replay or acknowledgment. An expired cursor
+returns `cursor_expired` and `reset_cursor`. Reconcile a new snapshot, process and
+acknowledge pending events, then use `events init --reset --snapshot-reconciled`
+with the returned cursor. Reset never discards pending events.
+
+MCP exposes `events_head`, `events_init`, `events_watch`, and `events_ack`. It uses
+managed inboxes under the public client data directory, without caller-provided
+file paths. Each watch call fetches at most one page of 500 events, waits at most
+25 seconds, and returns at most 1,000 pending events. Lower `max_pending` to use a
+smaller batch. Pending events are returned before another remote page is read.
+Repeated calls return unacknowledged events. The result reports
+`pending_count` and `backpressure`; use `events_ack` after processing each item.
+Local inbox effects are declared in MCP annotations and offline capabilities.

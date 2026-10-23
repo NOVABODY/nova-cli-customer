@@ -1,34 +1,32 @@
 # Customer capability coverage
 
-This is the customer workflow inventory and implementation checklist. It is not
-a claim of full CLI parity. The repository remains private.
+This is the broader web workflow inventory. The completed delivery scope is
+[legacy customer CLI parity](LegacyCliParity.md): 67 accepted command outcomes,
+with platform administration and private authentication modes excluded. This is
+not full coverage of every web workflow below.
 
 ## Current availability
 
-The customer client currently supports browser authorization, local profiles,
-credential refresh and local sign-out, plus vehicle, work-order, and defect list and detail reads. The
-local MCP exposes the same six read operations. Installation alone does not
-enable these operations on a Nova deployment. Native browser authorization and
-customer access must be enabled there.
+The client implements the accepted legacy commands: 52 business commands, nine
+local auth/profile commands, two health commands, and four workshop-event commands.
+MCP exposes 58 named tools; local auth/profile setup uses the browser or local CLI.
+The legacy ledger records compatibility tests and sampled real browser, installed
+CLI, system credential store, and stdio MCP verification. Broader web-only actions
+must not be inferred from these results or from a related command name.
 
-Every other workflow below is **unavailable in this CLI** until its named
-operation, authorization contract and tests ship. Existing web functionality is
-not evidence that the native client can call it. Capability discovery is an
-inventory, not an authorization grant or a substitute for implementation.
-
-The pending API change NOVABODY/nova-john-app#4805 is a dependency for the
-authorization foundation. Its review, merge, deployment and customer activation
-are separate gates. Do not infer any of them from this document or a client
-release. Additional workflows require their own reviewed native-client contracts.
+Capability discovery reports `legacy_customer_parity: true` and keeps
+`full_customer_parity: false` for this broader web inventory. Discovery does not
+check authorization or deployment. The API checks every operation, role and record.
+Matching API changes, review, merge, deployment and customer activation remain
+separate gates. The repository remains private.
 
 ## Workflow table of contents
 
 “DSP” and “shop” identify the customer audience, not blanket permission for every
 member of that audience. The API checks the action and record on every request.
 The source column names the web/API owner used to verify the existing workflow.
-Vehicle, work-order, and defect list/detail reads are implemented here. Work-order reads
-require explicit browser consent for `work_orders.list.v1` and/or
-`work_orders.get.v1`, plus API deployment support.
+Use the legacy ledger for exact implemented commands. This table describes broader
+web workflows; it is not a command availability or authorization table.
 
 | Area | Existing customer workflow to cover | Audience | Web/API owner |
 | --- | --- | --- | --- |
@@ -40,10 +38,10 @@ require explicit browser consent for `work_orders.list.v1` and/or
 | Inspection catalog | Vehicle-class catalog, effective DSP checklist, targets, positions and criticality. | Authorized inspectors and fleet roles | `api/inspectionCatalog.js`; `routes/dvic_template.py` |
 | Inspection draft | Start/resume/cancel own draft; checklist answers; tread depths; defects; open-defect checks; photo upload, commit and removal. | Authorized DSP/shop inspectors | `api/inspections.js`; `routes/inspections.py`; `routes/inspection_open_defect_check.py` |
 | Inspection results | Submit a complete or permitted incomplete inspection; list/detail/latest results; export. | Authorized inspectors and readers | `LatestInspections`; `api/inspections.js` |
-| Defect evidence | List/detail **implemented**, subject to deployment and `defects.list.v1` / `defects.get.v1` grants. Remaining: catalog; create and permitted edits/deletion; comments and revisions; photos and photo history. | DSP and shop with record access | `Defects`; `api/defects.js`; `routes/defect_comments.py` |
+| Defect evidence | List/detail **implemented**, subject to deployment and `defects.list.v1` / `defects.get.v1` grants. Catalog, title updates, comment reads and photo downloads/uploads are also implemented. Other creates, edits/deletion, comment writes/revisions and photo history remain outside the legacy scope. | DSP and shop with record access | `Defects`; `api/defects.js`; `routes/defect_comments.py` |
 | Defect decisions | Approval/rejection; cost decisions; record work completed outside Nova. | Authorized DSP decision makers | `Defects`; `api/client.js: defectReviews`; `routes/defect_reviews.py` |
 | Repair routing | Request detail and eligible destinations; send to shop or external provider; rental-routing decisions; cancel/defer/add defects. | Authorized DSP roles | `api/client.js: repairRequests`; `routes/repair_requests.py` |
-| Shop intake and work | Work-order list/detail **implemented**, subject to deployment and grants. Remaining: van board, export; manual intake; accept/decline/release; assignments; activity and notes. | Shop roles, per action and assignment | `WoV2Dashboard`; `api/workOrders.js`; `routes/work_orders/` |
+| Shop intake and work | Work-order list/detail **implemented**, subject to deployment and grants. Manual intake, accept/decline/release, assignments, activity and notes are also implemented. Van board and export are outside the legacy scope. | Shop roles, per action and assignment | `WoV2Dashboard`; `api/workOrders.js`; `routes/work_orders/` |
 | Shop scheduling | Schedule/unschedule; pickup requests and confirmation; batch scheduling; allowed DSP responses and rescheduling. | Shop coordinators and scoped DSP roles | `api/workOrders.js`; `routes/work_orders/pickup.py`; `routes/work_orders/schedule_batches.py` |
 | Repair execution | Line-item add/update/remove/split/defer/progress; RO records; defect move/release/reject/delay; custody and completion evidence. | Assigned shop workers and coordinators | `api/workOrders.js`; `routes/work_orders/line_items.py`; `routes/work_orders/lifecycle.py` |
 | Technician shifts | Current shift; start/end; status events with required location evidence. | Eligible shop technicians | `api/technicianShifts.js`; `routes/technician_shifts.py` |

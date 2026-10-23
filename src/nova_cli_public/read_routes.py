@@ -3,6 +3,7 @@
 import re
 
 READ_ROUTES = {
+    r"/workshop-events": "workshop_events.list.v1",
     r"/auth/me": "identity.get.v1",
     r"/search": "search.list.v1",
     r"/teams/repair-bucket-defaults": "teams.repair_bucket_defaults.v1",

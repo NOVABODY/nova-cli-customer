@@ -317,29 +317,29 @@
       "command": "events head",
       "aliases": [],
       "cohort": "events",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "events init",
       "aliases": [],
       "cohort": "events",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "events watch",
       "aliases": [],
       "cohort": "events",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "events ack",
       "aliases": [],
       "cohort": "events",
-      "cli_status": "pending parity verification",
-      "mcp_status": "pending parity verification"
+      "cli_status": "locally verified",
+      "mcp_status": "locally verified"
     },
     {
       "command": "vehicle list",

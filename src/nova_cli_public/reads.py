@@ -14,10 +14,12 @@ from nova_cli_public import legacy_reads as handlers
 from nova_cli_public import legacy_writes as write_handlers
 from nova_cli_public.config import data_dir
 from nova_cli_public.errors import ApiError, UsageError
+from nova_cli_public.event_commands import EVENT_COMMANDS, EVENT_MODELS
+from nova_cli_public.events import run_event_tool
 from nova_cli_public.read_commands import READ_COMMANDS
 from nova_cli_public.write_commands import WRITE_COMMANDS
 
-ALL_COMMANDS = READ_COMMANDS + WRITE_COMMANDS
+ALL_COMMANDS = READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS
 WRITE_TOOLS = {entry["tool"] for entry in WRITE_COMMANDS}
 
 BY_COMMAND = {entry["command"]: entry for entry in ALL_COMMANDS}
@@ -89,6 +91,8 @@ def register_commands(root_subparsers):
 
 
 def input_model(entry, *, mcp=False):
+    if mcp and entry["tool"] in EVENT_MODELS:
+        return EVENT_MODELS[entry["tool"]]
     fields = {}
     for flags, options in entry["arguments"]:
         name = options.get("dest", flags[0].lstrip("-").replace("-", "_"))
@@ -224,6 +228,8 @@ class CustomerReadService:
                 for key, value in arguments.items()
             }
         values = MODELS[name].model_validate(arguments).model_dump()
+        if name in EVENT_MODELS:
+            return run_event_tool(name, values, self.client)
         for group in entry["groups"]:
             chosen = [key for key in group["arguments"] if values.get(key) not in (None, False)]
             if len(chosen) > 1 or (group["required"] and not chosen):
