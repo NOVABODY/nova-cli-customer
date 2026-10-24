@@ -24,7 +24,7 @@ ALL_COMMANDS = READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS
 WRITE_TOOLS = {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS}
 
 BY_COMMAND = {entry["command"]: entry for entry in ALL_COMMANDS}
-BY_TOOL = {entry["tool"]: entry for entry in ALL_COMMANDS}
+BY_TOOL = {entry["tool"]: entry for entry in ALL_COMMANDS if entry.get("mcp", True)}
 ALIASES = {
     "work-order": ["work-orders", "wo"],
     "defect": ["defects"],
@@ -160,6 +160,8 @@ def input_model(entry, *, mcp=False):
             }
             if value_type is str:
                 constraints["pattern"] = rf"^(?:{prefixes[name]}-)?[0-9]+$"
+        if name == "quote":
+            constraints = {"pattern": r"^(?:BRQ-)?[0-9]+$"}
         if name == "request_ref":
             constraints = {"pattern": r"^[A-Za-z0-9_-]{1,64}$"}
         if mcp and name == "max_wait":

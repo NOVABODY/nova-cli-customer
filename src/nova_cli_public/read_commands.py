@@ -2,6 +2,7 @@
 
 import re
 
+from nova_cli_public import body_documents
 from nova_cli_public import legacy_reads as handlers
 from nova_cli_public.errors import UsageError
 
@@ -30,6 +31,18 @@ def body_read(args, tool):
 
 
 READ_COMMANDS = [
+    {
+        "command": "body-repair quote", "tool": "download_body_repair_quote", "mcp": False,
+        "grant": "body_repair.documents.quote.read.v1", "groups": [],
+        "arguments": [(["request_ref"], {}), (["--quote"], {}), (["--out"], {"required": True})],
+        "handler": lambda args: body_documents.download(args, "quote"),
+    },
+    {
+        "command": "body-repair scope", "tool": "download_body_repair_scope", "mcp": False,
+        "grant": "body_repair.documents.scope.read.v1", "groups": [],
+        "arguments": [(["request_ref"], {}), (["--out"], {"required": True})],
+        "handler": lambda args: body_documents.download(args, "scope"),
+    },
     {
         "command": "body-repair list", "tool": "list_body_repair_requests",
         "grant": "body_repair.requests.list.v1", "groups": [],
