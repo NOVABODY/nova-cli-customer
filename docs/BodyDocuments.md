@@ -23,3 +23,23 @@ content-addressed URN metadata. Original bytes are base64 encoded, not rendered
 as JSON text or returned through a file:// path. Local embedding has a 1 MiB
 raw byte product limit; larger documents require the CLI --out download. This
 limit is not a universal MCP host guarantee. Hosted MCP is not implemented here.
+
+
+## Invoice or receipt
+
+Request explicit browser consent for `body_repair.documents.invoice.read.v1`.
+Default login permissions do not grow. Then download the available document:
+
+```sh
+nova auth login --operations 'body_repair.documents.invoice.read.v1'
+nova body-repair invoice BRR-1 --out invoice.pdf
+```
+
+The same command returns an invoice or receipt according to the server's payment
+state; the chosen output name does not select the document type. Local MCP tool
+`download_body_repair_invoice` accepts only request_ref, with no quote or out
+argument. It returns the existing embedded PDF resource and descriptor without
+writing a local file. The existing 10 MiB CLI / 1 MiB local embedding caps apply.
+The server checks request ownership, billing/payment availability and the shop's
+own invoice projection. No document, a foreign order or missing consent fails
+without creating a download file. This client does not bill or pay an order.

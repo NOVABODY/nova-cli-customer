@@ -53,7 +53,7 @@ def server(*responses):
     return create_server(CustomerReadService(api)), api
 
 
-@pytest.mark.parametrize('kind', ['quote', 'scope'])
+@pytest.mark.parametrize('kind', ['quote', 'scope', 'invoice'])
 def test_sdk_session_embeds_original_pdf_and_exposes_only_remote_read(tmp_path, monkeypatch, kind):
     monkeypatch.chdir(tmp_path)
     response = Response(PDF)
@@ -85,7 +85,7 @@ def test_sdk_session_embeds_original_pdf_and_exposes_only_remote_read(tmp_path, 
             assert 'private-token' not in result.model_dump_json() and 'file://' not in result.model_dump_json()
     asyncio.run(check())
     assert response.sizes == [PDF_EMBED_MAX_BYTES + 1]
-    assert api.opener.requests[0].full_url.endswith('/opaque_order/quote?quote=BRQ-2' if kind == 'quote' else '/opaque_order/scope')
+    assert api.opener.requests[0].full_url.endswith('/opaque_order/quote?quote=BRQ-2' if kind == 'quote' else '/opaque_order/' + kind)
     assert list(tmp_path.iterdir()) == []
 
 
@@ -151,3 +151,29 @@ def test_refresh_keeps_embedded_cap_and_existing_json_tools_keep_their_shape(mon
     asyncio.run(check())
     assert len(refreshed) == 1 and pdf.sizes == [PDF_EMBED_MAX_BYTES + 1]
     assert api.opener.requests[1].get_header('Authorization') == 'Bearer refreshed-token'
+
+
+
+def test_invoice_tool_has_no_quote_or_file_path_selector():
+    from nova_cli_public import cli, delegated
+    from nova_cli_public.capabilities import manifest
+
+    app, api = server()
+    async def check():
+        async with create_connected_server_and_client_session(app) as session:
+            tool = next(t for t in (await session.list_tools()).tools if t.name == 'download_body_repair_invoice')
+            assert 'invoice or receipt' in tool.description
+            for extra in ({'quote': 'BRQ-2'}, {'out': '/tmp/unrequested.pdf'}):
+                result = await session.call_tool(tool.name, {'request_ref': 'BRR-1', **extra})
+                assert result.isError and result.structuredContent['error']['code'] == 'invalid_arguments'
+    asyncio.run(check())
+    for extra in ([], ['--out', 'invoice.pdf', '--quote', 'BRQ-2']):
+        with pytest.raises(SystemExit):
+            cli.build_parser().parse_args(['body-repair', 'invoice', 'BRR-1', *extra])
+    entry = manifest(cli.build_parser(), 'body-repair invoice')['commands'][0]
+    assert entry['required_operation'] == 'body_repair.documents.invoice.read.v1'
+    assert 'invoice or receipt' in entry['description']
+    assert entry['effects'] == ['remote_read', 'local_file_write'] and entry['mcp_effects'] == ['remote_read']
+    assert entry['required_operation'] in delegated.OPERATIONS
+    assert delegated.DEFAULT_OPERATIONS == 'vehicles.list_full.v1 vehicles.get_full.v1'
+    assert api.opener.requests == []

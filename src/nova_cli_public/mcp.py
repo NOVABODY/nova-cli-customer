@@ -57,7 +57,7 @@ def create_server(service):
         return [
             types.Tool(
                 name=name,
-                description=BY_TOOL[name]["command"]
+                description=BY_TOOL[name].get("description", BY_TOOL[name]["command"])
                 + (
                     ". Change customer data. / Cambie los datos del cliente."
                     if name in WRITE_TOOLS and not BY_TOOL[name].get("read_only", False)

@@ -49,7 +49,7 @@ def client(*responses):
     return result
 
 
-@pytest.mark.parametrize('kind', ['quote', 'scope'])
+@pytest.mark.parametrize('kind', ['quote', 'scope', 'invoice'])
 def test_download_preserves_pdf_bytes_chosen_path_and_cli_only_discovery(tmp_path, kind):
     response = Response(length=len(PDF))
     api = client(response)
@@ -219,3 +219,11 @@ def test_failed_disk_write_or_close_removes_own_partial_file(tmp_path, monkeypat
 def test_permitted_pdf_trailing_whitespace_is_preserved():
     data = PDF + b' \t\r\n\f\x00'
     assert client(Response(data)).request('GET', '/body-repair/requests/1/scope', pdf=True) == data
+
+
+
+def test_invoice_binary_transport_rejects_quote_query_before_network():
+    api = client()
+    with pytest.raises(UsageError):
+        api.request('GET', '/body-repair/requests/BRR-1/invoice', query={'quote': 'BRQ-2'}, pdf=True)
+    assert api.opener.requests == []
