@@ -13,13 +13,14 @@ from pydantic import AfterValidator, ConfigDict, Field, create_model
 from nova_cli_public import legacy_reads as handlers
 from nova_cli_public import legacy_writes as write_handlers
 from nova_cli_public.config import data_dir
+from nova_cli_public.cortex import CORTEX_COMMANDS
 from nova_cli_public.errors import ApiError, UsageError
 from nova_cli_public.event_commands import EVENT_COMMANDS, EVENT_MODELS
 from nova_cli_public.events import run_event_tool
 from nova_cli_public.read_commands import READ_COMMANDS
 from nova_cli_public.write_commands import WRITE_COMMANDS
 
-ALL_COMMANDS = READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS
+ALL_COMMANDS = READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS
 WRITE_TOOLS = {entry["tool"] for entry in WRITE_COMMANDS}
 
 BY_COMMAND = {entry["command"]: entry for entry in ALL_COMMANDS}

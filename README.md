@@ -238,3 +238,15 @@ object shape. Existing timestamp-only cursor files replay their saved timestamp
 once, then save a numeric-ID boundary. Upsert by defect ID to absorb this
 compatibility replay. New defects at a saved timestamp remain reachable. No
 checkpoint advances until the whole pull and its output complete.
+
+Review a Cortex CSV or XLSX file with `nova fleet-import review --file fleet.csv`.
+Use `--options '{"corrections":{"2":{"vin":"1FTBR1C85LKA12345"}},"excluded_rows":[]}'`
+to resend the same original file with cumulative corrections and exclusions.
+The API returns source rows, field errors and mapped rows without importing
+fleet data. Review corrections with the human; do not invent fleet facts.
+The separate `vehicles.fleet_import.review.v1` grant uses read scope. Requires
+the customer Cortex admission API; existing default grants gain no permission.
+Local stdio MCP exposes `review_cortex_file` using the same local path/bytes
+contract. This is not a hosted assistant file-transfer or import-apply claim.
+Limits: 20 MiB source file and 64 KiB JSON options; existing API decoding and
+row limits also apply. No source file is rewritten or archived by review.

@@ -13,7 +13,7 @@ from typing import Any
 from nova_cli_public import __version__, delegated
 from nova_cli_public.config import Profile
 from nova_cli_public.errors import ApiError, UsageError
-from nova_cli_public.read_routes import PUBLIC_READS, admitted_read
+from nova_cli_public.read_routes import PUBLIC_READS, READ_POST_ROUTES, admitted_read
 from nova_cli_public.tokens import KeyringTokenStore
 from nova_cli_public.write_routes import admitted_write
 
@@ -80,12 +80,12 @@ class ApiClient:
         raw_body: bytes | None = None,
         raw_content_type: str | None = None,
     ) -> Response:
-        customer_read = method == "GET" and (admitted_read(path) or path in PUBLIC_READS)
+        customer_read = (method == "GET" and (admitted_read(path) or path in PUBLIC_READS)) or (method == "POST" and path in READ_POST_ROUTES)
         token_request = method == "POST" and path == "/oauth/token" and raw_body is not None
         customer_write = admitted_write(method, path)
         if not (customer_read or customer_write or token_request):
             raise UsageError("This route is not available in the public CLI.")
-        if customer_read and (json_body is not None or raw_body is not None):
+        if customer_read and method == "GET" and (json_body is not None or raw_body is not None):
             raise UsageError("Reads cannot send a request body.")
         if json_body is not None and raw_body is not None:
             raise UsageError("Use only one of json_body or raw_body.")
@@ -222,9 +222,9 @@ class ApiClient:
                 code="outcome_unknown",
             ) from None
 
-    def request(self, method, path, *, json_body=None, query=None, retry_auth=True):
+    def request(self, method, path, *, json_body=None, query=None, retry_auth=True, raw_body=None, raw_content_type=None):
         mutation = admitted_write(method, path)
-        if not (mutation or (method == "GET" and admitted_read(path))):
+        if not (mutation or (method == "GET" and admitted_read(path)) or (method == "POST" and path in READ_POST_ROUTES)):
             raise UsageError("This command is not available in the public CLI.")
         if not self.access_token:
             self.refresh()
@@ -233,6 +233,7 @@ class ApiClient:
                 method,
                 path,
                 json_body=json_body,
+                raw_body=raw_body, raw_content_type=raw_content_type,
                 query=query,
                 headers={"Authorization": f"Bearer {self.access_token}"},
             ).body
@@ -244,7 +245,7 @@ class ApiClient:
                 ) from None
             if not mutation and exc.status == 401 and retry_auth:
                 self.refresh()
-                return self.request(method, path, query=query, retry_auth=False)
+                return self.request(method, path, json_body=json_body, raw_body=raw_body, raw_content_type=raw_content_type, query=query, retry_auth=False)
             raise
 
 
