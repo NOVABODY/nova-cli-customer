@@ -26,6 +26,10 @@ def download(args, kind):
     data = client_from_args(args).request('GET', f'/body-repair/requests/{args.request_ref}/{kind}',
         query={'lang': lang} if kind == 'documentation' else {'quote': quote} if quote is not None else None,
         **({'archive': True} if kind == 'documentation' else {'pdf': True}))
+    return publish(data, destination, claim_archive.MIME if kind == 'documentation' else 'application/pdf')
+
+
+def publish(data, destination, media):
     try:
         descriptor, temporary = tempfile.mkstemp(prefix='.nova-document-', dir=destination.parent)
         try:
@@ -37,7 +41,7 @@ def download(args, kind):
     except OSError:
         raise UsageError('Cannot save the document. Check the output folder. / '
                          'No se puede guardar el documento. Revisa la carpeta de salida.') from None
-    return {'ok': True, 'out': str(destination), 'content_type': claim_archive.MIME if kind == 'documentation' else 'application/pdf', 'size_bytes': len(data)}
+    return {'ok': True, 'out': str(destination), 'content_type': media, 'size_bytes': len(data)}
 
 
 

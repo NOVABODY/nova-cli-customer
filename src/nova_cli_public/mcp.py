@@ -84,6 +84,9 @@ def create_server(service):
             data = await asyncio.to_thread(service.run, name, arguments)
             if isinstance(data, EmbeddedDocument):
                 descriptor = data.descriptor()
+                if data.mime_type.startswith('image/'):
+                    return types.CallToolResult(structuredContent=descriptor, content=[types.ImageContent(
+                        type='image', data=base64.b64encode(data.data).decode('ascii'), mimeType=data.mime_type)])
                 return types.CallToolResult(structuredContent=descriptor, content=[types.EmbeddedResource(
                     type="resource", resource=types.BlobResourceContents(uri=descriptor['uri'],
                         mimeType=descriptor["mime_type"], blob=base64.b64encode(data.data).decode('ascii')))])
@@ -97,6 +100,12 @@ def create_server(service):
         except AuthError:
             return error("authentication_required")
         except ApiError as exc:
+            if exc.code == 'image_too_large':
+                command = shlex.join(['nova', '--profile', service.client.profile.name, 'body-repair', 'pave-image',
+                    '--storage-key=' + arguments['storage_key'], '--category', arguments['category'],
+                    '--idx', str(arguments.get('idx', 0)), '--out', 'pave-image.bin'])
+                return types.CallToolResult(isError=True, structuredContent={'error': {'code': exc.code}},
+                    content=[types.TextContent(type='text', text=f'Use {command}. / Usa {command}.')])
             if exc.code in {"document_too_large", "archive_too_large"}:
                 if exc.code == "archive_too_large":
                     command = shlex.join(["nova", "--profile", service.client.profile.name, "body-repair", "documentation", "--out", "documentation.zip",

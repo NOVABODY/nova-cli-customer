@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from http.client import HTTPException
 from typing import Any
 
-from nova_cli_public import __version__, claim_archive, delegated
+from nova_cli_public import __version__, claim_archive, delegated, pave_images
 from nova_cli_public.config import Profile
 from nova_cli_public.errors import ApiError, UsageError
 from nova_cli_public.read_routes import PDF_ROUTES, PUBLIC_READS, READ_POST_ROUTES, admitted_read
@@ -36,21 +36,27 @@ def _pdf_target(method, path, query, json_body, raw_body, max_bytes=PDF_MAX_BYTE
         raise UsageError("Use a numeric or BRQ quote ID.")
 
 
-def _pdf_bytes(response, max_bytes=PDF_MAX_BYTES):
-    if (response.status != 200 or response.headers.get('Content-Type', '').split(';')[0].strip().lower() != 'application/pdf'
+def _pdf_bytes(response, max_bytes=PDF_MAX_BYTES, *, image=False):
+    media = response.headers.get('Content-Type', '').split(';')[0].strip().lower()
+    if (response.status != 200 or (media not in pave_images.MIMES if image else media != 'application/pdf')
             or response.headers.get('Content-Encoding', 'identity').lower() != 'identity'):
-        raise ApiError("Nova did not return a PDF.", status=response.status)
+        raise ApiError("Nova did not return an image. / Nova no devolvió una imagen." if image else "Nova did not return a PDF.", status=response.status)
     length = response.headers.get('Content-Length')
     if length is not None and (len(length) > 8 or not length.isascii() or not length.isdigit()):
-        raise ApiError("Invalid PDF length.")
+        raise ApiError("Invalid image length. / Longitud de imagen no válida." if image else "Invalid PDF length.")
     if length is not None and int(length) > max_bytes:
-        raise ApiError("PDF exceeds the byte limit.", code="document_too_large")
+        raise ApiError("Image exceeds the byte limit. / La imagen supera el límite de bytes." if image else "PDF exceeds the byte limit.",
+                       code="image_too_large" if image else "document_too_large")
     raw = response.read(max_bytes + 1)
     if len(raw) > max_bytes:
-        raise ApiError("PDF exceeds the byte limit.", code="document_too_large")
+        raise ApiError("Image exceeds the byte limit. / La imagen supera el límite de bytes." if image else "PDF exceeds the byte limit.",
+                       code="image_too_large" if image else "document_too_large")
     if length is not None and len(raw) != int(length):
-        raise ApiError("PDF transfer is too large or incomplete.")
-    if not raw.startswith(b'%PDF-') or not raw.rstrip(b'\x00\t\n\f\r ').endswith(b'%%EOF'):
+        raise ApiError("Incomplete image transfer. / Transferencia de imagen incompleta." if image else "PDF transfer is too large or incomplete.")
+    if image:
+        if pave_images.mime(raw) != media:
+            raise ApiError('Invalid image format. / Formato de imagen no válido.')
+    elif not raw.startswith(b'%PDF-') or not raw.rstrip(b'\x00\t\n\f\r ').endswith(b'%%EOF'):
         raise ApiError("Nova did not return a PDF.")
     return raw
 
@@ -120,7 +126,13 @@ class ApiClient:
         pdf_max_bytes: int = PDF_MAX_BYTES,
         archive: bool = False,
         archive_max_bytes: int = claim_archive.MAX_BYTES,
+        image: bool = False,
+        image_max_bytes: int = claim_archive.MAX_BYTES,
     ) -> Response:
+        if image:
+            if pdf or archive:
+                raise UsageError('Use one document format. / Usa un formato de documento.')
+            pave_images.target(method, path, query, json_body, raw_body, image_max_bytes)
         if archive:
             if pdf:
                 raise UsageError('Use one document format. / Usa un formato de documento.')
@@ -138,10 +150,10 @@ class ApiClient:
             raise UsageError("Use only one of json_body or raw_body.")
         url = self._url(path, query)
         request_headers = {
-            "Accept": claim_archive.MIME if archive else "application/pdf" if pdf else "application/json",
+            "Accept": ", ".join(pave_images.MIMES) if image else claim_archive.MIME if archive else "application/pdf" if pdf else "application/json",
             "User-Agent": f"nova-cli/{__version__}",
         }
-        if pdf or archive:
+        if pdf or archive or image:
             request_headers["Accept-Encoding"] = "identity"
         data = None
         if json_body is not None:
@@ -156,6 +168,8 @@ class ApiClient:
         req = urllib.request.Request(url, data=data, headers=request_headers, method=method.upper())
         try:
             with self.opener.open(req, timeout=self.timeout) as resp:
+                if image:
+                    return Response(resp.status, dict(resp.headers.items()), _pdf_bytes(resp, image_max_bytes, image=True))
                 if archive:
                     return Response(resp.status, dict(resp.headers.items()), claim_archive.read(resp, archive_max_bytes))
                 if pdf:
@@ -167,14 +181,14 @@ class ApiClient:
                     body=_decode_body(raw, resp.headers.get("Content-Type", "")),
                 )
         except urllib.error.HTTPError as exc:
-            if pdf or archive:
+            if pdf or archive or image:
                 try:
                     raw = exc.read(PDF_ERROR_MAX_BYTES + 1)
                 finally:
                     exc.close()
             else:
                 raw = exc.read()
-            if pdf or archive:
+            if pdf or archive or image:
                 body = {}
                 if len(raw) <= PDF_ERROR_MAX_BYTES and 'application/json' in exc.headers.get('Content-Type', '').lower():
                     try:
@@ -290,7 +304,11 @@ class ApiClient:
                 code="outcome_unknown",
             ) from None
 
-    def request(self, method, path, *, json_body=None, query=None, retry_auth=True, raw_body=None, raw_content_type=None, pdf=False, pdf_max_bytes=PDF_MAX_BYTES, archive=False, archive_max_bytes=claim_archive.MAX_BYTES):
+    def request(self, method, path, *, json_body=None, query=None, retry_auth=True, raw_body=None, raw_content_type=None, pdf=False, pdf_max_bytes=PDF_MAX_BYTES, archive=False, archive_max_bytes=claim_archive.MAX_BYTES, image=False, image_max_bytes=claim_archive.MAX_BYTES):
+        if image:
+            if pdf or archive:
+                raise UsageError('Use one document format. / Usa un formato de documento.')
+            pave_images.target(method, path, query, json_body, raw_body, image_max_bytes)
         if archive:
             if pdf:
                 raise UsageError('Use one document format. / Usa un formato de documento.')
@@ -309,7 +327,7 @@ class ApiClient:
                 json_body=json_body,
                 raw_body=raw_body, raw_content_type=raw_content_type,
                 query=query,
-                headers={"Authorization": f"Bearer {self.access_token}"}, pdf=pdf, pdf_max_bytes=pdf_max_bytes, archive=archive, archive_max_bytes=archive_max_bytes,
+                headers={"Authorization": f"Bearer {self.access_token}"}, pdf=pdf, pdf_max_bytes=pdf_max_bytes, archive=archive, archive_max_bytes=archive_max_bytes, image=image, image_max_bytes=image_max_bytes,
             ).body
         except ApiError as exc:
             if mutation and (exc.status is None or exc.status >= 500 or 300 <= exc.status < 400):
@@ -319,7 +337,7 @@ class ApiClient:
                 ) from None
             if not mutation and exc.status == 401 and retry_auth:
                 self.refresh()
-                return self.request(method, path, json_body=json_body, raw_body=raw_body, raw_content_type=raw_content_type, query=query, retry_auth=False, pdf=pdf, pdf_max_bytes=pdf_max_bytes, archive=archive, archive_max_bytes=archive_max_bytes)
+                return self.request(method, path, json_body=json_body, raw_body=raw_body, raw_content_type=raw_content_type, query=query, retry_auth=False, pdf=pdf, pdf_max_bytes=pdf_max_bytes, archive=archive, archive_max_bytes=archive_max_bytes, image=image, image_max_bytes=image_max_bytes)
             raise
 
 

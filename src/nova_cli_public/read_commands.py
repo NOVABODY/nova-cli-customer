@@ -2,7 +2,7 @@
 
 import re
 
-from nova_cli_public import body_documents
+from nova_cli_public import body_documents, pave_images
 from nova_cli_public import legacy_reads as handlers
 from nova_cli_public.errors import UsageError
 
@@ -31,6 +31,15 @@ def body_read(args, tool):
 
 
 READ_COMMANDS = [
+    {
+        "command": "body-repair pave-image", "tool": "download_body_repair_pave_image", "image_read": True,
+        "description": "Read a Body repair PAVE image. / Consulta una imagen PAVE de reparación de carrocería.",
+        "grant": "body_repair.pave.images.read.v1", "groups": [],
+        "arguments": [(["--storage-key"], {"required": True}),
+            (["--category"], {"required": True, "choices": ["panel", "damage", "side", "vehicle"]}),
+            (["--idx"], {"type": "nonnegative_int", "default": 0}), (["--out"], {"required": True})],
+        "handler": pave_images.download,
+    },
     {
         "command": "body-repair documentation", "tool": "download_body_repair_documentation", "document_kind": "documentation",
         "description": "Read the Body repair documentation ZIP. / Consulta el ZIP de documentación de reparación de carrocería.",

@@ -346,3 +346,68 @@ def test_claim_zip_language_is_closed_before_credentials(tmp_path, monkeypatch):
     with pytest.raises(UsageError):
         client().request('GET', '/body-repair/requests/BRR-1/documentation', archive=True, query={'lang': 'fr'})
 
+
+
+@pytest.mark.parametrize('raw,media', [(b'\x89PNG\r\n\x1a\noriginal', 'image/png'), (b'\xff\xd8\xfforiginal', 'image/jpeg'), (b'RIFF1234WEBPoriginal', 'image/webp')])
+def test_pave_image_cli_fixed_query_original_bytes_and_safe_output(tmp_path, raw, media):
+    from urllib.parse import parse_qs, urlsplit
+    response = Response(raw, media)
+    api = client(response)
+    destination = tmp_path / 'chosen.image'
+    key = "photos/pave/key with ' quote"
+    args = cli.build_parser().parse_args(['body-repair', 'pave-image', '--storage-key=' + key, '--category', 'panel', '--idx', '2', '--out', str(destination)])
+    args._client = api
+    assert args.handler(args)['content_type'] == media
+    assert destination.read_bytes() == raw and destination.stat().st_mode & 0o777 == 0o600
+    request = api.opener.requests[0]
+    assert urlsplit(request.full_url).path == '/api/body-repair/pave/image'
+    assert parse_qs(urlsplit(request.full_url).query) == {'storage_key': [key], 'category': ['panel'], 'idx': ['2']}
+    assert request.get_header('Authorization') == 'Bearer first-token'
+    assert response.limits == [64 * 1024 * 1024 + 1]
+    with pytest.raises(UsageError):
+        args.handler(args)
+    assert len(api.opener.requests) == 1 and not list(tmp_path.glob('.nova-document-*'))
+    entry = manifest(cli.build_parser(), 'body-repair pave-image')['commands'][0]
+    assert entry['effects'] == ['remote_read', 'local_file_write'] and entry['mcp_effects'] == ['remote_read']
+    assert entry['required_operation'] == 'body_repair.pave.images.read.v1'
+    assert entry['required_operation'] not in delegated.DEFAULT_OPERATIONS
+
+
+@pytest.mark.parametrize('fault', ['mime', 'magic', 'signature', 'encoding', 'length', 'status', 'oversize'])
+def test_pave_image_transport_rejects_invalid_bytes_and_metadata(fault):
+    response = Response(b'not-an-image' if fault == 'signature' else b'\x89PNG\r\n\x1a\noriginal', 'image/jpeg' if fault == 'magic' else 'application/octet-stream' if fault == 'mime' else 'image/png', 65 * 1024 * 1024 if fault == 'oversize' else 100 if fault == 'length' else None)
+    if fault == 'encoding':
+        response.headers['Content-Encoding'] = 'gzip'
+    if fault == 'status':
+        response.status = 206
+    with pytest.raises(ApiError):
+        client(response).request('GET', '/body-repair/pave/image', query={'storage_key': 'key', 'category': 'panel', 'idx': 0}, image=True)
+    if fault == 'oversize':
+        assert response.limits == []
+
+
+def test_pave_image_invalid_arguments_precede_credentials(monkeypatch, tmp_path):
+    monkeypatch.setattr('nova_cli_public.legacy_reads.client_from_args', lambda args: pytest.fail('Invalid image loaded credentials'))
+    args = cli.build_parser().parse_args(['body-repair', 'pave-image', '--storage-key=', '--category', 'panel', '--idx', '1000', '--out', str(tmp_path / 'never')])
+    with pytest.raises(UsageError):
+        args.handler(args)
+
+
+def test_pave_image_refresh_preserves_binary_mode_and_cap(monkeypatch):
+    body = Response(b'{}', 'application/json')
+    error = urllib.error.HTTPError('https://nova.example/api', 401, '', body.headers, body)
+    raw = b'\xff\xd8\xfforiginal'
+    response = Response(raw, 'image/jpeg')
+    api = client(error, response)
+    refreshed = []
+    monkeypatch.setattr(api, 'refresh', lambda: refreshed.append(True))
+    assert api.request('GET', '/body-repair/pave/image', query={'storage_key': 'key', 'category': 'damage', 'idx': 0}, image=True, image_max_bytes=1024) == raw
+    assert refreshed == [True] and response.limits == [1025]
+
+
+def test_pave_image_streamed_oversize_is_bounded_before_signature_validation():
+    response = Response(b'x' * 1025, 'image/png')
+    with pytest.raises(ApiError) as caught:
+        client(response).request('GET', '/body-repair/pave/image',
+            query={'storage_key': 'key', 'category': 'panel', 'idx': 0}, image=True, image_max_bytes=1024)
+    assert caught.value.code == 'image_too_large' and response.limits == [1025]
