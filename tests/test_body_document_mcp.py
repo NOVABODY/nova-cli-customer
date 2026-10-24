@@ -227,3 +227,45 @@ def test_sdk_claim_zip_too_large_has_cli_and_browser_handoff(declared):
             assert 'body-repair documentation' in result.content[0].text and 'open the order' in result.content[0].text
     asyncio.run(check())
     assert response.sizes == ([] if declared else [PDF_EMBED_MAX_BYTES + 1])
+
+
+def test_sdk_pave_image_schema_native_image_and_shell_safe_profile_fallback(tmp_path, monkeypatch):
+    import shlex
+
+    from nova_cli_public import cli
+    monkeypatch.chdir(tmp_path)
+    raw = b'\x89PNG\r\n\x1a\noriginal'
+    small, large = Response(raw), Response(b'x' * (PDF_EMBED_MAX_BYTES + 1))
+    for response in (small, large):
+        response.headers.replace_header('Content-Type', 'image/png')
+    app, api = server(small, large)
+    arguments = {'storage_key': "-key with ' quote", 'category': 'vehicle', 'idx': 0}
+    async def check():
+        async with create_connected_server_and_client_session(app) as session:
+            tool = next(t for t in (await session.list_tools()).tools if t.name == 'download_body_repair_pave_image')
+            assert set(tool.inputSchema['properties']) == {'storage_key', 'category', 'idx'}
+            assert tool.inputSchema['properties']['storage_key']['maxLength'] == 500
+            assert tool.inputSchema['properties']['idx']['maximum'] == 999
+            assert tool.annotations.readOnlyHint and not tool.annotations.destructiveHint
+            for extra in ({'token': 'forbidden'}, {'out': '/tmp/forbidden'}, {'idx': True}, {'storage_key': ''}):
+                assert (await session.call_tool(tool.name, {**arguments, **extra})).isError
+            result = await session.call_tool(tool.name, arguments)
+            assert not result.isError
+            result = types.CallToolResult.model_validate_json(result.model_dump_json())
+            assert len(result.content) == 1
+            image = result.content[0]
+            assert isinstance(image, types.ImageContent) and image.mimeType == 'image/png'
+            assert base64.b64decode(image.data, validate=True) == raw
+            assert result.structuredContent == {'uri': 'urn:sha256:' + hashlib.sha256(raw).hexdigest(), 'mime_type': 'image/png', 'size_bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()}
+            denied = await session.call_tool(tool.name, arguments)
+            assert denied.isError and denied.structuredContent['error']['code'] == 'image_too_large'
+            command = denied.content[0].text.split('Use ', 1)[1].split('. / Usa ', 1)[0]
+            words = shlex.split(command)
+            assert words[0] == "nova"
+            parsed = cli.build_parser().parse_args(words[1:])
+            assert parsed.profile == api.profile.name and parsed.storage_key == arguments['storage_key']
+            assert parsed.category == 'vehicle' and parsed.idx == 0
+            assert 'private-token' not in result.model_dump_json() + denied.model_dump_json()
+    asyncio.run(check())
+    assert len(api.opener.requests) == 2 and small.sizes == large.sizes == [PDF_EMBED_MAX_BYTES + 1]
+    assert list(tmp_path.iterdir()) == []

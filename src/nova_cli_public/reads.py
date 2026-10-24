@@ -10,7 +10,7 @@ from uuid import uuid4
 
 from pydantic import AfterValidator, ConfigDict, Field, create_model
 
-from nova_cli_public import body_documents
+from nova_cli_public import body_documents, pave_images
 from nova_cli_public import legacy_reads as handlers
 from nova_cli_public import legacy_writes as write_handlers
 from nova_cli_public.config import data_dir
@@ -124,6 +124,10 @@ def input_model(entry, *, mcp=False):
         )
         default = ... if required else options.get("default", False if value_type is bool else None)
         constraints = {}
+        if name == 'storage_key' and entry.get('image_read'):
+            constraints = {'min_length': 1, 'max_length': 500}
+        if name == 'idx' and entry.get('image_read'):
+            constraints = {'ge': 0, 'le': 999}
         if name in ("page", "per_page", "limit"):
             constraints["ge"] = 1
         if name == "per_page":
@@ -220,6 +224,9 @@ class CustomerReadService:
         return {name: model.model_json_schema() for name, model in MODELS.items()}
 
     def output_schema(self, name):
+        if BY_TOOL[name].get('image_read'):
+            return {**body_documents.DOCUMENT_SCHEMA, 'description': 'Descriptor for original image bytes. No local file is written.',
+                'properties': {**body_documents.DOCUMENT_SCHEMA['properties'], 'mime_type': {'enum': list(pave_images.MIMES)}}}
         if BY_TOOL[name].get("document_kind"):
             return body_documents.document_schema(BY_TOOL[name]["document_kind"])
         return {
@@ -238,6 +245,8 @@ class CustomerReadService:
                 for key, value in arguments.items()
             }
         values = MODELS[name].model_validate(arguments).model_dump()
+        if entry.get('image_read'):
+            return pave_images.embedded(self.client, values)
         if entry.get('document_kind'):
             return body_documents.embedded(self.client, values['request_ref'], entry['document_kind'], values.get('quote'), values.get('lang', 'en'))
         if name in EVENT_MODELS:

@@ -9,6 +9,7 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/body-repair/pave/image": "body_repair.pave.images.read.v1",
     **PDF_ROUTES,
     r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/documentation": "body_repair.documents.documentation.read.v1",
     r"/body-repair/requests": "body_repair.requests.list.v1",

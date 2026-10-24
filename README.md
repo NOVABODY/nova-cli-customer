@@ -374,3 +374,12 @@ it embeds original ZIP bytes up to 1 MiB, with size/hash metadata and no file wr
 For larger files use the CLI command or download documentation from the order.
 Requires explicit `body_repair.documents.documentation.read.v1` consent and the
 coordinated API admission/privacy fix. PDF limits and default permissions stay fixed.
+
+Read a stored Body PAVE image with `nova body-repair pave-image
+--storage-key=KEY --category panel --idx 0 --out image.bin`. Use the selected
+public profile (`--profile NAME`). PNG, JPEG and WebP bytes retain their format.
+CLI limit: 64 MiB; local MCP limit: 1 MiB. Oversize tools return a CLI command.
+Consulta una imagen PAVE guardada con el mismo comando y el perfil público
+seleccionado. Límite de CLI: 64 MiB; límite de MCP local: 1 MiB.
+The API controls scope and POST evidence holds. This command does not run a scan,
+fetch a provider URL, or change a report. Explicit image-read consent is required.
