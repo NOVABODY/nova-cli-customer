@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import base64
 import json
 import sys
 from typing import Any
 
+from nova_cli_public.body_documents import EmbeddedPDF
 from nova_cli_public.client import ApiClient
 from nova_cli_public.config import ConfigStore
 from nova_cli_public.errors import ApiError, AuthError, NovaCliError, UsageError
@@ -31,6 +33,7 @@ def create_server(service):
 
     def error(code, detail=None):
         messages = {
+            "document_too_large": "This PDF exceeds the 1 MiB tool limit. Use the CLI download with --out. / Este PDF supera el límite de 1 MiB de la herramienta. Usa la descarga de CLI con --out.",
             "authentication_required": "Run nova auth login, then try again.",
             "forbidden": "Your Nova account cannot perform this operation.",
             "not_found": "This record is not available to your account.",
@@ -78,6 +81,11 @@ def create_server(service):
     async def call_tool(name: str, arguments: dict[str, Any]):
         try:
             data = await asyncio.to_thread(service.run, name, arguments)
+            if isinstance(data, EmbeddedPDF):
+                descriptor = data.descriptor()
+                return types.CallToolResult(structuredContent=descriptor, content=[types.EmbeddedResource(
+                    type="resource", resource=types.BlobResourceContents(uri=descriptor['uri'],
+                        mimeType="application/pdf", blob=base64.b64encode(data.data).decode('ascii')))])
             return types.CallToolResult(
                 structuredContent=data,
                 isError=name in ('preview_fleet_import', 'apply_fleet_import') and data.get('ok') is False,
@@ -88,6 +96,8 @@ def create_server(service):
         except AuthError:
             return error("authentication_required")
         except ApiError as exc:
+            if exc.code == "document_too_large":
+                return error("document_too_large")
             reset = cursor_reset_detail(exc) if name.startswith("events_") else None
             if reset:
                 return error("cursor_expired", reset)
