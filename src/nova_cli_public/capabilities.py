@@ -179,10 +179,12 @@ def manifest(parser, selected=None):
                     if grant == operation["grant"]
                 ],
             )
+            if not operation.get("mcp", True):
+                entry.update(mcp_tool=None, tool_input_schema=None, output_schema=None)
             entry["input_schema"] = input_model(operation).model_json_schema()
             entry["effects"] = [operation.get("effect", "remote_read")] + (
                 ["local_file_write"]
-                if tool in ("download_defect_photos", "pull_defects", "pull_vehicle_reports")
+                if tool in ("download_defect_photos", "pull_defects", "pull_vehicle_reports", "download_body_repair_quote", "download_body_repair_scope")
                 else []
             )
         if name.startswith("events "):
