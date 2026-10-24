@@ -12,6 +12,12 @@ from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 # Only effect/usage information lives here. Arguments come from the real parser;
 # fleet input/output contracts come from the same models used during execution.
 DETAILS = {
+    "defect create": (
+        "Report a defect and optionally select a repair shop.",
+        ["remote_write"],
+        "nova defect create --vehicle-id VAN-0001 --source maintenance_request --part headlight --defect-type not_working",
+    ),
+
     "fleet-import preview": ("Check reviewed rows against current fleet data. This does not import vans.",
                              ["remote_read", "local_file_read"], "nova fleet-import preview --review-file reviewed.json"),
     "fleet-import apply": ("Import the agreed reviewed rows. Inspect row results before trying again.",

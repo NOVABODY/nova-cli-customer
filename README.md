@@ -167,6 +167,22 @@ nova work-order schedule WO-0001 --scheduled-at 2026-10-26T09:00:00-04:00
 nova upload photo ./damage.jpg --kind defect --parent-id FD-0001 --commit
 ```
 
+Report a catalog defect with `defect create` (`create_defect` in local MCP):
+
+```sh
+nova auth login --scope "nova:read nova:write" --operations "defect_catalog.get.v1 defects.create.v1 uploads.presign.v1 defects.photos.create.v1"
+nova defect create --vehicle-id VAN-0001 --source maintenance_request --part headlight --defect-type not_working --vendor-workshop-id 3
+```
+
+Use the catalog for part, type and position values. `--details` accepts a JSON
+object string up to 64 KiB; the API validates its catalog-specific fields. The
+reporting user is your account. Reporter and mileage overrides are not accepted.
+An inspection source requires your open inspection. Choose one internal or
+external shop; routing still depends on current relationships and permissions.
+After creation, use the returned defect ID with the photo-upload command above.
+Creation itself does not upload a photo. The API must support `defects.create.v1`;
+existing consent does not expand automatically.
+
 The upload grant permits the existing upload kinds. `--commit` needs a separate
 parent-photo operation: `defects.photos.create.v1`, `inspections.photos.create.v1`,
 or `vehicle_reports.photos.create.v1`. Signed upload requests send no Nova bearer
