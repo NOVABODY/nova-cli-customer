@@ -231,3 +231,10 @@ an earlier report moving forward does not hide an unprocessed report. A newer
 version replaces the earlier version within a pull; consumers upsert between
 pulls. A timestamp-only saved cursor replays its timestamp to retain tied IDs.
 This is an incremental scan, not a database snapshot.
+
+Defect pulls also require the confirmed API keyset contract. New defect cursors
+store both `reported_at` and `id`; `cursor_before` and `cursor_after` use that
+object shape. Existing timestamp-only cursor files replay their saved timestamp
+once, then save a numeric-ID boundary. Upsert by defect ID to absorb this
+compatibility replay. New defects at a saved timestamp remain reachable. No
+checkpoint advances until the whole pull and its output complete.
