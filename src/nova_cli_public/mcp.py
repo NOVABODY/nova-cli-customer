@@ -10,7 +10,7 @@ from typing import Any
 
 from nova_cli_public.client import ApiClient
 from nova_cli_public.config import ConfigStore
-from nova_cli_public.errors import ApiError, AuthError, NovaCliError
+from nova_cli_public.errors import ApiError, AuthError, NovaCliError, UsageError
 from nova_cli_public.event_commands import EVENT_LOCAL_TOOLS
 from nova_cli_public.events import EventInboxError, cursor_reset_detail
 from nova_cli_public.reads import BY_TOOL, FILE_TOOLS, WRITE_TOOLS
@@ -83,7 +83,7 @@ def create_server(service):
                 isError=name in ('preview_fleet_import', 'apply_fleet_import') and data.get('ok') is False,
                 content=[types.TextContent(type="text", text=json.dumps(data, ensure_ascii=False))],
             )
-        except (ValidationError, KeyError, ValueError, TypeError):
+        except (ValidationError, KeyError, ValueError, TypeError, argparse.ArgumentTypeError):
             return error("invalid_arguments")
         except AuthError:
             return error("authentication_required")
@@ -102,6 +102,8 @@ def create_server(service):
             )
         except EventInboxError as exc:
             return error("event_inbox_error", {"message": str(exc)})
+        except UsageError:
+            return error("invalid_arguments")
         except (NovaCliError, OSError):
             return error("unavailable")
 

@@ -9,7 +9,7 @@ not full coverage of every web workflow below.
 
 The client implements the accepted legacy commands: 52 business commands, nine
 local auth/profile commands, two health commands, and four workshop-event commands.
-MCP exposes the 58 legacy named tools plus Cortex file review and import preview/apply; local auth/profile setup uses the browser or local CLI.
+MCP exposes the 58 legacy named tools plus Cortex file review, import preview/apply and direct defect reporting; local auth/profile setup uses the browser or local CLI.
 The legacy ledger records compatibility tests and sampled real browser, installed
 CLI, system credential store, and stdio MCP verification. Broader web-only actions
 must not be inferred from these results or from a related command name.
@@ -38,7 +38,7 @@ web workflows; it is not a command availability or authorization table.
 | Inspection catalog | Vehicle-class catalog, effective DSP checklist, targets, positions and criticality. | Authorized inspectors and fleet roles | `api/inspectionCatalog.js`; `routes/dvic_template.py` |
 | Inspection draft | Start/resume/cancel own draft; checklist answers; tread depths; defects; open-defect checks; photo upload, commit and removal. | Authorized DSP/shop inspectors | `api/inspections.js`; `routes/inspections.py`; `routes/inspection_open_defect_check.py` |
 | Inspection results | Submit a complete or permitted incomplete inspection; list/detail/latest results; export. | Authorized inspectors and readers | `LatestInspections`; `api/inspections.js` |
-| Defect evidence | List/detail **implemented**, subject to deployment and `defects.list.v1` / `defects.get.v1` grants. Catalog, title updates, comment reads and photo downloads/uploads are also implemented. Other creates, edits/deletion, comment writes/revisions and photo history remain outside the legacy scope. | DSP and shop with record access | `Defects`; `api/defects.js`; `routes/defect_comments.py` |
+| Defect evidence | List/detail **implemented**, subject to deployment and `defects.list.v1` / `defects.get.v1` grants. Catalog, title updates, comment reads and photo downloads/uploads are also implemented. Direct defect reporting with optional shop routing is implemented beyond legacy parity under `defects.create.v1`; edits/deletion, comment writes/revisions and photo history remain outside the legacy scope. | DSP and shop with record access | `Defects`; `api/defects.js`; `routes/defect_comments.py` |
 | Defect decisions | Approval/rejection; cost decisions; record work completed outside Nova. | Authorized DSP decision makers | `Defects`; `api/client.js: defectReviews`; `routes/defect_reviews.py` |
 | Repair routing | Request detail and eligible destinations; send to shop or external provider; rental-routing decisions; cancel/defer/add defects. | Authorized DSP roles | `api/client.js: repairRequests`; `routes/repair_requests.py` |
 | Shop intake and work | Work-order list/detail **implemented**, subject to deployment and grants. Manual intake, accept/decline/release, assignments, activity and notes are also implemented. Van board and export are outside the legacy scope. | Shop roles, per action and assignment | `WoV2Dashboard`; `api/workOrders.js`; `routes/work_orders/` |

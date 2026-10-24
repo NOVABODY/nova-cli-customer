@@ -4,6 +4,44 @@ from nova_cli_public import legacy_writes as handlers
 
 WRITE_COMMANDS = [
     {
+        "command": "defect create",
+        "tool": "create_defect",
+        "grant": "defects.create.v1",
+        "scope": "nova:read nova:write",
+        "effect": "remote_write",
+        "arguments": [
+            (["--vehicle-id"], {"required": True}),
+            (
+                ["--source"],
+                {
+                    "required": True,
+                    "choices": [
+                        "inspection",
+                        "maintenance_request",
+                        "driver_report",
+                        "customer_report",
+                        "shop_finding",
+                        "other",
+                    ],
+                },
+            ),
+            (["--part"], {"required": True, "help": "Use a part from the defect catalog."}),
+            (["--defect-type"], {"required": True, "help": "Use a type from the defect catalog."}),
+            (["--position"], {}),
+            (["--inspection-id"], {}),
+            (["--details"], {"help": "Defect details as a JSON object. Maximum: 64 KiB."}),
+            (["--notes"], {}),
+            (["--reported-at"], {"type": "iso_datetime_arg"}),
+            (["--vendor-workshop-id"], {"type": "positive_id"}),
+            (["--external-vendor-id"], {"type": "positive_id"}),
+            (["--dsp-contact-user-id"], {"type": "positive_id"}),
+            (["--service-station-code"], {}),
+        ],
+        "groups": [{"required": False, "arguments": ["vendor_workshop_id", "external_vendor_id"]}],
+        "defaults": {},
+        "handler": handlers.cmd_defect_create,
+    },
+    {
         "command": "work-order create",
         "tool": "create_work_order",
         "grant": "work_orders.create.v1",

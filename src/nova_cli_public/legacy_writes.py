@@ -263,6 +263,49 @@ def cmd_notification_update_preferences(args: argparse.Namespace) -> Any:
     return client_from_args(args).request("PUT", "/notifications/preferences", json_body=body)
 
 
+def cmd_defect_create(args: argparse.Namespace) -> Any:
+    fields = (
+        "vehicle_id",
+        "source",
+        "part",
+        "defect_type",
+        "position",
+        "inspection_id",
+        "notes",
+        "reported_at",
+        "vendor_workshop_id",
+        "external_vendor_id",
+        "dsp_contact_user_id",
+        "service_station_code",
+    )
+    body = clean_query({key: getattr(args, key) for key in fields})
+    for field, limit in (
+        ("part", 40),
+        ("defect_type", 40),
+        ("position", 30),
+        ("notes", 2000),
+        ("service_station_code", 20),
+    ):
+        if field in body and len(require_nonblank_string(body, field, "Reporting")) > limit:
+            raise UsageError(f"{field} exceeds {limit} characters.")
+    if (args.source == "inspection") != bool(args.inspection_id):
+        raise UsageError("Use inspection_id only with source inspection.")
+    if args.dsp_contact_user_id is not None and args.external_vendor_id is None:
+        raise UsageError("DSP contact requires an external vendor.")
+    if args.details is not None:
+        if len(args.details.encode("utf-8")) > 65536:
+            raise UsageError("Defect details exceed 64 KiB.")
+        try:
+            details = json.loads(args.details)
+            json.dumps(details, allow_nan=False)
+        except ValueError as exc:
+            raise UsageError("Defect details must be a JSON object.") from exc
+        if not isinstance(details, dict):
+            raise UsageError("Defect details must be a JSON object.")
+        body["details"] = details
+    return client_from_args(args).request("POST", "/defects", json_body=body)
+
+
 def cmd_defect_update(args: argparse.Namespace) -> Any:
     if not args.title.strip() or len(args.title) > 120:
         raise UsageError("--title must be nonblank and at most 120 characters.")
