@@ -13,4 +13,11 @@ Use a request ID or order token from an accessible order. Optional quote referen
 accept numeric or BRQ IDs, not opaque tokens. The server chooses the permitted
 customer/shop document and checks quote membership. Downloads have a 10 MiB cap.
 Choose a new output path; an existing file is not overwritten. Output is metadata,
-not PDF bytes. These commands have no local or hosted MCP adapter in this slice.
+not PDF bytes. Local stdio MCP exposes `download_body_repair_quote` and
+`download_body_repair_scope` with request_ref and optional quote for the quote
+tool. No out/path input is accepted; these tools write no files. The result
+contains an embedded application/pdf binary resource plus size, SHA-256 and
+content-addressed URN metadata. Original bytes are base64 encoded, not rendered
+as JSON text or returned through a file:// path. Local embedding has a 1 MiB
+raw byte product limit; larger documents require the CLI --out download. This
+limit is not a universal MCP host guarantee. Hosted MCP is not implemented here.

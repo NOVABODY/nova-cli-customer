@@ -181,6 +181,8 @@ def manifest(parser, selected=None):
             )
             if not operation.get("mcp", True):
                 entry.update(mcp_tool=None, tool_input_schema=None, output_schema=None)
+            if operation.get("document_kind"):
+                entry['mcp_effects'] = ['remote_read']
             entry["input_schema"] = input_model(operation).model_json_schema()
             entry["effects"] = [operation.get("effect", "remote_read")] + (
                 ["local_file_write"]

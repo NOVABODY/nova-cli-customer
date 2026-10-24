@@ -32,13 +32,13 @@ def body_read(args, tool):
 
 READ_COMMANDS = [
     {
-        "command": "body-repair quote", "tool": "download_body_repair_quote", "mcp": False,
+        "command": "body-repair quote", "tool": "download_body_repair_quote", "document_kind": "quote",
         "grant": "body_repair.documents.quote.read.v1", "groups": [],
         "arguments": [(["request_ref"], {}), (["--quote"], {}), (["--out"], {"required": True})],
         "handler": lambda args: body_documents.download(args, "quote"),
     },
     {
-        "command": "body-repair scope", "tool": "download_body_repair_scope", "mcp": False,
+        "command": "body-repair scope", "tool": "download_body_repair_scope", "document_kind": "scope",
         "grant": "body_repair.documents.scope.read.v1", "groups": [],
         "arguments": [(["request_ref"], {}), (["--out"], {"required": True})],
         "handler": lambda args: body_documents.download(args, "scope"),

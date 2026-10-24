@@ -22,7 +22,9 @@ PDF_MAX_BYTES = 10 * 1024 * 1024
 PDF_ERROR_MAX_BYTES = 64 * 1024
 
 
-def _pdf_target(method, path, query, json_body, raw_body):
+def _pdf_target(method, path, query, json_body, raw_body, max_bytes=PDF_MAX_BYTES):
+    if type(max_bytes) is not int or not 1 <= max_bytes <= PDF_MAX_BYTES:
+        raise UsageError("Invalid PDF byte limit.")
     if (method != "GET" or not any(re.fullmatch(pattern, path) for pattern in PDF_ROUTES)
             or json_body is not None or raw_body is not None):
         raise UsageError("Use a named Body repair PDF read.")
@@ -34,15 +36,19 @@ def _pdf_target(method, path, query, json_body, raw_body):
         raise UsageError("Use a numeric or BRQ quote ID.")
 
 
-def _pdf_bytes(response):
+def _pdf_bytes(response, max_bytes=PDF_MAX_BYTES):
     if (response.status != 200 or response.headers.get('Content-Type', '').split(';')[0].strip().lower() != 'application/pdf'
             or response.headers.get('Content-Encoding', 'identity').lower() != 'identity'):
         raise ApiError("Nova did not return a PDF.", status=response.status)
     length = response.headers.get('Content-Length')
-    if length is not None and (len(length) > 8 or not length.isascii() or not length.isdigit() or int(length) > PDF_MAX_BYTES):
+    if length is not None and (len(length) > 8 or not length.isascii() or not length.isdigit()):
         raise ApiError("Invalid PDF length.")
-    raw = response.read(PDF_MAX_BYTES + 1)
-    if len(raw) > PDF_MAX_BYTES or (length is not None and len(raw) != int(length)):
+    if length is not None and int(length) > max_bytes:
+        raise ApiError("PDF exceeds the byte limit.", code="document_too_large")
+    raw = response.read(max_bytes + 1)
+    if len(raw) > max_bytes:
+        raise ApiError("PDF exceeds the byte limit.", code="document_too_large")
+    if length is not None and len(raw) != int(length):
         raise ApiError("PDF transfer is too large or incomplete.")
     if not raw.startswith(b'%PDF-') or not raw.rstrip(b'\x00\t\n\f\r ').endswith(b'%%EOF'):
         raise ApiError("Nova did not return a PDF.")
@@ -111,9 +117,10 @@ class ApiClient:
         raw_body: bytes | None = None,
         raw_content_type: str | None = None,
         pdf: bool = False,
+        pdf_max_bytes: int = PDF_MAX_BYTES,
     ) -> Response:
         if pdf:
-            _pdf_target(method, path, query, json_body, raw_body)
+            _pdf_target(method, path, query, json_body, raw_body, pdf_max_bytes)
         customer_read = (method == "GET" and (admitted_read(path) or path in PUBLIC_READS)) or (method == "POST" and path in READ_POST_ROUTES)
         token_request = method == "POST" and path == "/oauth/token" and raw_body is not None
         customer_write = admitted_write(method, path)
@@ -144,7 +151,7 @@ class ApiClient:
         try:
             with self.opener.open(req, timeout=self.timeout) as resp:
                 if pdf:
-                    return Response(resp.status, dict(resp.headers.items()), _pdf_bytes(resp))
+                    return Response(resp.status, dict(resp.headers.items()), _pdf_bytes(resp, pdf_max_bytes))
                 raw = resp.read()
                 return Response(
                     status=resp.status,
@@ -275,9 +282,9 @@ class ApiClient:
                 code="outcome_unknown",
             ) from None
 
-    def request(self, method, path, *, json_body=None, query=None, retry_auth=True, raw_body=None, raw_content_type=None, pdf=False):
+    def request(self, method, path, *, json_body=None, query=None, retry_auth=True, raw_body=None, raw_content_type=None, pdf=False, pdf_max_bytes=PDF_MAX_BYTES):
         if pdf:
-            _pdf_target(method, path, query, json_body, raw_body)
+            _pdf_target(method, path, query, json_body, raw_body, pdf_max_bytes)
         mutation = admitted_write(method, path)
         if not (mutation or (method == "GET" and admitted_read(path)) or (method == "POST" and path in READ_POST_ROUTES)):
             raise UsageError("This command is not available in the public CLI.")
@@ -290,7 +297,7 @@ class ApiClient:
                 json_body=json_body,
                 raw_body=raw_body, raw_content_type=raw_content_type,
                 query=query,
-                headers={"Authorization": f"Bearer {self.access_token}"}, pdf=pdf,
+                headers={"Authorization": f"Bearer {self.access_token}"}, pdf=pdf, pdf_max_bytes=pdf_max_bytes,
             ).body
         except ApiError as exc:
             if mutation and (exc.status is None or exc.status >= 500 or 300 <= exc.status < 400):
@@ -300,7 +307,7 @@ class ApiClient:
                 ) from None
             if not mutation and exc.status == 401 and retry_auth:
                 self.refresh()
-                return self.request(method, path, json_body=json_body, raw_body=raw_body, raw_content_type=raw_content_type, query=query, retry_auth=False, pdf=pdf)
+                return self.request(method, path, json_body=json_body, raw_body=raw_body, raw_content_type=raw_content_type, query=query, retry_auth=False, pdf=pdf, pdf_max_bytes=pdf_max_bytes)
             raise
 
 

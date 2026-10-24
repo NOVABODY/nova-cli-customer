@@ -1,7 +1,9 @@
 """Save the existing authorized Body PDFs to the caller's chosen file."""
+import hashlib
 import os
 import re
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
 from nova_cli_public.errors import UsageError
@@ -27,3 +29,33 @@ def download(args, kind):
     finally:
         os.unlink(temporary)
     return {'ok': True, 'out': str(destination), 'content_type': 'application/pdf', 'size_bytes': len(data)}
+
+
+PDF_EMBED_MAX_BYTES = 1024 * 1024
+DOCUMENT_SCHEMA = {
+    'type': 'object', 'additionalProperties': False,
+    'description': 'Descriptor for PDF bytes embedded in the resource content. No local file is written.',
+    'required': ['uri', 'mime_type', 'size_bytes', 'sha256'],
+    'properties': {
+        'uri': {'type': 'string', 'pattern': r'^urn:sha256:[a-f0-9]{64}$'},
+        'mime_type': {'const': 'application/pdf'},
+        'size_bytes': {'type': 'integer', 'minimum': 1, 'maximum': PDF_EMBED_MAX_BYTES},
+        'sha256': {'type': 'string', 'pattern': r'^[a-f0-9]{64}$'},
+    },
+}
+
+
+@dataclass(frozen=True)
+class EmbeddedPDF:
+    data: bytes
+
+    def descriptor(self):
+        digest = hashlib.sha256(self.data).hexdigest()
+        return {'uri': 'urn:sha256:' + digest, 'mime_type': 'application/pdf',
+                'size_bytes': len(self.data), 'sha256': digest}
+
+
+def embedded(client, request_ref, kind, quote=None):
+    return EmbeddedPDF(client.request('GET', f'/body-repair/requests/{request_ref}/{kind}',
+        query={'quote': quote} if quote is not None else None,
+        pdf=True, pdf_max_bytes=PDF_EMBED_MAX_BYTES))

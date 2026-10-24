@@ -10,6 +10,7 @@ from uuid import uuid4
 
 from pydantic import AfterValidator, ConfigDict, Field, create_model
 
+from nova_cli_public import body_documents
 from nova_cli_public import legacy_reads as handlers
 from nova_cli_public import legacy_writes as write_handlers
 from nova_cli_public.config import data_dir
@@ -219,6 +220,8 @@ class CustomerReadService:
         return {name: model.model_json_schema() for name, model in MODELS.items()}
 
     def output_schema(self, name):
+        if BY_TOOL[name].get("document_kind"):
+            return body_documents.DOCUMENT_SCHEMA
         return {
             "type": "object",
             "additionalProperties": True,
@@ -235,6 +238,8 @@ class CustomerReadService:
                 for key, value in arguments.items()
             }
         values = MODELS[name].model_validate(arguments).model_dump()
+        if entry.get('document_kind'):
+            return body_documents.embedded(self.client, values['request_ref'], entry['document_kind'], values.get('quote'))
         if name in EVENT_MODELS:
             return run_event_tool(name, values, self.client)
         for group in entry["groups"]:

@@ -66,11 +66,13 @@ def test_download_preserves_pdf_bytes_chosen_path_and_cli_only_discovery(tmp_pat
     assert response.limits == [PDF_MAX_BYTES + 1]
     assert not list(tmp_path.glob('.nova-document-*'))
     entry = manifest(cli.build_parser(), 'body-repair ' + kind)['commands'][0]
-    assert entry['mcp_tool'] is None and entry['tool_input_schema'] is None
+    assert entry['mcp_tool'] == 'download_body_repair_' + kind
+    assert 'out' not in entry['tool_input_schema']['properties']
+    assert entry['mcp_effects'] == ['remote_read']
     assert entry['effects'] == ['remote_read', 'local_file_write']
     assert entry['required_operation'] in delegated.OPERATIONS
     assert entry['required_operation'] not in delegated.DEFAULT_OPERATIONS
-    assert 'download_body_repair_' + kind not in CustomerReadService(api).tool_schemas()
+    assert 'download_body_repair_' + kind in CustomerReadService(api).tool_schemas()
 
 
 @pytest.mark.parametrize('body,mime,length', [
