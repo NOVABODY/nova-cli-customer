@@ -139,7 +139,7 @@ def test_file_publication_refuses_existing_file_and_cleans_failed_publish(tmp_pa
     def fail(*args):
         raise OSError('publish failed')
     monkeypatch.setattr(body_documents.os, 'link', fail)
-    with pytest.raises(OSError):
+    with pytest.raises(UsageError, match='Cannot save the document'):
         args.handler(args)
     assert list(tmp_path.iterdir()) == []
 
@@ -211,7 +211,7 @@ def test_failed_disk_write_or_close_removes_own_partial_file(tmp_path, monkeypat
     monkeypatch.setattr(body_documents.os, 'fdopen', BrokenOutput)
     args = cli.build_parser().parse_args(['body-repair', 'scope', '1', '--out', str(tmp_path / 'document.pdf')])
     args._client = client(Response())
-    with pytest.raises(OSError):
+    with pytest.raises(UsageError, match='Cannot save the document'):
         args.handler(args)
     assert list(tmp_path.iterdir()) == []
 
@@ -227,3 +227,18 @@ def test_invoice_binary_transport_rejects_quote_query_before_network():
     with pytest.raises(UsageError):
         api.request('GET', '/body-repair/requests/BRR-1/invoice', query={'quote': 'BRQ-2'}, pdf=True)
     assert api.opener.requests == []
+
+
+def test_missing_output_folder_returns_structured_cli_error(tmp_path, monkeypatch, capsys):
+    import json
+
+    from nova_cli_public import body_documents
+
+    monkeypatch.setattr(body_documents, 'client_from_args', lambda args: client(Response()))
+    destination = tmp_path / 'missing' / 'document.pdf'
+    assert cli.main(['body-repair', 'scope', 'BRR-1', '--out', str(destination), '--json']) == 2
+    captured = capsys.readouterr()
+    result = json.loads(captured.err)
+    assert result['ok'] is False and 'Check the output folder' in result['error']
+    assert 'Revisa la carpeta de salida' in result['error'] and 'Traceback' not in captured.err
+    assert not captured.out and list(tmp_path.iterdir()) == []
