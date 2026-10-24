@@ -308,3 +308,27 @@ check them before another attempt if the result is unknown. No retry is added.
 
 A null repair time is rejected by the API; use the existing unschedule workflow
 to remove a schedule. Clearing a repair bucket or assignment remains supported.
+
+### PAVE report reads
+
+Read the PAVE report history for a van, the reports for a Body Repair order,
+or the order's comparison. Use a record ID that your account can read.
+
+```sh
+nova auth login --operations "vehicles.pave_reports.list.v1 body_repair.pave.list.v1 body_repair.pave.compare.v1"
+nova vehicle pave-reports VAN-0001 --json
+nova body-repair pave-reports BRR-0001 --json
+nova body-repair pave-comparison BRR-0001 --json
+```
+
+The API must allow these operations for the registered client. Obtain new
+browser consent for each required operation. Default login permissions do not
+include these reads. The API checks the role, organization, order and report
+visibility on every request. A held post-repair report can have an ID and phase
+with no grade or evidence. Do not treat withheld values as a missing report.
+
+Local MCP uses `list_vehicle_pave_reports`, `list_body_repair_pave_reports` and
+`compare_body_repair_pave_reports`. An order report list uses the standard MCP
+`items` wrapper. Other API fields stay unchanged. These tools do not start a scan,
+change a report, or download files. Open the van or Body Repair order in Nova to
+use its normal report controls. PAVE and Body Repair are product terms.

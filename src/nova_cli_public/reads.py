@@ -140,6 +140,7 @@ def input_model(entry, *, mcp=False):
             constraints["pattern"] = r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
         if name in (
             "vehicle_id",
+            "req_id",
             "wo_id",
             "defect_id",
             "report_id",
@@ -149,6 +150,7 @@ def input_model(entry, *, mcp=False):
         ):
             prefixes = {
                 "vehicle_id": "VAN",
+                "req_id": "BRR",
                 "wo_id": "WO",
                 "defect_id": "FD",
                 "report_id": "VR",

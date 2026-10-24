@@ -3,6 +3,9 @@
 import re
 
 READ_ROUTES = {
+    r"/vehicles/(?:VAN-)?[0-9]+/pave-reports": "vehicles.pave_reports.list.v1",
+    r"/body-repair/requests/(?:BRR-)?[0-9]+/pave": "body_repair.pave.list.v1",
+    r"/body-repair/requests/(?:BRR-)?[0-9]+/pave/comparison": "body_repair.pave.compare.v1",
     r"/workshop-events": "workshop_events.list.v1",
     r"/auth/me": "identity.get.v1",
     r"/search": "search.list.v1",
