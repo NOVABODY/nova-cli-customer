@@ -3,6 +3,7 @@
 import re
 
 WRITE_ROUTES = {
+    ("POST", r"/vehicles/bulk-upsert"): "vehicles.fleet_import.apply.v1",
     ("POST", r"/work-orders/manual"): "work_orders.create.v1",
     ("POST", r"/work-orders/(?:WO-)?[0-9]+/assignment"): "work_orders.assignment.update.v1",
     ("POST", r"/work-orders/(?:WO-)?[0-9]+/schedule"): "work_orders.schedule.update.v1",

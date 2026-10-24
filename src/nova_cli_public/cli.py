@@ -167,6 +167,8 @@ def main(argv=None):
     try:
         value = args.handler(args)
         emit(value, as_json=args.json, quiet=args.quiet)
+        if getattr(args, 'read_command', '') in ('fleet-import preview', 'fleet-import apply') and value.get('ok') is False:
+            return 1
         return 0
     except ValidationError:
         message = "Invalid read arguments or response."

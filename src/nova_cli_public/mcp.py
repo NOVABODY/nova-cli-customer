@@ -57,7 +57,7 @@ def create_server(service):
                 description=BY_TOOL[name]["command"]
                 + (
                     ". Change customer data. / Cambie los datos del cliente."
-                    if name in WRITE_TOOLS
+                    if name in WRITE_TOOLS and not BY_TOOL[name].get("read_only", False)
                     else ". Update the local event inbox. / Actualice la bandeja de eventos local."
                     if name in EVENT_LOCAL_TOOLS
                     else ". Read customer data. / Consulte los datos del cliente."
@@ -65,9 +65,9 @@ def create_server(service):
                 inputSchema=schema,
                 outputSchema=service.output_schema(name),
                 annotations=types.ToolAnnotations(
-                    readOnlyHint=name not in FILE_TOOLS | WRITE_TOOLS | EVENT_LOCAL_TOOLS,
-                    destructiveHint=name in WRITE_TOOLS,
-                    idempotentHint=name not in FILE_TOOLS | WRITE_TOOLS | EVENT_LOCAL_TOOLS,
+                    readOnlyHint=BY_TOOL[name].get("read_only", name not in FILE_TOOLS | WRITE_TOOLS | EVENT_LOCAL_TOOLS),
+                    destructiveHint=name in WRITE_TOOLS and not BY_TOOL[name].get("read_only", False),
+                    idempotentHint=BY_TOOL[name].get("read_only", name not in FILE_TOOLS | WRITE_TOOLS | EVENT_LOCAL_TOOLS),
                     openWorldHint=False,
                 ),
             )
@@ -80,6 +80,7 @@ def create_server(service):
             data = await asyncio.to_thread(service.run, name, arguments)
             return types.CallToolResult(
                 structuredContent=data,
+                isError=name in ('preview_fleet_import', 'apply_fleet_import') and data.get('ok') is False,
                 content=[types.TextContent(type="text", text=json.dumps(data, ensure_ascii=False))],
             )
         except (ValidationError, KeyError, ValueError, TypeError):

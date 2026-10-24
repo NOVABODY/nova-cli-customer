@@ -12,6 +12,10 @@ from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 # Only effect/usage information lives here. Arguments come from the real parser;
 # fleet input/output contracts come from the same models used during execution.
 DETAILS = {
+    "fleet-import preview": ("Check reviewed rows against current fleet data. This does not import vans.",
+                             ["remote_read", "local_file_read"], "nova fleet-import preview --review-file reviewed.json"),
+    "fleet-import apply": ("Import the agreed reviewed rows. Inspect row results before trying again.",
+                           ["remote_write", "local_file_read"], "nova fleet-import apply --review-file reviewed.json"),
     "fleet-import review": (
         "Review a Cortex source file. Resend the unchanged file with cumulative JSON corrections.",
         ["remote_read", "local_file_read"], "nova fleet-import review --file fleet.csv --options '{}'",
@@ -182,7 +186,7 @@ def manifest(parser, selected=None):
             entry["mcp_execution"] = (
                 "One page per call; managed local inbox; explicit acknowledgment."
             )
-        if name == "fleet-import review":
+        if name in ("fleet-import review", "fleet-import preview", "fleet-import apply"):
             entry["effects"].append("local_file_read")
         if name == "upload photo":
             entry["effects"].append("local_file_read")
