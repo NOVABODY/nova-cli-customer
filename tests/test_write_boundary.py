@@ -25,7 +25,7 @@ class Opener:
         return response
 
 
-@pytest.mark.parametrize("status", [401, 409, 422])
+@pytest.mark.parametrize("status", [401, 409, 422, 302, 500, 503])
 def test_write_http_error_is_sent_once_without_refresh_retry(status, monkeypatch):
     headers = Message()
     headers["Content-Type"] = "application/json"
@@ -44,7 +44,11 @@ def test_write_http_error_is_sent_once_without_refresh_retry(status, monkeypatch
     with pytest.raises(ApiError) as raised:
         client.request("POST", "/work-orders/WO-1/complete", json_body={"last_mileage": 100})
     assert raised.value.status == status
-    assert raised.value.detail == body["detail"]
+    if status >= 500 or 300 <= status < 400:
+        assert raised.value.code == "outcome_unknown"
+        assert raised.value.detail is None
+    else:
+        assert raised.value.detail == body["detail"]
     assert len(opener.calls) == 1
 
 

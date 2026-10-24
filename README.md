@@ -189,7 +189,10 @@ or `vehicle_reports.photos.create.v1`. Signed upload requests send no Nova beare
 token and do not follow redirects. Photos are limited to 50 MiB.
 
 Change requests are sent once. An expired cached token, a timeout, or another error
-does not trigger an automatic retry. The client can refresh before the first send.
+does not trigger an automatic retry. Server errors and redirects after a change
+request also have an unknown outcome. The client can refresh before the first send.
+A defect report must identify the expected vehicle and catalog fields in its
+success response; an incomplete or mismatched response has an unknown outcome.
 An `outcome_unknown` error means the response was lost; check the record before you
 try again. Business rejections retain their details, including version conflicts,
 mileage requirements, and validation failures. Existing duplicate and concurrency

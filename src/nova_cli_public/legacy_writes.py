@@ -303,7 +303,15 @@ def cmd_defect_create(args: argparse.Namespace) -> Any:
         if not isinstance(details, dict):
             raise UsageError("Defect details must be a JSON object.")
         body["details"] = details
-    return client_from_args(args).request("POST", "/defects", json_body=body)
+    value = client_from_args(args).request("POST", "/defects", json_body=body)
+    if (not isinstance(value, dict)
+            or not re.fullmatch(r"FD-[0-9]{1,100}", str(value.get("id", ""))) or int(value["id"][3:]) < 1
+            or not re.fullmatch(r"VAN-[0-9]{1,100}", str(value.get("vehicle_id", "")))
+            or int(value["vehicle_id"][4:]) != int(body["vehicle_id"].split("-")[-1])
+            or value.get("part") != body["part"].lower() or value.get("defect_type") != body["defect_type"].lower()):
+        raise ApiError("The report outcome is unknown. Read the vehicle defects before another attempt.",
+                       code="outcome_unknown")
+    return value
 
 
 def cmd_defect_update(args: argparse.Namespace) -> Any:
