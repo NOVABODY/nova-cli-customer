@@ -116,7 +116,6 @@ WRITE_COMMANDS = [
         "arguments": [
             (["wo_id"], {}),
             (["--scheduled-at"], {"help": "ISO 8601 time with explicit UTC offset."}),
-            (["--clear-scheduled-at"], {"default": False, "action": "store_true", "help": "Clear the repair time. / Borra la hora de reparación."}),
             (
                 ["--include-defect-id"],
                 {
@@ -142,7 +141,6 @@ WRITE_COMMANDS = [
             (["--clear-technician"], {"default": False, "action": "store_true"}),
         ],
         "groups": [
-            {"required": False, "arguments": ["scheduled_at", "clear_scheduled_at"]},
             {"required": False, "arguments": ["repair_bucket", "clear_repair_bucket"]},
             {"required": False, "arguments": ["team_id", "clear_team"]},
             {"required": False, "arguments": ["technician_id", "clear_technician"]},

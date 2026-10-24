@@ -295,15 +295,16 @@ Connect through the existing browser flow with the review/import operations:
 Fleet reads for recovery require their own consent, or use the fleet in your
 browser. This does not expand an existing saved connection.
 
-### Schedule clearing and visit composition
+### Visit composition
 
 The existing `nova work-order schedule` command and local `schedule_work_order`
-tool accept an explicit clear-time action and visit defect selection.
-Use `--clear-scheduled-at` (local MCP `clear_scheduled_at: true`) to clear the
-repair time. Repeat `--include-defect-id` and `--exclude-defect-id` with numeric
+tool accept visit defect selection. Repeat `--include-defect-id` and `--exclude-defect-id` with numeric
 IDs (local MCP `include_defect_id` / `exclude_defect_id` arrays), up to 100 each.
 Do not repeat an ID or place it in both lists. Omitted fields remain absent.
 The existing `work_orders.schedule.update.v1` grant is unchanged; the API owns
 state, workshop/defect eligibility, visit locks and customer confirmation.
 Selection can affect other work orders. Read current visits before changes and
 check them before another attempt if the result is unknown. No retry is added.
+
+A null repair time is rejected by the API; use the existing unschedule workflow
+to remove a schedule. Clearing a repair bucket or assignment remains supported.

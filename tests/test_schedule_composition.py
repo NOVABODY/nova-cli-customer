@@ -14,14 +14,13 @@ class Client:
         return {"id": "WO-1"}
 
 
-def test_cli_and_local_mcp_clear_time_and_change_visit_defects():
+def test_cli_and_local_mcp_change_visit_defects():
     direct, local = Client(), Client()
     args = cli.build_parser().parse_args(
         [
             "work-order",
             "schedule",
             "WO-1",
-            "--clear-scheduled-at",
             "--include-defect-id",
             "2",
             "--include-defect-id",
@@ -36,7 +35,6 @@ def test_cli_and_local_mcp_clear_time_and_change_visit_defects():
         "schedule_work_order",
         {
             "wo_id": "WO-1",
-            "clear_scheduled_at": True,
             "include_defect_id": [2, 3],
             "exclude_defect_id": [4],
         },
@@ -48,7 +46,7 @@ def test_cli_and_local_mcp_clear_time_and_change_visit_defects():
             (
                 "POST",
                 "/work-orders/WO-1/schedule",
-                {"scheduled_at": None, "include_defect_ids": [2, 3], "exclude_defect_ids": [4]},
+                {"include_defect_ids": [2, 3], "exclude_defect_ids": [4]},
             )
         ]
     )
@@ -70,16 +68,3 @@ def test_local_mcp_rejects_invalid_visit_composition_before_request(fields):
         CustomerReadService(client).run("schedule_work_order", {"wo_id": "WO-1", **fields})
     assert client.calls == []
 
-
-def test_cli_cannot_set_and_clear_time_together():
-    with pytest.raises(SystemExit):
-        cli.build_parser().parse_args(
-            [
-                "work-order",
-                "schedule",
-                "WO-1",
-                "--scheduled-at",
-                "2026-10-24T10:00:00Z",
-                "--clear-scheduled-at",
-            ]
-        )

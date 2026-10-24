@@ -158,8 +158,6 @@ def cmd_work_order_assignment(args: argparse.Namespace) -> Any:
 
 def cmd_work_order_schedule(args: argparse.Namespace) -> Any:
     body = assignment_body(args)
-    if getattr(args, "clear_scheduled_at", False):
-        body["scheduled_at"] = None
     if args.scheduled_at is not None:
         try:
             slot = datetime.fromisoformat(args.scheduled_at)
