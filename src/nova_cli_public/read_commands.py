@@ -13,7 +13,43 @@ def pave_read(args, field, prefix, template):
     return handlers.client_from_args(args).request("GET", template.format(reference))
 
 
+def body_read(args, tool):
+    # Reuse the tool contract for CLI validation before constructing a route.
+    from nova_cli_public.reads import MODELS, validate_response
+
+    model = MODELS[tool]
+    values = model.model_validate(
+        {key: getattr(args, key) for key in model.model_fields}
+    ).model_dump(exclude_none=True)
+    reference = values.pop("request_ref", None)
+    path = "/body-repair/requests" + ("/" + reference if reference is not None else "")
+    options = {"query": values} if reference is None else {}
+    value = handlers.client_from_args(args).request("GET", path, **options)
+    validate_response(tool, value)
+    return value
+
+
 READ_COMMANDS = [
+    {
+        "command": "body-repair list", "tool": "list_body_repair_requests",
+        "grant": "body_repair.requests.list.v1", "groups": [],
+        "arguments": [
+            (["--status"], {"choices": ["pending_quotes", "quoted", "quote_selected",
+                "pickup_proposed", "pickup_scheduled", "in_shop", "repair_complete",
+                "pending_signoff", "awaiting_return", "completed", "cancelled",
+                "no_eligible_vendor", "halted"]}),
+            (["--stage"], {"choices": ["open"]}),
+            (["--limit"], {"type": "int"}), (["--offset"], {"type": "int"}),
+            (["--vehicle-id"], {}),
+        ],
+        "handler": lambda args: body_read(args, "list_body_repair_requests"),
+    },
+    {
+        "command": "body-repair get", "tool": "get_body_repair_request",
+        "grant": "body_repair.requests.get.v1", "groups": [],
+        "arguments": [(["request_ref"], {})],
+        "handler": lambda args: body_read(args, "get_body_repair_request"),
+    },
     {
         "command": "vehicle pave-reports", "tool": "list_vehicle_pave_reports",
         "grant": "vehicles.pave_reports.list.v1",

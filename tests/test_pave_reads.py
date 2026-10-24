@@ -83,7 +83,7 @@ def test_pave_ids_fail_before_any_request(tool, field, value):
 
 
 def test_pave_adapter_does_not_admit_scan_image_or_general_body_routes():
-    for path in ['/body-repair/requests/BRR-1', '/vehicles/VAN-1/pave-reports/scan',
+    for path in ['/body-repair/requests/BRR-1/scope/edit', '/vehicles/VAN-1/pave-reports/scan',
                  '/body-repair/requests/BRR-1/pave/2/file', '/body-repair/requests/BRR-1/pave/image']:
         assert not admitted_read(path)
     client = Client({})
