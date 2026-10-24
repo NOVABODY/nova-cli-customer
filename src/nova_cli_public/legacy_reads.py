@@ -179,20 +179,12 @@ def cmd_defect_pull(args: argparse.Namespace) -> Any:
     if args.vehicle_id:
         query["vehicle_id"] = args.vehicle_id
     if args.new and cursor_before:
-        query["date_from"] = cursor_before[:10]
-        query["tz_offset_minutes"] = 0
+        query.update(reported_since=cursor_before["reported_at"], after_id=defect_key(cursor_before)[1])
     defects = fetch_all_defects(client_from_args(args), query)
-    if args.new and cursor_before:
-        defects = [
-            defect
-            for defect in defects
-            if iso_datetime_gt(str(defect.get("reported_at", "")), cursor_before)
-        ]
     cursor_after = cursor_before
     if args.new and defects:
-        cursor_after = max(
-            str(defect["reported_at"]) for defect in defects if defect.get("reported_at")
-        )
+        last = max(defects, key=defect_key)
+        cursor_after = {"reported_at": last["reported_at"], "id": last["id"]}
     package = {
         "generated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "vehicle_id": args.vehicle_id,
@@ -397,28 +389,30 @@ def defect_matches_status(defect: Any, status: str) -> bool:
 
 
 def fetch_all_defects(client: ApiClient, query: dict[str, Any]) -> list[dict[str, Any]]:
-    page = 1
-    defects: list[dict[str, Any]] = []
     per_page = query.get("per_page") or 50
+    since = query.get("reported_since") or "0001-01-01T00:00:00Z"
+    after_id = query.get("after_id", 0)
+    defects: dict[int, dict[str, Any]] = {}
     while True:
-        response = client.request("GET", "/defects", query={**query, "page": page})
-        if not isinstance(response, dict) or not isinstance(response.get("items"), list):
-            raise ApiError("API response did not include defect items")
-        if (
-            not response["items"]
-            and isinstance(response.get("total"), int)
-            and len(defects) < response["total"]
-        ):
-            raise ApiError("Defect pagination made no progress; cursor unchanged.")
-        defects.extend(item for item in response["items"] if isinstance(item, dict))
-        total = response.get("total")
-        if isinstance(total, int):
-            if len(defects) >= total:
-                break
-        elif len(response["items"]) < per_page:
-            break
-        page += 1
-    return defects
+        response = client.request("GET", "/defects", query={**query,
+            "reported_since": since, "after_id": after_id, "per_page": per_page, "page": 1})
+        if not isinstance(response, dict) or response.get("keyset") is not True:
+            raise ApiError("API does not confirm keyset pagination; cursor unchanged.")
+        items, total = response.get("items"), response.get("total")
+        if (not isinstance(items, list) or type(total) is not int or total < 0
+                or len(items) != min(per_page, total) or response.get("page") != 1
+                or response.get("per_page") != per_page):
+            raise ApiError("Invalid defect page; cursor unchanged.")
+        boundary = (parse_iso_datetime(since), after_id)
+        for item in items:
+            key = defect_key(item)
+            if key <= boundary:
+                raise ApiError("Defect pagination made no progress; cursor unchanged.")
+            defects[key[1]] = item
+            boundary = key
+            since, after_id = item["reported_at"], key[1]
+        if total <= per_page:
+            return sorted(defects.values(), key=defect_key)
 
 
 def fetch_all_vehicle_reports(client: ApiClient, query: dict[str, Any]) -> list[dict[str, Any]]:
@@ -454,21 +448,42 @@ def default_defects_cursor_path() -> Path:
     return data_dir() / "defects_cursor.json"
 
 
-def read_defects_cursor(path: Path) -> str | None:
+def read_defects_cursor(path: Path) -> dict[str, str] | None:
     if not path.exists():
         return None
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise UsageError(f"Invalid defects cursor JSON at {path}") from exc
-    cursor = data.get("reported_at") if isinstance(data, dict) else None
-    if cursor is not None and (not isinstance(cursor, str)):
+    if not isinstance(data, dict) or not isinstance(data.get("reported_at"), str):
         raise UsageError(f"Invalid defects cursor shape at {path}")
+    cursor = {"reported_at": data["reported_at"], "id": data.get("id", "FD-0")}
+    try:
+        defect_key(cursor)
+    except ApiError as exc:
+        raise UsageError(f"Invalid defects cursor at {path}") from exc
     return cursor
 
 
-def write_defects_cursor(path: Path, reported_at: str) -> None:
-    write_json_file(path, {"reported_at": reported_at})
+def write_defects_cursor(path: Path, cursor: dict[str, str]) -> None:
+    write_json_file(path, cursor)
+
+
+def defect_key(record: dict[str, Any]) -> tuple[datetime, int]:
+    if not isinstance(record, dict):
+        raise ApiError("Invalid defect record; cursor unchanged.")
+    match = re.fullmatch(r"FD-([0-9]+)", str(record.get("id", "")), flags=re.IGNORECASE)
+    instant = record.get("reported_at")
+    if match is None or not isinstance(instant, str):
+        raise ApiError("Invalid defect cursor; cursor unchanged.")
+    try:
+        parsed = parse_iso_datetime(iso_datetime_arg(instant))
+        numeric_id = int(match.group(1))
+        if numeric_id > 2_147_483_647:
+            raise ValueError()
+    except (ValueError, argparse.ArgumentTypeError) as exc:
+        raise ApiError("Invalid defect boundary; cursor unchanged.") from exc
+    return parsed, numeric_id
 
 
 def default_vehicle_reports_cursor_path() -> Path:

@@ -359,12 +359,14 @@ def test_defect_pull_vehicle_combines_pages_and_writes_out(monkeypatch, tmp_path
                 "total": 2,
                 "page": 1,
                 "per_page": 1,
+                "keyset": True,
             },
             {
                 "items": [{"id": "FD-2", "reported_at": "2026-06-11T10:00:00Z"}],
-                "total": 2,
-                "page": 2,
+                "total": 1,
+                "page": 1,
                 "per_page": 1,
+                "keyset": True,
             },
         ]
     )
@@ -391,8 +393,8 @@ def test_defect_pull_vehicle_combines_pages_and_writes_out(monkeypatch, tmp_path
     assert package["count"] == 2
     assert [item["id"] for item in package["defects"]] == ["FD-1", "FD-2"]
     assert [request["query"] for request in client.requests] == [
-        {"per_page": 1, "vehicle_id": "VAN-0001", "page": 1},
-        {"per_page": 1, "vehicle_id": "VAN-0001", "page": 2},
+        {"per_page": 1, "vehicle_id": "VAN-0001", "page": 1, "reported_since": "0001-01-01T00:00:00Z", "after_id": 0},
+        {"per_page": 1, "vehicle_id": "VAN-0001", "page": 1, "reported_since": "2026-06-10T10:00:00Z", "after_id": 1},
     ]
 
 
@@ -407,6 +409,7 @@ def test_defect_pull_new_missing_cursor_full_pull_and_advances(monkeypatch, tmp_
                 "total": 2,
                 "page": 1,
                 "per_page": 50,
+                "keyset": True,
             }
         ]
     )
@@ -417,9 +420,9 @@ def test_defect_pull_new_missing_cursor_full_pull_and_advances(monkeypatch, tmp_
     result = cmd_defect_pull(args)
 
     assert result["cursor_before"] is None
-    assert result["cursor_after"] == "2026-06-11T10:00:00Z"
-    assert json.loads(cursor.read_text()) == {"reported_at": "2026-06-11T10:00:00Z"}
-    assert client.requests[0]["query"] == {"per_page": 50, "page": 1}
+    assert result["cursor_after"] == {"reported_at": "2026-06-11T10:00:00Z", "id": "FD-2"}
+    assert json.loads(cursor.read_text()) == {"reported_at": "2026-06-11T10:00:00Z", "id": "FD-2"}
+    assert client.requests[0]["query"] == {"per_page": 50, "page": 1, "reported_since": "0001-01-01T00:00:00Z", "after_id": 0}
 
 
 def test_defect_pull_new_filters_same_day_and_advances(monkeypatch, tmp_path):
@@ -427,13 +430,13 @@ def test_defect_pull_new_filters_same_day_and_advances(monkeypatch, tmp_path):
         [
             {
                 "items": [
-                    {"id": "FD-old", "reported_at": "2026-06-10T09:00:00Z"},
-                    {"id": "FD-same", "reported_at": "2026-06-10T10:00:00Z"},
-                    {"id": "FD-new", "reported_at": "2026-06-10T10:00:01Z"},
+                    {"id": "FD-1", "reported_at": "2026-06-10T10:00:00Z"},
+                    {"id": "FD-2", "reported_at": "2026-06-10T10:00:01Z"},
                 ],
-                "total": 3,
+                "total": 2,
                 "page": 1,
                 "per_page": 50,
+                "keyset": True,
             }
         ]
     )
@@ -444,13 +447,13 @@ def test_defect_pull_new_filters_same_day_and_advances(monkeypatch, tmp_path):
 
     result = cmd_defect_pull(args)
 
-    assert [item["id"] for item in result["defects"]] == ["FD-new"]
-    assert result["cursor_before"] == "2026-06-10T10:00:00Z"
-    assert result["cursor_after"] == "2026-06-10T10:00:01Z"
+    assert [item["id"] for item in result["defects"]] == ["FD-1", "FD-2"]
+    assert result["cursor_before"] == {"reported_at": "2026-06-10T10:00:00Z", "id": "FD-0"}
+    assert result["cursor_after"] == {"reported_at": "2026-06-10T10:00:01Z", "id": "FD-2"}
     assert client.requests[0]["query"] == {
         "per_page": 50,
-        "date_from": "2026-06-10",
-        "tz_offset_minutes": 0,
+        "reported_since": "2026-06-10T10:00:00Z",
+        "after_id": 0,
         "page": 1,
     }
 

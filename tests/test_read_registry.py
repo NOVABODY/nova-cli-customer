@@ -25,7 +25,8 @@ class Reader:
 
     def request(self, method, path, *, query=None):
         self.calls.append((method, path, query))
-        return {"items": self.rows, "total": len(self.rows)}
+        return {"items": self.rows, "total": len(self.rows), "page": 1,
+                "per_page": (query or {}).get("per_page", 50), "keyset": True}
 
 
 def test_registry_contains_29_reads_25_writes_and_4_events_without_admin_or_generic_api():
@@ -213,8 +214,8 @@ def test_mcp_wait_is_bounded_before_any_request():
 
 def test_empty_defect_page_with_remaining_total_fails_instead_of_looping():
     client = Reader()
-    client.request = lambda *args, **kwargs: {"items": [], "total": 1}
-    with pytest.raises(legacy_reads.ApiError, match="no progress"):
+    client.request = lambda *args, **kwargs: {"items": [], "total": 1, "page": 1, "per_page": 50, "keyset": True}
+    with pytest.raises(legacy_reads.ApiError, match="Invalid defect page"):
         legacy_reads.fetch_all_defects(client, {})
 
 
