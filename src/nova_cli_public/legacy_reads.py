@@ -302,6 +302,7 @@ def cmd_vehicle_report_pull(args: argparse.Namespace) -> Any:
             "status": args.status,
             "external_ref": args.external_ref,
             "updated_since": cursor_before["updated_at"] if cursor_before else None,
+            "after_id": max(0, cursor_boundary[1]) if cursor_boundary else 0,
             "limit": args.per_page,
         }
     )
@@ -421,22 +422,32 @@ def fetch_all_defects(client: ApiClient, query: dict[str, Any]) -> list[dict[str
 
 
 def fetch_all_vehicle_reports(client: ApiClient, query: dict[str, Any]) -> list[dict[str, Any]]:
-    offset = 0
-    reports: list[dict[str, Any]] = []
     limit = query.get("limit") or 100
+    since = query.get("updated_since") or "0001-01-01T00:00:00Z"
+    after_id = query.get("after_id", 0)
+    reports: dict[int, dict[str, Any]] = {}
     while True:
-        response = client.request("GET", "/vehicle-reports", query={**query, "offset": offset})
-        if not isinstance(response, dict) or not isinstance(response.get("items"), list):
-            raise ApiError("API response did not include vehicle-report items")
-        items = response["items"]
-        reports.extend(item for item in items if isinstance(item, dict))
-        total = response.get("total")
-        if isinstance(total, int) and len(reports) >= total:
-            break
-        if len(items) < limit:
-            break
-        offset += limit
-    return reports
+        response = client.request("GET", "/vehicle-reports", query={**query,
+            "updated_since": since, "after_id": after_id, "limit": limit, "offset": 0})
+        if not isinstance(response, dict) or response.get("keyset") is not True:
+            raise ApiError("API does not confirm keyset pagination; cursor unchanged.")
+        items, total = response.get("items"), response.get("total")
+        if (not isinstance(items, list) or type(total) is not int or total < 0
+                or len(items) != min(limit, total) or response.get("offset") != 0
+                or response.get("limit") != limit):
+            raise ApiError("Invalid vehicle-report page; cursor unchanged.")
+        boundary = (parse_iso_datetime(since), after_id)
+        for item in items:
+            if not isinstance(item, dict):
+                raise ApiError("Invalid vehicle-report item; cursor unchanged.")
+            key = vehicle_report_key(item)
+            if key <= boundary:
+                raise ApiError("Vehicle-report pagination made no progress; cursor unchanged.")
+            reports[key[1]] = item
+            boundary = key
+            since, after_id = item["updated_at"], key[1]
+        if total <= limit:
+            return sorted(reports.values(), key=vehicle_report_key)
 
 
 def default_defects_cursor_path() -> Path:
