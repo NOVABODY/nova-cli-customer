@@ -191,7 +191,7 @@ def manifest(parser, selected=None):
             entry["input_schema"] = input_model(operation).model_json_schema()
             entry["effects"] = [operation.get("effect", "remote_read")] + (
                 ["local_file_write"]
-                if tool in ("download_defect_photos", "pull_defects", "pull_vehicle_reports", "download_body_repair_quote", "download_body_repair_scope", "download_body_repair_invoice")
+                if tool in ("download_defect_photos", "pull_defects", "pull_vehicle_reports", "download_body_repair_quote", "download_body_repair_scope", "download_body_repair_invoice", "download_body_repair_documentation")
                 else []
             )
         if name.startswith("events "):

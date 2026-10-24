@@ -242,3 +242,107 @@ def test_missing_output_folder_returns_structured_cli_error(tmp_path, monkeypatc
     assert result['ok'] is False and 'Check the output folder' in result['error']
     assert 'Revisa la carpeta de salida' in result['error'] and 'Traceback' not in captured.err
     assert not captured.out and list(tmp_path.iterdir()) == []
+
+
+def claim_zip(*, compression=0, lang="en"):
+    import zipfile
+    output = io.BytesIO()
+    with zipfile.ZipFile(output, 'w', compression=compression) as archive:
+        for name, data in [('recibo.pdf' if lang == 'es' else 'receipt.pdf', b'original receipt'), ('archivos-no-disponibles.txt' if lang == 'es' else 'missing-files.txt', b'One scan is not available.')]:
+            entry = zipfile.ZipInfo(name, date_time=(2026, 1, 2, 0, 0, 0))
+            entry.compress_type = compression
+            archive.writestr(entry, data)
+    return output.getvalue()
+
+
+def test_claim_zip_cli_preserves_original_bytes_and_remote_read_discovery(tmp_path):
+    from nova_cli_public.claim_archive import MAX_BYTES
+    raw = claim_zip(lang='es')
+    response = Response(raw, 'application/zip', len(raw))
+    api = client(response)
+    destination = tmp_path / 'chosen.zip'
+    args = cli.build_parser().parse_args(['body-repair', 'documentation', '--lang', 'es', '--out', str(destination), '--', '-opaque'])
+    args._client = api
+    value = args.handler(args)
+    assert destination.read_bytes() == raw and destination.stat().st_mode & 0o777 == 0o600
+    assert value['content_type'] == 'application/zip' and response.limits == [MAX_BYTES + 1]
+    assert api.opener.requests[0].full_url.endswith('/-opaque/documentation?lang=es')
+    assert api.opener.requests[0].get_header('Accept') == 'application/zip'
+    assert not list(tmp_path.glob('.nova-document-*'))
+    entry = manifest(cli.build_parser(), 'body-repair documentation')['commands'][0]
+    assert entry['required_operation'] == 'body_repair.documents.documentation.read.v1'
+    assert entry['required_operation'] in delegated.OPERATIONS and entry['required_operation'] not in delegated.DEFAULT_OPERATIONS
+    assert entry['effects'] == ['remote_read', 'local_file_write'] and entry['mcp_effects'] == ['remote_read']
+    with pytest.raises(UsageError):
+        args.handler(args)
+    assert len(api.opener.requests) == 1
+
+
+@pytest.mark.parametrize('fault', ['mime', 'encoding', 'status', 'length', 'oversize', 'truncated', 'compressed', 'crc'])
+def test_claim_zip_invalid_transfer_or_archive_never_writes(tmp_path, fault):
+    from nova_cli_public.claim_archive import MAX_BYTES
+    raw = claim_zip(compression=8 if fault == 'compressed' else 0)
+    if fault == 'truncated':
+        raw = raw[:-4]
+    if fault == 'crc':
+        raw = raw.replace(b'original receipt', b'corrupt! receipt')
+    response = Response(raw, 'text/html' if fault == 'mime' else 'application/zip', MAX_BYTES + 1 if fault == 'oversize' else len(raw) + 1 if fault == 'length' else None)
+    if fault == 'encoding':
+        response.headers['Content-Encoding'] = 'gzip'
+    if fault == 'status':
+        response.status = 206
+    args = cli.build_parser().parse_args(['body-repair', 'documentation', 'BRR-1', '--out', str(tmp_path / 'never.zip')])
+    args._client = client(response)
+    with pytest.raises(ApiError):
+        args.handler(args)
+    assert list(tmp_path.iterdir()) == []
+    if fault == 'oversize':
+        assert response.limits == []
+
+
+@pytest.mark.parametrize('query', [{'quote': '1'}, {'url': 'https://evil.example'}])
+def test_claim_zip_no_selector_or_arbitrary_binary_route(query):
+    api = client()
+    with pytest.raises(UsageError):
+        api.request('GET', '/body-repair/requests/BRR-1/documentation', query=query, archive=True)
+    assert not api.opener.requests
+
+
+def test_claim_zip_refresh_preserves_format_and_limit(monkeypatch):
+    body = Response(b'{}', 'application/json')
+    error = urllib.error.HTTPError('https://nova.example/api', 401, '', body.headers, body)
+    response = Response(claim_zip(), 'application/zip')
+    api = client(error, response)
+    refreshed = []
+    monkeypatch.setattr(api, 'refresh', lambda: refreshed.append(True))
+    assert api.request('GET', '/body-repair/requests/1/documentation', archive=True, archive_max_bytes=1024) == claim_zip()
+    assert refreshed == [True] and response.limits == [1025]
+
+
+def test_claim_zip_bounds_directory_bytes_before_zipfile_allocation(monkeypatch):
+    import struct
+    import zipfile
+
+    from nova_cli_public import claim_archive
+
+    output = io.BytesIO()
+    with zipfile.ZipFile(output, 'w') as archive:
+        for index in range(100):
+            archive.writestr(f'scan-{index}.pdf', b'x')
+    raw = bytearray(output.getvalue())
+    end = raw.rfind(b'PK\x05\x06')
+    struct.pack_into('<HH', raw, end + 8, 2, 2)
+    monkeypatch.setattr(claim_archive.zipfile, 'ZipFile',
+        lambda *args, **kwargs: pytest.fail('Unbounded directory reached ZipFile allocation'))
+    with pytest.raises(ApiError):
+        claim_archive.read(Response(bytes(raw), 'application/zip'), claim_archive.MAX_BYTES)
+
+
+def test_claim_zip_language_is_closed_before_credentials(tmp_path, monkeypatch):
+    monkeypatch.setattr('nova_cli_public.body_documents.client_from_args',
+        lambda args: pytest.fail('Invalid language loaded credentials'))
+    with pytest.raises(SystemExit):
+        cli.build_parser().parse_args(['body-repair', 'documentation', 'BRR-1', '--lang', 'fr', '--out', str(tmp_path / 'never.zip')])
+    with pytest.raises(UsageError):
+        client().request('GET', '/body-repair/requests/BRR-1/documentation', archive=True, query={'lang': 'fr'})
+

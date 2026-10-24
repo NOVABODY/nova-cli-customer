@@ -10,6 +10,7 @@ PDF_ROUTES = {
 
 READ_ROUTES = {
     **PDF_ROUTES,
+    r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/documentation": "body_repair.documents.documentation.read.v1",
     r"/body-repair/requests": "body_repair.requests.list.v1",
     r"/body-repair/requests/[A-Za-z0-9_-]{1,64}": "body_repair.requests.get.v1",
     r"/vehicles/(?:VAN-)?[0-9]+/pave-reports": "vehicles.pave_reports.list.v1",

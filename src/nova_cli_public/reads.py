@@ -221,7 +221,7 @@ class CustomerReadService:
 
     def output_schema(self, name):
         if BY_TOOL[name].get("document_kind"):
-            return body_documents.DOCUMENT_SCHEMA
+            return body_documents.document_schema(BY_TOOL[name]["document_kind"])
         return {
             "type": "object",
             "additionalProperties": True,
@@ -239,7 +239,7 @@ class CustomerReadService:
             }
         values = MODELS[name].model_validate(arguments).model_dump()
         if entry.get('document_kind'):
-            return body_documents.embedded(self.client, values['request_ref'], entry['document_kind'], values.get('quote'))
+            return body_documents.embedded(self.client, values['request_ref'], entry['document_kind'], values.get('quote'), values.get('lang', 'en'))
         if name in EVENT_MODELS:
             return run_event_tool(name, values, self.client)
         for group in entry["groups"]:

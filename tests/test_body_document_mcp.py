@@ -177,3 +177,53 @@ def test_invoice_tool_has_no_quote_or_file_path_selector():
     assert entry['required_operation'] in delegated.OPERATIONS
     assert delegated.DEFAULT_OPERATIONS == 'vehicles.list_full.v1 vehicles.get_full.v1'
     assert api.opener.requests == []
+
+
+def test_sdk_claim_zip_embeds_original_bytes_with_zip_schema(tmp_path, monkeypatch):
+    import zipfile
+    monkeypatch.chdir(tmp_path)
+    output = io.BytesIO()
+    with zipfile.ZipFile(output, 'w') as archive:
+        archive.writestr('recibo.pdf', b'receipt')
+        archive.writestr('recogida.pdf', b'original scan')
+    raw = output.getvalue()
+    response = Response(raw)
+    response.headers.replace_header('Content-Type', 'application/zip')
+    app, api = server(response)
+    async def check():
+        async with create_connected_server_and_client_session(app) as session:
+            tool = next(t for t in (await session.list_tools()).tools if t.name == 'download_body_repair_documentation')
+            assert set(tool.inputSchema['properties']) == {'request_ref', 'lang'}
+            assert tool.annotations.readOnlyHint and not tool.annotations.destructiveHint
+            assert tool.outputSchema['properties']['mime_type'] == {'const': 'application/zip'}
+            for extra in ({'out': 'unrequested.zip'}, {'quote': '1'}, {'lang': 'fr'}):
+                assert (await session.call_tool(tool.name, {'request_ref': 'BRR-1', **extra})).isError
+            result = await session.call_tool(tool.name, {'request_ref': 'BRR-1', 'lang': 'es'})
+            assert not result.isError
+            result = types.CallToolResult.model_validate_json(result.model_dump_json())
+            resource = result.content[0].resource
+            assert isinstance(resource, types.BlobResourceContents) and resource.mimeType == 'application/zip'
+            assert base64.b64decode(resource.blob, validate=True) == raw
+            assert result.structuredContent == {'uri': 'urn:sha256:' + hashlib.sha256(raw).hexdigest(),
+                'mime_type': 'application/zip', 'size_bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()}
+            assert 'private-token' not in result.model_dump_json() and 'file://' not in result.model_dump_json()
+    asyncio.run(check())
+    assert api.opener.requests[0].full_url.endswith('/BRR-1/documentation?lang=es')
+    assert len(api.opener.requests) == 1 and response.sizes == [PDF_EMBED_MAX_BYTES + 1]
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize('declared', [None, PDF_EMBED_MAX_BYTES + 1])
+def test_sdk_claim_zip_too_large_has_cli_and_browser_handoff(declared):
+    response = Response(b'x' * (PDF_EMBED_MAX_BYTES + 1), declared)
+    response.headers.replace_header('Content-Type', 'application/zip')
+    app, _ = server(response)
+    async def check():
+        async with create_connected_server_and_client_session(app) as session:
+            result = await session.call_tool('download_body_repair_documentation', {'request_ref': '-opaque', 'lang': 'es'})
+            assert result.isError and result.structuredContent['error']['code'] == 'archive_too_large'
+            assert '--lang es -- -opaque' in result.content[0].text
+            assert '--profile test body-repair' in result.content[0].text
+            assert 'body-repair documentation' in result.content[0].text and 'open the order' in result.content[0].text
+    asyncio.run(check())
+    assert response.sizes == ([] if declared else [PDF_EMBED_MAX_BYTES + 1])

@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from http.client import HTTPException
 from typing import Any
 
-from nova_cli_public import __version__, delegated
+from nova_cli_public import __version__, claim_archive, delegated
 from nova_cli_public.config import Profile
 from nova_cli_public.errors import ApiError, UsageError
 from nova_cli_public.read_routes import PDF_ROUTES, PUBLIC_READS, READ_POST_ROUTES, admitted_read
@@ -118,7 +118,13 @@ class ApiClient:
         raw_content_type: str | None = None,
         pdf: bool = False,
         pdf_max_bytes: int = PDF_MAX_BYTES,
+        archive: bool = False,
+        archive_max_bytes: int = claim_archive.MAX_BYTES,
     ) -> Response:
+        if archive:
+            if pdf:
+                raise UsageError('Use one document format. / Usa un formato de documento.')
+            claim_archive.target(method, path, query, json_body, raw_body, archive_max_bytes)
         if pdf:
             _pdf_target(method, path, query, json_body, raw_body, pdf_max_bytes)
         customer_read = (method == "GET" and (admitted_read(path) or path in PUBLIC_READS)) or (method == "POST" and path in READ_POST_ROUTES)
@@ -132,10 +138,10 @@ class ApiClient:
             raise UsageError("Use only one of json_body or raw_body.")
         url = self._url(path, query)
         request_headers = {
-            "Accept": "application/pdf" if pdf else "application/json",
+            "Accept": claim_archive.MIME if archive else "application/pdf" if pdf else "application/json",
             "User-Agent": f"nova-cli/{__version__}",
         }
-        if pdf:
+        if pdf or archive:
             request_headers["Accept-Encoding"] = "identity"
         data = None
         if json_body is not None:
@@ -150,6 +156,8 @@ class ApiClient:
         req = urllib.request.Request(url, data=data, headers=request_headers, method=method.upper())
         try:
             with self.opener.open(req, timeout=self.timeout) as resp:
+                if archive:
+                    return Response(resp.status, dict(resp.headers.items()), claim_archive.read(resp, archive_max_bytes))
                 if pdf:
                     return Response(resp.status, dict(resp.headers.items()), _pdf_bytes(resp, pdf_max_bytes))
                 raw = resp.read()
@@ -159,14 +167,14 @@ class ApiClient:
                     body=_decode_body(raw, resp.headers.get("Content-Type", "")),
                 )
         except urllib.error.HTTPError as exc:
-            if pdf:
+            if pdf or archive:
                 try:
                     raw = exc.read(PDF_ERROR_MAX_BYTES + 1)
                 finally:
                     exc.close()
             else:
                 raw = exc.read()
-            if pdf:
+            if pdf or archive:
                 body = {}
                 if len(raw) <= PDF_ERROR_MAX_BYTES and 'application/json' in exc.headers.get('Content-Type', '').lower():
                     try:
@@ -282,7 +290,11 @@ class ApiClient:
                 code="outcome_unknown",
             ) from None
 
-    def request(self, method, path, *, json_body=None, query=None, retry_auth=True, raw_body=None, raw_content_type=None, pdf=False, pdf_max_bytes=PDF_MAX_BYTES):
+    def request(self, method, path, *, json_body=None, query=None, retry_auth=True, raw_body=None, raw_content_type=None, pdf=False, pdf_max_bytes=PDF_MAX_BYTES, archive=False, archive_max_bytes=claim_archive.MAX_BYTES):
+        if archive:
+            if pdf:
+                raise UsageError('Use one document format. / Usa un formato de documento.')
+            claim_archive.target(method, path, query, json_body, raw_body, archive_max_bytes)
         if pdf:
             _pdf_target(method, path, query, json_body, raw_body, pdf_max_bytes)
         mutation = admitted_write(method, path)
@@ -297,7 +309,7 @@ class ApiClient:
                 json_body=json_body,
                 raw_body=raw_body, raw_content_type=raw_content_type,
                 query=query,
-                headers={"Authorization": f"Bearer {self.access_token}"}, pdf=pdf, pdf_max_bytes=pdf_max_bytes,
+                headers={"Authorization": f"Bearer {self.access_token}"}, pdf=pdf, pdf_max_bytes=pdf_max_bytes, archive=archive, archive_max_bytes=archive_max_bytes,
             ).body
         except ApiError as exc:
             if mutation and (exc.status is None or exc.status >= 500 or 300 <= exc.status < 400):
@@ -307,7 +319,7 @@ class ApiClient:
                 ) from None
             if not mutation and exc.status == 401 and retry_auth:
                 self.refresh()
-                return self.request(method, path, json_body=json_body, raw_body=raw_body, raw_content_type=raw_content_type, query=query, retry_auth=False, pdf=pdf, pdf_max_bytes=pdf_max_bytes)
+                return self.request(method, path, json_body=json_body, raw_body=raw_body, raw_content_type=raw_content_type, query=query, retry_auth=False, pdf=pdf, pdf_max_bytes=pdf_max_bytes, archive=archive, archive_max_bytes=archive_max_bytes)
             raise
 
 
