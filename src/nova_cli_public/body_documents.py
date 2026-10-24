@@ -21,13 +21,17 @@ def download(args, kind):
         raise UsageError("The output file exists. / El archivo de salida ya existe.")
     data = client_from_args(args).request('GET', f'/body-repair/requests/{args.request_ref}/{kind}',
         query={'quote': quote} if quote is not None else None, pdf=True)
-    descriptor, temporary = tempfile.mkstemp(prefix='.nova-document-', dir=destination.parent)
     try:
-        with os.fdopen(descriptor, 'wb') as output:
-            output.write(data)
-        os.link(temporary, destination)
-    finally:
-        os.unlink(temporary)
+        descriptor, temporary = tempfile.mkstemp(prefix='.nova-document-', dir=destination.parent)
+        try:
+            with os.fdopen(descriptor, 'wb') as output:
+                output.write(data)
+            os.link(temporary, destination)
+        finally:
+            os.unlink(temporary)
+    except OSError:
+        raise UsageError('Cannot save the document. Check the output folder. / '
+                         'No se puede guardar el documento. Revisa la carpeta de salida.') from None
     return {'ok': True, 'out': str(destination), 'content_type': 'application/pdf', 'size_bytes': len(data)}
 
 
