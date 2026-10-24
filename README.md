@@ -332,3 +332,26 @@ Local MCP uses `list_vehicle_pave_reports`, `list_body_repair_pave_reports` and
 `items` wrapper. Other API fields stay unchanged. These tools do not start a scan,
 change a report, or download files. Open the van or Body Repair order in Nova to
 use its normal report controls. PAVE and Body Repair are product terms.
+
+### Body Repair order reads
+
+```sh
+nova auth login --operations "body_repair.requests.list.v1 body_repair.requests.get.v1"
+nova body-repair list --stage open --limit 20 --offset 0 --json
+nova body-repair get BRR-0001 --json
+```
+
+The API must allow these operations for the registered client. Obtain new browser
+consent. Default permissions do not include these reads. List filters are
+`--status`, `--stage open`, `--limit` (1–200), `--offset` (0 or more), and
+`--vehicle-id`. These tools do not expose staff scope or fetch another page.
+For audience and losing-bidder shop rows, pass the returned `request_token` to
+`body-repair get`; those rows have no internal order ID. Use `order_number` as the
+human reference. The API owns each role's fields and visibility. Its vendor
+queue can report `total` as the returned row count, so do not infer a complete
+queue from that value or assume offset pagination applies to every role.
+
+Local MCP tools are `list_body_repair_requests` and `get_body_repair_request`.
+The list keeps the API's `items` and `total` object. This slice adds no order
+changes, file downloads or automatic paging. API integration and installed-client
+verification are separate from source adapter tests.

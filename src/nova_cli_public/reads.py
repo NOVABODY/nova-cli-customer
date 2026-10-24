@@ -128,7 +128,7 @@ def input_model(entry, *, mcp=False):
         if name == "per_page":
             constraints["le"] = 100 if entry["command"] == "vehicle list" else 200
         if name == "limit":
-            constraints["le"] = 500
+            constraints["le"] = 200 if entry["command"] == "body-repair list" else 500
         if name == "offset":
             constraints["ge"] = 0
         if name in ("scheduled_within_hours", "returned_within_hours"):
@@ -160,6 +160,8 @@ def input_model(entry, *, mcp=False):
             }
             if value_type is str:
                 constraints["pattern"] = rf"^(?:{prefixes[name]}-)?[0-9]+$"
+        if name == "request_ref":
+            constraints = {"pattern": r"^[A-Za-z0-9_-]{1,64}$"}
         if mcp and name == "max_wait":
             default = 25.0
             constraints = {"ge": 0, "le": 25}
@@ -312,6 +314,15 @@ class CustomerReadService:
 def validate_response(name, value):
     if not isinstance(value, (dict, list)):
         raise ApiError("Invalid read response")
+    if name in ("list_body_repair_requests", "get_body_repair_request"):
+        if not isinstance(value, dict):
+            raise ApiError("Invalid read response")
+        if name == "list_body_repair_requests" and (
+            not isinstance(value.get("items"), list)
+            or any(not isinstance(row, dict) for row in value["items"])
+            or type(value.get("total")) is not int or value["total"] < 0
+        ):
+            raise ApiError("Invalid read response")
     core = {
         "list_vehicles": ("id",),
         "get_vehicle": ("id",),
