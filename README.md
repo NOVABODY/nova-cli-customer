@@ -223,3 +223,11 @@ smaller batch. Pending events are returned before another remote page is read.
 Repeated calls return unacknowledged events. The result reports
 `pending_count` and `backpressure`; use `events_ack` after processing each item.
 Local inbox effects are declared in MCP annotations and offline capabilities.
+
+Vehicle-report pulls require API support for strict timestamp/ID keysets
+(API #5027). Each page confirms `keyset: true`. Older APIs fail without advancing
+the cursor. Pulls use offset zero with the saved `(updated_at, id)` boundary so
+an earlier report moving forward does not hide an unprocessed report. A newer
+version replaces the earlier version within a pull; consumers upsert between
+pulls. A timestamp-only saved cursor replays its timestamp to retain tied IDs.
+This is an incremental scan, not a database snapshot.

@@ -162,76 +162,25 @@ def test_vehicle_report_list_rejects_invalid_arguments(argv):
         build_parser().parse_args(argv)
 
 
-def test_vehicle_report_pull_paginates_and_uses_composite_cursor_boundary(
-    monkeypatch, tmp_path, capsys
-):
+def test_vehicle_report_pull_uses_composite_cursor_boundary(monkeypatch, tmp_path, capsys):
     cursor = tmp_path / "reports-cursor.json"
-    cursor.write_text(json.dumps({"updated_at": "2026-07-14T10:00:00Z", "id": "VR-00002"}))
-    client = FakeClient(
-        [
-            {
-                "items": [
-                    {"id": "VR-00001", "updated_at": "2026-07-14T10:00:00Z"},
-                    {"id": "VR-00002", "updated_at": "2026-07-14T10:00:00Z"},
-                ],
-                "total": 4,
-                "limit": 2,
-                "offset": 0,
-            },
-            {
-                "items": [
-                    {"id": "VR-00004", "updated_at": "2026-07-14T10:00:01Z"},
-                    {"id": "VR-00003", "updated_at": "2026-07-14T10:00:00Z"},
-                ],
-                "total": 4,
-                "limit": 2,
-                "offset": 2,
-            },
-        ]
-    )
+    original = {"updated_at": "2026-07-14T10:00:00Z", "id": "VR-00002"}
+    cursor.write_text(json.dumps(original))
+    client = FakeClient([{"items": [
+        {"id": "VR-00003", "updated_at": original["updated_at"]},
+        {"id": "VR-00004", "updated_at": "2026-07-14T10:00:01Z"}],
+        "total": 2, "limit": 2, "offset": 0, "keyset": True}])
     monkeypatch.setattr(cli, "client_from_args", lambda _args: client)
-    args = build_parser().parse_args(
-        [
-            "vehicle-report",
-            "pull",
-            "--status",
-            "promoted",
-            "--cursor-file",
-            str(cursor),
-            "--per-page",
-            "2",
-        ]
-    )
-
-    result = args.handler(args)
+    args = build_parser().parse_args(["vehicle-report", "pull", "--status", "promoted",
+                                     "--cursor-file", str(cursor), "--per-page", "2"])
+    assert args.handler(args) is None and args.quiet is True
     package = json.loads(capsys.readouterr().out)
-
-    assert result is None
-    assert args.quiet is True
     assert [item["id"] for item in package["reports"]] == ["VR-00003", "VR-00004"]
-    assert package["cursor_before"] == {
-        "updated_at": "2026-07-14T10:00:00Z",
-        "id": "VR-00002",
-    }
-    assert package["cursor_after"] == {
-        "updated_at": "2026-07-14T10:00:01Z",
-        "id": "VR-00004",
-    }
+    assert package["cursor_before"] == original
+    assert package["cursor_after"] == {"updated_at": "2026-07-14T10:00:01Z", "id": "VR-00004"}
     assert json.loads(cursor.read_text()) == package["cursor_after"]
-    assert [request["query"] for request in client.requests] == [
-        {
-            "status": "promoted",
-            "updated_since": "2026-07-14T10:00:00Z",
-            "limit": 2,
-            "offset": 0,
-        },
-        {
-            "status": "promoted",
-            "updated_since": "2026-07-14T10:00:00Z",
-            "limit": 2,
-            "offset": 2,
-        },
-    ]
+    assert client.requests[0]["query"] == {"status": "promoted", "updated_since": original["updated_at"],
+                                            "after_id": 2, "limit": 2, "offset": 0}
 
 
 def test_vehicle_report_pull_old_cursor_includes_same_timestamp_ids(monkeypatch, tmp_path, capsys):
@@ -246,6 +195,7 @@ def test_vehicle_report_pull_old_cursor_includes_same_timestamp_ids(monkeypatch,
                 "total": 1,
                 "limit": 100,
                 "offset": 0,
+                "keyset": True,
             }
         ]
     )
@@ -272,12 +222,12 @@ def test_vehicle_report_pull_compares_numeric_ids_across_padding_boundary(
         [
             {
                 "items": [
-                    {"id": "VR-99999", "updated_at": "2026-07-14T10:00:00Z"},
                     {"id": "VR-100000", "updated_at": "2026-07-14T10:00:00Z"},
                 ],
-                "total": 2,
+                "total": 1,
                 "limit": 100,
                 "offset": 0,
+                "keyset": True,
             }
         ]
     )
@@ -307,6 +257,7 @@ def test_vehicle_report_pull_does_not_advance_cursor_when_stdout_fails(monkeypat
                 "total": 1,
                 "limit": 100,
                 "offset": 0,
+                "keyset": True,
             }
         ]
     )
@@ -334,6 +285,7 @@ def test_vehicle_report_pull_writes_package_before_advancing_cursor(monkeypatch,
                 "total": 1,
                 "limit": 100,
                 "offset": 0,
+                "keyset": True,
             }
         ]
     )
