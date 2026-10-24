@@ -30,7 +30,36 @@ def body_read(args, tool):
     return value
 
 
+def inspection_read(args, tool):
+    from nova_cli_public.reads import MODELS, validate_response
+
+    model = MODELS[tool]
+    values = model.model_validate({key: getattr(args, key) for key in model.model_fields}).model_dump(exclude_none=True)
+    reference = values.pop('inspection_id', None)
+    path = '/inspections' + ('/' + reference if reference is not None else '')
+    value = handlers.client_from_args(args).request('GET', path, **({'query': values} if reference is None else {}))
+    validate_response(tool, value)
+    return value
+
+
 READ_COMMANDS = [
+    {
+        "command": "inspection list", "tool": "list_inspections", "grant": "inspections.list.v1",
+        "description": "List permitted inspections. / Consulta las inspecciones permitidas.", "groups": [],
+        "arguments": [(["--dsp-id"], {}), (["--vehicle-id"], {}),
+            (["--date-from"], {"type": "iso_date_arg"}), (["--date-to"], {"type": "iso_date_arg"}),
+            (["--result"], {"choices": ["passed", "flagged", "conditional", "incomplete"]}),
+            (["--status"], {"choices": ["draft", "submitted", "superseded", "expired"]}),
+            (["--page"], {"type": "positive_int", "default": 1}),
+            (["--per-page"], {"type": "bounded_report_page_size", "default": 20})],
+        "handler": lambda args: inspection_read(args, "list_inspections"),
+    },
+    {
+        "command": "inspection get", "tool": "get_inspection", "grant": "inspections.get.v1",
+        "description": "Read a permitted inspection. / Consulta una inspección permitida.", "groups": [],
+        "arguments": [(["inspection_id"], {})],
+        "handler": lambda args: inspection_read(args, "get_inspection"),
+    },
     {
         "command": "body-repair pave-image", "tool": "download_body_repair_pave_image", "image_read": True,
         "description": "Read a Body repair PAVE image. / Consulta una imagen PAVE de reparación de carrocería.",
