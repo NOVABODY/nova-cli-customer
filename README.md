@@ -253,3 +253,25 @@ row limits also apply. No source file is rewritten or archived by review.
 
 Local MCP retains its 2 MiB response limit for Cortex previews. Use the CLI
 for a larger preview, or review a smaller source file without changing row facts.
+
+Save the corrected Cortex review as JSON. Run
+`nova fleet-import preview --review-file reviewed.json` for database checks,
+then `nova fleet-import apply --review-file reviewed.json` only after reviewing
+the result with the human. Both require full scope and the separate
+`vehicles.fleet_import.apply.v1` grant. `preview_fleet_import` and
+`apply_fleet_import` expose the same actions in local MCP. Preview makes no fleet
+changes; apply can create or update vans. `--add-missing-stations` and
+`--deactivate-missing` are explicit options. Deactivation is blocked after
+excluded, inactive or skipped source rows. Resolve errors or explicitly exclude
+rows through Cortex review first; do not edit facts to bypass an import error.
+
+Import accepts 1–2000 mapped rows and a complete review JSON of at most 100 MiB.
+No automatic split occurs, because deactivation cannot be split safely. Partial
+row errors retain results but return CLI exit 1 and MCP isError. A lost/invalid
+apply response or server failure returns outcome_unknown; inspect the fleet
+before trying again. Neither preview nor apply automatically retries its POST.
+
+Connect through the existing browser flow with the review/import operations:
+`nova auth login --scope "nova:read nova:write" --operations "vehicles.fleet_import.review.v1 vehicles.fleet_import.apply.v1"`.
+Fleet reads for recovery require their own consent, or use the fleet in your
+browser. This does not expand an existing saved connection.

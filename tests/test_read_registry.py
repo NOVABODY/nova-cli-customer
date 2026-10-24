@@ -29,8 +29,8 @@ class Reader:
                 "per_page": (query or {}).get("per_page", 50), "keyset": True}
 
 
-def test_registry_contains_30_reads_25_writes_and_4_events_without_admin_or_generic_api():
-    assert len(reads.BY_COMMAND) == 59
+def test_registry_contains_30_reads_27_full_scope_tools_and_4_events_without_admin_or_generic_api():
+    assert len(reads.BY_COMMAND) == 61
     assert {
         "defect photos",
         "defect pull",
@@ -232,8 +232,8 @@ def test_mcp_annotations_disclose_file_writes():
     )
     for tool in result.root.tools:
         assert tool.annotations.readOnlyHint == (
-            tool.name not in reads.FILE_TOOLS | reads.WRITE_TOOLS | EVENT_LOCAL_TOOLS
+            tool.name == "preview_fleet_import" or tool.name not in reads.FILE_TOOLS | reads.WRITE_TOOLS | EVENT_LOCAL_TOOLS
         )
         assert tool.annotations.idempotentHint == (
-            tool.name not in reads.FILE_TOOLS | reads.WRITE_TOOLS | EVENT_LOCAL_TOOLS
+            tool.name == "preview_fleet_import" or tool.name not in reads.FILE_TOOLS | reads.WRITE_TOOLS | EVENT_LOCAL_TOOLS
         )
