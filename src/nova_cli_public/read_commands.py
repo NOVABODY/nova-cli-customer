@@ -1,8 +1,37 @@
 """Pinned customer read command declarations from the legacy CLI."""
 
+import re
+
 from nova_cli_public import legacy_reads as handlers
+from nova_cli_public.errors import UsageError
+
+
+def pave_read(args, field, prefix, template):
+    reference = getattr(args, field)
+    if not re.fullmatch(rf"(?:{prefix}-)?[0-9]+", reference):
+        raise UsageError("Use a record ID. / Use un ID de registro.")
+    return handlers.client_from_args(args).request("GET", template.format(reference))
+
 
 READ_COMMANDS = [
+    {
+        "command": "vehicle pave-reports", "tool": "list_vehicle_pave_reports",
+        "grant": "vehicles.pave_reports.list.v1",
+        "arguments": [(["vehicle_id"], {})], "groups": [],
+        "handler": lambda args: pave_read(args, "vehicle_id", "VAN", "/vehicles/{}/pave-reports"),
+    },
+    {
+        "command": "body-repair pave-reports", "tool": "list_body_repair_pave_reports",
+        "grant": "body_repair.pave.list.v1",
+        "arguments": [(["req_id"], {})], "groups": [],
+        "handler": lambda args: pave_read(args, "req_id", "BRR", "/body-repair/requests/{}/pave"),
+    },
+    {
+        "command": "body-repair pave-comparison", "tool": "compare_body_repair_pave_reports",
+        "grant": "body_repair.pave.compare.v1",
+        "arguments": [(["req_id"], {})], "groups": [],
+        "handler": lambda args: pave_read(args, "req_id", "BRR", "/body-repair/requests/{}/pave/comparison"),
+    },
     {
         "command": "auth whoami",
         "tool": "whoami",

@@ -148,3 +148,12 @@ alone was not treated as proof of write authority. Important role sources are
 `lib/permissions.js`, `lib/rolePermissions.js` and `lib/navigationAccess.js`.
 These source references document the audit; users do not need source access to
 use the CLI. Later API changes require revalidation of the affected rows.
+
+### PAVE read adapter slice
+
+The public CLI and local MCP now expose van PAVE history, Body Repair report
+lists and report comparison through three explicit read grants. See
+[consent and commands](../README.md#pave-report-reads). API role, tenant and
+held-report projections remain authoritative. This slice does not add scan,
+attachment, report mutation or file-download support. Source SDK tests prove
+adapter behavior; they do not prove an installed client joined to a deployed API.
