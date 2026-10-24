@@ -11,7 +11,9 @@ nova body-repair scope BRR-1 --out scope.pdf
 
 Use a request ID or order token from an accessible order. Optional quote references
 accept numeric or BRQ IDs, not opaque tokens. The server chooses the permitted
-customer/shop document and checks quote membership. Downloads have a 10 MiB cap.
+customer/shop document. For fleet readers, the quote must belong to the order.
+Shop readers always receive their own quote; the API ignores their quote selector.
+Downloads have a 10 MiB cap.
 Choose a new output path; an existing file is not overwritten. Output is metadata,
 not PDF bytes. Local stdio MCP exposes `download_body_repair_quote` and
 `download_body_repair_scope` with request_ref and optional quote for the quote
