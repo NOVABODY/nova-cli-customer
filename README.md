@@ -250,3 +250,6 @@ Local stdio MCP exposes `review_cortex_file` using the same local path/bytes
 contract. This is not a hosted assistant file-transfer or import-apply claim.
 Limits: 20 MiB source file and 64 KiB JSON options; existing API decoding and
 row limits also apply. No source file is rewritten or archived by review.
+
+Local MCP retains its 2 MiB response limit for Cortex previews. Use the CLI
+for a larger preview, or review a smaller source file without changing row facts.
