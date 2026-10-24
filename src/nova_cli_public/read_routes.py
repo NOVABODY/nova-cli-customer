@@ -40,3 +40,6 @@ PUBLIC_READS = {"/health", "/health/ready"}
 
 def admitted_read(path):
     return any(re.fullmatch(pattern, path) for pattern in READ_ROUTES)
+
+
+READ_POST_ROUTES = {"/vehicles/fleet-import/parse": "vehicles.fleet_import.review.v1"}

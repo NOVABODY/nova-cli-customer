@@ -9,7 +9,7 @@ not full coverage of every web workflow below.
 
 The client implements the accepted legacy commands: 52 business commands, nine
 local auth/profile commands, two health commands, and four workshop-event commands.
-MCP exposes 58 named tools; local auth/profile setup uses the browser or local CLI.
+MCP exposes the 58 legacy named tools plus Cortex file review; local auth/profile setup uses the browser or local CLI.
 The legacy ledger records compatibility tests and sampled real browser, installed
 CLI, system credential store, and stdio MCP verification. Broader web-only actions
 must not be inferred from these results or from a related command name.
@@ -31,7 +31,7 @@ web workflows; it is not a command availability or authorization table.
 | Area | Existing customer workflow to cover | Audience | Web/API owner |
 | --- | --- | --- | --- |
 | Fleet reads | List and filter vehicles; read one vehicle. **Implemented**, subject to deployment access. | DSP and shop, within scope | `MyVehicles`; `api/vehicles.js`; `routes/vehicles.py` |
-| Fleet management | Add, update, deactivate and delete eligible vehicles; replacement; VIN decode; roster import preview and confirmation; history export. | Authorized DSP fleet roles | `MyVehicles`; `api/vehicles.js`; `routes/vehicle_replacements.py` |
+| Fleet management | Cortex file review/corrections are implemented for the public CLI and local MCP, subject to its separate API grant. Import dry run/apply adapters remain pending. Add, update, deactivate and delete eligible vehicles; replacement; VIN decode; roster import preview and confirmation; history export. | Authorized DSP fleet roles | `MyVehicles`; `api/vehicles.js`; `routes/vehicle_replacements.py` |
 | Fleet updates | Pending new-van and plate-mismatch records; suggestions; grouping/filtering; reconciliation. | Authorized DSP fleet roles | `UnlistedVehiclesTab`; `api/fleetUpdates.js`; `api/unlistedVehicleReports.js` |
 | Vehicle notes and custody | Notes and permitted edits/deletion; checkout history and workshop choices; check-out/check-in with mileage, inspection or photo evidence. | DSP and shop, per action | `api/vehicles.js`; `routes/vehicles.py` |
 | Grounding and vehicle evidence | Grounding reports and allowed decisions; vehicle PAVE reports and scan handoff. | Scoped customer roles | `api/grounding.js`; `routes/grounding.py`; `routes/vehicle_pave_reports.py` |

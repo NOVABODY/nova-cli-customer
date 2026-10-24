@@ -5,13 +5,17 @@ import argparse
 from nova_cli_public import __version__
 from nova_cli_public.errors import UsageError
 from nova_cli_public.event_commands import EVENT_LOCAL_TOOLS
-from nova_cli_public.read_routes import READ_ROUTES
+from nova_cli_public.read_routes import READ_POST_ROUTES, READ_ROUTES
 from nova_cli_public.reads import BY_COMMAND, BY_TOOL, CustomerReadService, input_model
 from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 
 # Only effect/usage information lives here. Arguments come from the real parser;
 # fleet input/output contracts come from the same models used during execution.
 DETAILS = {
+    "fleet-import review": (
+        "Review a Cortex source file. Resend the unchanged file with cumulative JSON corrections.",
+        ["remote_read", "local_file_read"], "nova fleet-import review --file fleet.csv --options '{}'",
+    ),
     "capabilities": (
         "List the commands in this client. No account access is checked.",
         ["local_read"],
@@ -151,6 +155,10 @@ def manifest(parser, selected=None):
                 required_scope=operation.get("scope", "nova:read") if operation["grant"] else None,
                 required_operation=operation["grant"],
                 api_routes=[
+                    {"method": "POST", "path_pattern": path}
+                    for path, grant in READ_POST_ROUTES.items()
+                    if grant == operation["grant"]
+                ] + [
                     {"method": "GET", "path_pattern": path}
                     for path, grant in READ_ROUTES.items()
                     if grant == operation["grant"]
@@ -174,6 +182,8 @@ def manifest(parser, selected=None):
             entry["mcp_execution"] = (
                 "One page per call; managed local inbox; explicit acknowledgment."
             )
+        if name == "fleet-import review":
+            entry["effects"].append("local_file_read")
         if name == "upload photo":
             entry["effects"].append("local_file_read")
             entry["conditional_operations"] = PHOTO_COMMIT_GRANTS

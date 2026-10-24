@@ -29,8 +29,8 @@ class Reader:
                 "per_page": (query or {}).get("per_page", 50), "keyset": True}
 
 
-def test_registry_contains_29_reads_25_writes_and_4_events_without_admin_or_generic_api():
-    assert len(reads.BY_COMMAND) == 58
+def test_registry_contains_30_reads_25_writes_and_4_events_without_admin_or_generic_api():
+    assert len(reads.BY_COMMAND) == 59
     assert {
         "defect photos",
         "defect pull",
