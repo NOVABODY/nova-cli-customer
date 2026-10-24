@@ -362,3 +362,15 @@ Local MCP tools are `list_body_repair_requests` and `get_body_repair_request`.
 The list keeps the API's `items` and `total` object. This slice adds no order
 changes, file downloads or automatic paging. API integration and installed-client
 verification are separate from source adapter tests.
+
+
+### Body documentation ZIP
+
+`nova body-repair documentation BRR-0001 --lang es --out documentation.zip`
+saves the original authorized ZIP (64 MiB limit), without extraction or overwrite.
+`--lang` selects `en` or `es` (default `en`) for receipt text and filenames.
+Local MCP `download_body_repair_documentation` takes `request_ref` and `lang`;
+it embeds original ZIP bytes up to 1 MiB, with size/hash metadata and no file write.
+For larger files use the CLI command or download documentation from the order.
+Requires explicit `body_repair.documents.documentation.read.v1` consent and the
+coordinated API admission/privacy fix. PDF limits and default permissions stay fixed.

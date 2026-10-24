@@ -32,6 +32,13 @@ def body_read(args, tool):
 
 READ_COMMANDS = [
     {
+        "command": "body-repair documentation", "tool": "download_body_repair_documentation", "document_kind": "documentation",
+        "description": "Read the Body repair documentation ZIP. / Consulta el ZIP de documentación de reparación de carrocería.",
+        "grant": "body_repair.documents.documentation.read.v1", "groups": [],
+        "arguments": [(["request_ref"], {}), (["--out"], {"required": True}), (["--lang"], {"choices": ["en", "es"], "default": "en"})],
+        "handler": lambda args: body_documents.download(args, "documentation"),
+    },
+    {
         "command": "body-repair invoice", "tool": "download_body_repair_invoice", "document_kind": "invoice",
         "description": "Read the available Body repair invoice or receipt PDF. / Consulta el PDF disponible de la factura o el recibo de reparación de carrocería.",
         "grant": "body_repair.documents.invoice.read.v1", "groups": [],

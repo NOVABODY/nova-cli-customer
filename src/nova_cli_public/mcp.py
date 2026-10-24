@@ -6,10 +6,11 @@ import argparse
 import asyncio
 import base64
 import json
+import shlex
 import sys
 from typing import Any
 
-from nova_cli_public.body_documents import EmbeddedPDF
+from nova_cli_public.body_documents import EmbeddedDocument
 from nova_cli_public.client import ApiClient
 from nova_cli_public.config import ConfigStore
 from nova_cli_public.errors import ApiError, AuthError, NovaCliError, UsageError
@@ -81,11 +82,11 @@ def create_server(service):
     async def call_tool(name: str, arguments: dict[str, Any]):
         try:
             data = await asyncio.to_thread(service.run, name, arguments)
-            if isinstance(data, EmbeddedPDF):
+            if isinstance(data, EmbeddedDocument):
                 descriptor = data.descriptor()
                 return types.CallToolResult(structuredContent=descriptor, content=[types.EmbeddedResource(
                     type="resource", resource=types.BlobResourceContents(uri=descriptor['uri'],
-                        mimeType="application/pdf", blob=base64.b64encode(data.data).decode('ascii')))])
+                        mimeType=descriptor["mime_type"], blob=base64.b64encode(data.data).decode('ascii')))])
             return types.CallToolResult(
                 structuredContent=data,
                 isError=name in ('preview_fleet_import', 'apply_fleet_import') and data.get('ok') is False,
@@ -96,8 +97,14 @@ def create_server(service):
         except AuthError:
             return error("authentication_required")
         except ApiError as exc:
-            if exc.code == "document_too_large":
-                return error("document_too_large")
+            if exc.code in {"document_too_large", "archive_too_large"}:
+                if exc.code == "archive_too_large":
+                    command = shlex.join(["nova", "--profile", service.client.profile.name, "body-repair", "documentation", "--out", "documentation.zip",
+                        "--lang", arguments.get("lang", "en"), "--", arguments["request_ref"]])
+                    return types.CallToolResult(isError=True,
+                        structuredContent={"error": {"code": exc.code}},
+                        content=[types.TextContent(type="text", text=f"Use {command}, or open the order in Nova. / Usa {command}, o abre la orden en Nova.")])
+                return error(exc.code)
             reset = cursor_reset_detail(exc) if name.startswith("events_") else None
             if reset:
                 return error("cursor_expired", reset)
