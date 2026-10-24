@@ -346,7 +346,14 @@ consent. Default permissions do not include these reads. List filters are
 `--status`, `--stage open`, `--limit` (1–200), `--offset` (0 or more), and
 `--vehicle-id`. These tools do not expose staff scope or fetch another page.
 For audience and losing-bidder shop rows, pass the returned `request_token` to
-`body-repair get`; those rows have no internal order ID. Use `order_number` as the
+`body-repair get`; those rows have no internal order ID. A token can start with
+`-`. Put the token after `--` so the CLI reads it as a literal value:
+
+```sh
+nova body-repair get --json -- "$request_token"
+```
+
+Use `order_number` as the
 human reference. The API owns each role's fields and visibility. Its vendor
 queue can report `total` as the returned row count, so do not infer a complete
 queue from that value or assume offset pagination applies to every role.

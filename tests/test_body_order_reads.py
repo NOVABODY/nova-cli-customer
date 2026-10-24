@@ -115,3 +115,13 @@ def test_body_detail_does_not_expand_pave_request_reference_schema():
         CustomerReadService(Client([])).run('list_body_repair_pave_reports', {'req_id': 'audience_token'})
     with pytest.raises(ApiError):
         CustomerReadService(Client([])).run('get_body_repair_request', {'request_ref': 'audience_token'})
+
+
+def test_cli_dash_leading_body_token_after_delimiter_is_one_literal_get():
+    token = '-opaque_body_token'
+    response = {'access_class': 'losing_bidder_sanitized', 'request_token': token}
+    client = Client(response)
+    args = cli.build_parser().parse_args(['body-repair', 'get', '--json', '--', token])
+    args._client = client
+    assert args.handler(args) == response
+    assert client.calls == [('GET', '/body-repair/requests/' + token, {})]
