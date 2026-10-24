@@ -14,6 +14,15 @@ def pave_read(args, field, prefix, template):
     return handlers.client_from_args(args).request("GET", template.format(reference))
 
 
+def photo_references(args):
+    from nova_cli_public.reads import MODELS, validate_response
+
+    values = MODELS['list_defect_photos'].model_validate({'defect_id': args.defect_id})
+    value = handlers.client_from_args(args).request('GET', f'/defects/{values.defect_id}/photos')
+    validate_response('list_defect_photos', value)
+    return value
+
+
 def body_read(args, tool):
     # Reuse the tool contract for CLI validation before constructing a route.
     from nova_cli_public.reads import MODELS, validate_response
@@ -43,6 +52,11 @@ def inspection_read(args, tool):
 
 
 READ_COMMANDS = [
+    {
+        'command': 'defect list-photos', 'tool': 'list_defect_photos', 'grant': 'defects.photos.list.v1',
+        'description': 'Read stored photo references. / Consulta las referencias de fotos guardadas.',
+        'groups': [], 'arguments': [(['defect_id'], {})], 'handler': photo_references,
+    },
     {
         "command": "inspection list", "tool": "list_inspections", "grant": "inspections.list.v1",
         "description": "List permitted inspections. / Consulta las inspecciones permitidas.", "groups": [],

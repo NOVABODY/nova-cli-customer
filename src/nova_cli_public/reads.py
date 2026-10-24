@@ -185,6 +185,9 @@ def input_model(entry, *, mcp=False):
                 constraints['le'] = 2147483647
             if name == 'date_to':
                 value_type = Annotated[str, AfterValidator(handlers.iso_date_arg), AfterValidator(_inspection_date_order)]
+        if entry['tool'] == 'list_defect_photos' and name == 'defect_id':
+            value_type = Annotated[str, AfterValidator(_inspection_reference)]
+            constraints['max_length'] = 100
         if name == "quote":
             constraints = {"pattern": r"^(?:BRQ-)?[0-9]+$"}
         if name == "request_ref":
@@ -364,6 +367,12 @@ def validate_response(name, value):
         or type(value.get('per_page')) is not int or not 1 <= value['per_page'] <= 100
     ):
         raise ApiError('Invalid inspection page. / Página de inspecciones no válida.')
+    if name == 'list_defect_photos' and (
+        not isinstance(value, dict) or not isinstance(value.get('items'), list)
+        or any(not isinstance(row, dict) for row in value['items'])
+        or type(value.get('total')) is not int or value['total'] < 0
+    ):
+        raise ApiError('Invalid photo response. / Respuesta de fotos no válida.')
     core = {
         "list_vehicles": ("id",),
         "get_vehicle": ("id",),
