@@ -3,6 +3,7 @@
 import re
 
 PDF_ROUTES = {
+    r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/invoice": "body_repair.documents.invoice.read.v1",
     r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/quote": "body_repair.documents.quote.read.v1",
     r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/scope": "body_repair.documents.scope.read.v1",
 }

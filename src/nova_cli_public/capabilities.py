@@ -12,6 +12,11 @@ from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 # Only effect/usage information lives here. Arguments come from the real parser;
 # fleet input/output contracts come from the same models used during execution.
 DETAILS = {
+    "body-repair invoice": (
+        "Download the available Body repair invoice or receipt PDF.",
+        ["remote_read", "local_file_write"],
+        "nova body-repair invoice BRR-1 --out invoice.pdf",
+    ),
     "defect create": (
         "Report a defect and optionally select a repair shop.",
         ["remote_write"],
@@ -186,7 +191,7 @@ def manifest(parser, selected=None):
             entry["input_schema"] = input_model(operation).model_json_schema()
             entry["effects"] = [operation.get("effect", "remote_read")] + (
                 ["local_file_write"]
-                if tool in ("download_defect_photos", "pull_defects", "pull_vehicle_reports", "download_body_repair_quote", "download_body_repair_scope")
+                if tool in ("download_defect_photos", "pull_defects", "pull_vehicle_reports", "download_body_repair_quote", "download_body_repair_scope", "download_body_repair_invoice")
                 else []
             )
         if name.startswith("events "):
