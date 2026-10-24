@@ -116,6 +116,22 @@ WRITE_COMMANDS = [
         "arguments": [
             (["wo_id"], {}),
             (["--scheduled-at"], {"help": "ISO 8601 time with explicit UTC offset."}),
+            (
+                ["--include-defect-id"],
+                {
+                    "type": "int",
+                    "action": "append",
+                    "help": "Add a defect to the visit. Repeat for each numeric defect ID. / Añade un defecto a la visita. Repite para cada ID numérico.",
+                },
+            ),
+            (
+                ["--exclude-defect-id"],
+                {
+                    "type": "int",
+                    "action": "append",
+                    "help": "Remove a defect from the visit. Repeat for each numeric defect ID. / Elimina un defecto de la visita. Repite para cada ID numérico.",
+                },
+            ),
             (["--repair-bucket"], {"choices": ["overnight", "shop", "sidelined"]}),
             (["--clear-repair-bucket"], {"default": False, "action": "store_true"}),
             (["--ro-number"], {"help": "ROWriter RO reference; preserves leading zeros."}),

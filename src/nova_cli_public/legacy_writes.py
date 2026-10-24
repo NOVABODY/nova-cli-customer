@@ -176,6 +176,20 @@ def cmd_work_order_schedule(args: argparse.Namespace) -> Any:
         if not args.ro_number.strip() or len(args.ro_number) > 60:
             raise UsageError("--ro-number must be nonblank and at most 60 characters.")
         body["ro_number"] = args.ro_number.strip()
+    selected = {}
+    for kind in ("include", "exclude"):
+        values = getattr(args, f"{kind}_defect_id", None) or []
+        if (
+            len(values) > 100
+            or any(type(value) is not int or not 1 <= value <= 2147483647 for value in values)
+            or len(set(values)) != len(values)
+        ):
+            raise UsageError("Use 100 or fewer different positive numeric defect IDs in each list. / Usa hasta 100 ID numéricos positivos diferentes por lista.")
+        selected[kind] = values
+        if values:
+            body[f"{kind}_defect_ids"] = values
+    if set(selected["include"]) & set(selected["exclude"]):
+        raise UsageError("Do not add and remove the same defect. / No añadas y elimines el mismo defecto.")
     if not body:
         raise UsageError("Provide a schedule field; omitted fields are preserved.")
     return client_from_args(args).request(
