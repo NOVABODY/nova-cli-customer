@@ -438,3 +438,13 @@ role, tenant, active work-order access and automatic approval. Input is a decima
 string greater than zero and at most 999999.99; the native receipt is preserved.
 After an unknown outcome, read the defect before another attempt. This adapter
 depends on API PR #5215 and does not establish production deployment or broad parity.
+
+Add a van with `nova vehicle create --data '{"fleet_id":"NEW1","vin":"1FTBR1C80MKA12345","plate":"NEW123","year":2021,"make":"Ford","model":"Transit"}'`.
+The `create_vehicle` MCP tool accepts the same closed `data` object. Request
+`vehicles.create.v1` and write scope at sign-in. Optional fields stay omitted
+unless supplied. The API owns uniqueness, role and tenant checks. Update-only
+fields and custody changes are not accepted by this command.
+Añade un van con `nova vehicle create --data`. Se requieren el ID de flota,
+VIN, matrícula, año, marca y modelo. Solicita el permiso `vehicles.create.v1`
+y el alcance de escritura. La API comprueba los permisos y los datos duplicados.
+

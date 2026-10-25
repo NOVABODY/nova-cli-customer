@@ -57,7 +57,28 @@ class Update(BaseModel):
     data: Metadata
 
 
-MODELS = {"decode_vehicle_vin": Vin, "update_vehicle": Update}
+class CreateData(Vin):
+    dsp_id: Positive | Annotated[str, Field(max_length=100, pattern=r"^(?:DSP-)?[0-9]{1,14}$"), AfterValidator(positive_reference)] | None = None
+    fleet_id: Annotated[str, Field(min_length=1, max_length=50)]
+    plate: Annotated[str, Field(min_length=1, max_length=20)]
+    year: Annotated[int, Field(ge=1980, le=2100)]
+    make: Annotated[str, Field(min_length=1, max_length=50)]
+    model: Annotated[str, Field(min_length=1, max_length=100)]
+    mileage: Annotated[int, Field(ge=0, le=2000000)] | None = None
+    vehicle_class: Literal['custom_delivery_van', 'regular_cargo_van', 'step_van_dot', 'electric_vehicle', 'box_truck_dot'] = 'regular_cargo_van'
+    ownership: Literal['amazon_owned', 'amazon_leased', 'dsp_owned', 'rental'] = 'amazon_owned'
+    fmc: Annotated[str, Field(max_length=50)] | None = None
+    raw_vehicle_provider: Annotated[str, Field(max_length=200)] | None = None
+    rental_id: Annotated[str, Field(max_length=50)] | None = None
+    assigned_location_id: Positive | None = None
+
+
+class Create(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    data: CreateData
+
+
+MODELS = {"decode_vehicle_vin": Vin, "update_vehicle": Update, "create_vehicle": Create}
 
 
 def run(args):
@@ -72,12 +93,20 @@ def run(args):
             data = json.loads(data)
         except ValueError as exc:
             raise UsageError("Use a JSON object of at most 64 KiB. / Usa un objeto JSON de 64 KiB como máximo.") from exc
+    if args.vehicle_tool == "create_vehicle":
+        value = Create.model_validate({"data": data})
+        return legacy_reads.client_from_args(args).request("POST", "/vehicles",
+            json_body=value.data.model_dump(exclude_unset=True))
     value = Update.model_validate({"vehicle_id": args.vehicle_id, "data": data})
     return legacy_reads.client_from_args(args).request("PATCH", "/vehicles/" + value.vehicle_id,
         json_body=value.data.model_dump(exclude_unset=True))
 
 
 COMMANDS = [
+    {"command": "vehicle create", "tool": "create_vehicle", "grant": "vehicles.create.v1",
+     "scope": "nova:read nova:write", "effect": "remote_write",
+     "arguments": [(["--data"], {"required": True, "help": "JSON object with van data. / Objeto JSON con los datos del van."})],
+     "groups": [], "handler": run, "defaults": {"vehicle_tool": "create_vehicle"}},
     {"command": "vehicle decode-vin", "tool": "decode_vehicle_vin", "grant": "vehicles.decode_vin.v1",
      "arguments": [(["vin"], {})], "groups": [], "handler": run,
      "defaults": {"vehicle_tool": "decode_vehicle_vin"}},
