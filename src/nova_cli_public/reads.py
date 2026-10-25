@@ -12,6 +12,7 @@ from pydantic import AfterValidator, ConfigDict, Field, create_model
 
 from nova_cli_public import (
     body_documents,
+    defect_cost,
     defect_reviews,
     pave_images,
     repair_requests,
@@ -27,8 +28,8 @@ from nova_cli_public.events import run_event_tool
 from nova_cli_public.read_commands import READ_COMMANDS
 from nova_cli_public.write_commands import WRITE_COMMANDS
 
-ALL_COMMANDS = READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + repair_requests.COMMANDS
-WRITE_TOOLS = {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review", "update_vehicle", "create_vehicle"}
+ALL_COMMANDS = READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + defect_cost.COMMANDS + repair_requests.COMMANDS
+WRITE_TOOLS = {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review", "update_vehicle", "create_vehicle", "set_defect_cost"}
 
 BY_COMMAND = {entry["command"]: entry for entry in ALL_COMMANDS}
 BY_TOOL = {entry["tool"]: entry for entry in ALL_COMMANDS if entry.get("mcp", True)}
@@ -113,6 +114,8 @@ def _inspection_date_order(value, info):
 def input_model(entry, *, mcp=False):
     if entry["tool"] in repair_requests.MODELS:
         return repair_requests.MODELS[entry["tool"]]
+    if entry["tool"] in defect_cost.MODELS:
+        return defect_cost.MODELS[entry["tool"]]
     if entry["tool"] in vehicle_metadata.MODELS:
         return vehicle_metadata.MODELS[entry["tool"]]
     if entry["tool"] in defect_reviews.MODELS:

@@ -430,6 +430,15 @@ la actualización nativa. Los comandos para registrar entrada y salida
 conservan su proceso de entrega y pruebas. La API aplica los permisos de
 rol, organización y campos.
 
+Set a defect cost with `nova defect set-cost FD-7 --estimated-cost 12.3450`
+or stdio MCP `set_defect_cost({"defect_id":"FD-7","estimated_cost":"12.3450"})`.
+This uses native `POST /defects/{defect_id}/cost`, operation
+`defects.cost.set.v1`, and full `nova:read nova:write` consent. The API decides
+role, tenant, active work-order access and automatic approval. Input is a decimal
+string greater than zero and at most 999999.99; the native receipt is preserved.
+After an unknown outcome, read the defect before another attempt. This adapter
+depends on API PR #5215 and does not establish production deployment or broad parity.
+
 Add a van with `nova vehicle create --data '{"fleet_id":"NEW1","vin":"1FTBR1C80MKA12345","plate":"NEW123","year":2021,"make":"Ford","model":"Transit"}'`.
 The `create_vehicle` MCP tool accepts the same closed `data` object. Request
 `vehicles.create.v1` and write scope at sign-in. Optional fields stay omitted

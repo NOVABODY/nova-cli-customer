@@ -177,6 +177,14 @@ custody remains read-only in the internal and hosted machine interfaces.
 Matching API operation admission is a deployment dependency; these adapters do
 not publish packages or deploy the API.
 
+Defect cost entry adds CLI `defect set-cost` and stdio `set_defect_cost` through
+native `POST /defects/{defect_id}/cost` and `defects.cost.set.v1`. The decimal
+string is forwarded without rounding; native automatic approval is retained.
+Full write consent and server role/tenant/work-order policy apply. Invalid
+receipts produce an unknown outcome without a retry. API #5215 remains the
+service-account authorization dependency; this is adapter evidence, not release
+or complete customer parity evidence.
+
 Vehicle creation adds `vehicle create --data` / `create_vehicle` using the native
 14-field create body. Fleet ID, VIN, plate, year, make and model are required.
 Create inputs exclude update-only fields and custody state. Each call uses the
