@@ -39,6 +39,7 @@ class Metadata(BaseModel):
     raw_vehicle_provider: Annotated[str, Field(max_length=200)] | None = None
     rental_id: Annotated[str, Field(max_length=50)] | None = None
     assigned_location_id: Positive | None = None
+    location: Literal['parking_lot', 'offsite', 'checked_out'] | None = None
     vin_override_reason: Annotated[str, Field(max_length=500)] | None = None
     expected_mileage: Annotated[int, Field(ge=0)] | None = None
     mileage_correction_reason: Annotated[str, Field(max_length=500)] | None = None

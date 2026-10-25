@@ -170,12 +170,16 @@ This client addition requires the corresponding API operations to be deployed.
 VIN decode and metadata update add two named CLI/stdio interactions,
 `decode_vehicle_vin` and `update_vehicle`, with separate delegated operation
 consent. The update uses the native partial-body contract and retains explicit
-null/false/zero values. Location transitions remain in the check-in/check-out
-workflow. Matching API operation admission is a deployment dependency; these
-adapters do not publish packages or deploy the API.
+null/false/zero values. Authorized human updates include the native `location`
+enum: `parking_lot`, `offsite` and `checked_out`. Existing check-in/check-out
+commands retain their normal handoff and evidence workflow. Service-account
+custody remains read-only in the internal and hosted machine interfaces.
+Matching API operation admission is a deployment dependency; these adapters do
+not publish packages or deploy the API.
 
 Vehicle creation adds `vehicle create --data` / `create_vehicle` using the native
 14-field create body. Fleet ID, VIN, plate, year, make and model are required.
 Create inputs exclude update-only fields and custody state. Each call uses the
 existing write consent and native API checks; `vehicles.create.v1` admission is
 a deployment dependency. Optional native defaults are not sent unless supplied.
+
