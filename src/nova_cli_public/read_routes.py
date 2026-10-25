@@ -9,6 +9,7 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/vehicles/decode-vin/[A-HJ-NPR-Z0-9]{17}": "vehicles.decode_vin.v1",
     r"/inspections": "inspections.list.v1",
     r"/inspections/(?:INS-)?[0-9]{1,14}": "inspections.get.v1",
     r"/defect-reviews/queue": "defect_reviews.queue.list.v1",

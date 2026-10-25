@@ -166,3 +166,10 @@ closed review body, including internal or external repair destinations,
 additional defects, rush context, and responsibility acknowledgement. The API
 continues to enforce role, tenant, routing eligibility, and audit attribution.
 This client addition requires the corresponding API operations to be deployed.
+
+VIN decode and metadata update add two named CLI/stdio interactions,
+`decode_vehicle_vin` and `update_vehicle`, with separate delegated operation
+consent. The update uses the native partial-body contract and retains explicit
+null/false/zero values. Location transitions remain in the check-in/check-out
+workflow. Matching API operation admission is a deployment dependency; these
+adapters do not publish packages or deploy the API.
