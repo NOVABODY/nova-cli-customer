@@ -448,3 +448,12 @@ Añade un van con `nova vehicle create --data`. Se requieren el ID de flota,
 VIN, matrícula, año, marca y modelo. Solicita el permiso `vehicles.create.v1`
 y el alcance de escritura. La API comprueba los permisos y los datos duplicados.
 
+
+Read native repair requests with `nova repair-request list`, `get RR-7`, or
+`external-vendor-options RR-7`. Stdio tools are `list_repair_requests`,
+`get_repair_request` and `list_repair_request_external_vendor_options`. Request
+`repair_requests.list.v1`, `repair_requests.get.v1` or
+`repair_requests.external_vendor_options.list.v1` at sign-in. List filters use
+the native status and rental routing fields; one page defaults to 100 records
+and permits at most 500. Native fields and totals stay unchanged. Routing and
+approval mutations are excluded. Companion API admission must be deployed.
