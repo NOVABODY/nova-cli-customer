@@ -392,3 +392,17 @@ JSON is preserved. The two named reads require explicit inspection-operation con
 Consulta las inspecciones permitidas con `nova inspection list` y `nova inspection get`.
 Si no se indica el estado, se usa el estado enviado de la API. Usa la página y el
 número de filas por página para consultar más resultados. No se descargan fotos ni XLSX.
+
+### Stored photo references
+
+Use `nova defect list-photos FD-123` or the local MCP tool `list_defect_photos`
+to read permitted photo metadata. The response retains `items`, `total` and
+all permitted fields. This read requires `defects.photos.list.v1` consent.
+It does not fetch a provider URL or download files. Use the existing
+`defect photos` command to download photos.
+
+Usa `nova defect list-photos FD-123` o la herramienta local MCP
+`list_defect_photos` para consultar los metadatos de fotos permitidos. La
+respuesta conserva `items`, `total` y los campos permitidos. Esta consulta
+requiere el permiso `defects.photos.list.v1`. No accede a una URL del
+proveedor ni descarga archivos. Usa `defect photos` para descargar fotos.
