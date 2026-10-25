@@ -184,3 +184,10 @@ Full write consent and server role/tenant/work-order policy apply. Invalid
 receipts produce an unknown outcome without a retry. API #5215 remains the
 service-account authorization dependency; this is adapter evidence, not release
 or complete customer parity evidence.
+
+Vehicle creation adds `vehicle create --data` / `create_vehicle` using the native
+14-field create body. Fleet ID, VIN, plate, year, make and model are required.
+Create inputs exclude update-only fields and custody state. Each call uses the
+existing write consent and native API checks; `vehicles.create.v1` admission is
+a deployment dependency. Optional native defaults are not sent unless supplied.
+
