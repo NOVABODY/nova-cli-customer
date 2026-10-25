@@ -51,3 +51,41 @@ def test_native_cost_receipt_is_not_rounded_capped_or_compared_to_input(amount):
     client = Client({'defect_id': 7, 'estimated_cost': amount, 'auto_approved': True})
     assert CustomerReadService(client).run('set_defect_cost', {'defect_id': '7', 'estimated_cost': '1'}) is client.receipt
     assert len(client.calls) == 1
+
+
+@pytest.mark.parametrize('status', [200, 401])
+def test_cost_real_client_admission_and_no_auth_retry(status, monkeypatch):
+    import io
+    import json
+    import urllib.error
+    from email.message import Message
+
+    from nova_cli_public.client import ApiClient
+    from nova_cli_public.config import Profile
+    from nova_cli_public.delegated import OPERATIONS
+
+    receipt = {'defect_id': 7, 'estimated_cost': '12.345', 'auto_approved': False}
+    calls = []
+    class Opener:
+        def open(self, request, timeout):
+            calls.append(request)
+            headers = Message()
+            headers['Content-Type'] = 'application/json'
+            if status == 401:
+                raise urllib.error.HTTPError(request.full_url, status, 'denied', headers, io.BytesIO(b'{}'))
+            response = io.BytesIO(json.dumps(receipt).encode())
+            response.status, response.headers = status, headers
+            return response
+    client = ApiClient(Profile('test', 'https://nova.example/api'), object(), opener=Opener())
+    client.access_token = 'synthetic-access'
+    monkeypatch.setattr(client, 'refresh', lambda: pytest.fail('Cost mutation must not retry via refresh'))
+    if status == 200:
+        assert CustomerReadService(client).run('set_defect_cost', {'defect_id': 'FD-7', 'estimated_cost': '12.3450'}) == receipt
+    else:
+        with pytest.raises(ApiError) as error:
+            CustomerReadService(client).run('set_defect_cost', {'defect_id': 'FD-7', 'estimated_cost': '12.3450'})
+        assert error.value.status == 401
+    assert 'defects.cost.set.v1' in OPERATIONS
+    assert len(calls) == 1 and calls[0].method == 'POST'
+    assert calls[0].full_url == 'https://nova.example/api/defects/FD-7/cost'
+    assert json.loads(calls[0].data) == {'estimated_cost': '12.3450'}
