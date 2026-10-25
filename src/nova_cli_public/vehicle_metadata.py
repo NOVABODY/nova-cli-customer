@@ -2,7 +2,7 @@
 import json
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from nova_cli_public import legacy_reads
 from nova_cli_public.defect_reviews import positive_reference
@@ -14,6 +14,11 @@ Positive = Annotated[int, Field(ge=1, le=2147483647)]
 class Vin(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     vin: Annotated[str, Field(pattern=r"^[A-HJ-NPR-Z0-9]{17}$")]
+
+    @field_validator("vin", mode="before")
+    @classmethod
+    def uppercase_vin(cls, value):
+        return value.upper() if isinstance(value, str) else value
 
 
 class Metadata(BaseModel):
