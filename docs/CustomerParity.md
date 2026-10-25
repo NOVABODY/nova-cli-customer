@@ -183,3 +183,9 @@ Create inputs exclude update-only fields and custody state. Each call uses the
 existing write consent and native API checks; `vehicles.create.v1` admission is
 a deployment dependency. Optional native defaults are not sent unless supplied.
 
+
+Native repair-request list, detail and external-vendor-option reads use separate
+`repair_requests.*.v1` grants through `repair-request` CLI commands and stdio
+MCP. Filters and response objects remain native. Existing Body and projected
+repair context reads retain their own operations. This adapter adds no routing
+mutation and does not claim deployment or complete parity.
