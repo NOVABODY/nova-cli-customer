@@ -413,3 +413,19 @@ a decision. Run `nova capabilities --command "defect-review approve" --json` for
 all routing fields. Request the exact `defect_reviews.queue.list.v1`,
 `defect_reviews.list.v1`, `defect_reviews.approve.v1`, or
 `defect_reviews.reject.v1` operations at sign-in. Decisions require write scope.
+
+Use `nova vehicle decode-vin 1FTBR1C80MKA12345` to read VIN data. Use
+`nova vehicle update VAN-1 --data '{"plate":"NEW123"}'` to change van data.
+The MCP tools are `decode_vehicle_vin` and `update_vehicle`; the update tool
+accepts a closed `data` object. Omitted fields stay unchanged. Explicit `null`
+is sent to the API. Human updates accept `location` values `parking_lot`,
+`offsite` and `checked_out` through the native partial update. Existing
+check-in/check-out commands retain their handoff and evidence workflow.
+Request `vehicles.decode_vin.v1` or `vehicles.update.v1` at sign-in. Updates
+require write scope. The API controls role, tenant, mileage and field permissions.
+Consulta los datos del VIN con `nova vehicle decode-vin`. Cambia los datos
+permitidos del van con `nova vehicle update`. Los campos omitidos no cambian.
+El campo `location` acepta `parking_lot`, `offsite` y `checked_out` mediante
+la actualización nativa. Los comandos para registrar entrada y salida
+conservan su proceso de entrega y pruebas. La API aplica los permisos de
+rol, organización y campos.
