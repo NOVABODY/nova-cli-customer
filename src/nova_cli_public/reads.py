@@ -10,7 +10,7 @@ from uuid import uuid4
 
 from pydantic import AfterValidator, ConfigDict, Field, create_model
 
-from nova_cli_public import body_documents, pave_images
+from nova_cli_public import body_documents, defect_reviews, pave_images
 from nova_cli_public import legacy_reads as handlers
 from nova_cli_public import legacy_writes as write_handlers
 from nova_cli_public.config import data_dir
@@ -21,8 +21,8 @@ from nova_cli_public.events import run_event_tool
 from nova_cli_public.read_commands import READ_COMMANDS
 from nova_cli_public.write_commands import WRITE_COMMANDS
 
-ALL_COMMANDS = READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS
-WRITE_TOOLS = {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS}
+ALL_COMMANDS = READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS
+WRITE_TOOLS = {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review"}
 
 BY_COMMAND = {entry["command"]: entry for entry in ALL_COMMANDS}
 BY_TOOL = {entry["tool"]: entry for entry in ALL_COMMANDS if entry.get("mcp", True)}
@@ -105,6 +105,8 @@ def _inspection_date_order(value, info):
 
 
 def input_model(entry, *, mcp=False):
+    if entry["tool"] in defect_reviews.MODELS:
+        return defect_reviews.MODELS[entry["tool"]]
     if mcp and entry["tool"] in EVENT_MODELS:
         return EVENT_MODELS[entry["tool"]]
     fields = {}
