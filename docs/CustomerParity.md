@@ -157,3 +157,12 @@ lists and report comparison through three explicit read grants. See
 held-report projections remain authoritative. This slice does not add scan,
 attachment, report mutation or file-download support. Source SDK tests prove
 adapter behavior; they do not prove an installed client joined to a deployed API.
+
+Native defect review now has four additional CLI commands and stdio MCP tools:
+`defect-review queue`, `history`, `approve`, and `reject`. Each requires its own
+`defect_reviews.*.v1` operation consent; decisions also require `nova:write`.
+Queue pages are limited to 200 records. Decision inputs match the native API's
+closed review body, including internal or external repair destinations,
+additional defects, rush context, and responsibility acknowledgement. The API
+continues to enforce role, tenant, routing eligibility, and audit attribution.
+This client addition requires the corresponding API operations to be deployed.

@@ -12,6 +12,10 @@ from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 # Only effect/usage information lives here. Arguments come from the real parser;
 # fleet input/output contracts come from the same models used during execution.
 DETAILS = {
+    "defect-review queue": ("List defects that need review.", ["remote_read"], "nova defect-review queue"),
+    "defect-review history": ("Read defect review history.", ["remote_read"], "nova defect-review history FD-1"),
+    "defect-review approve": ("Approve a defect and select its repair destination.", ["remote_write"], "nova defect-review approve FD-1"),
+    "defect-review reject": ("Reject a defect.", ["remote_write"], "nova defect-review reject FD-1 --reject-reason-code duplicate"),
     "body-repair invoice": (
         "Download the available Body repair invoice or receipt PDF.",
         ["remote_read", "local_file_write"],

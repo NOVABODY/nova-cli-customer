@@ -406,3 +406,10 @@ Usa `nova defect list-photos FD-123` o la herramienta local MCP
 respuesta conserva `items`, `total` y los campos permitidos. Esta consulta
 requiere el permiso `defects.photos.list.v1`. No accede a una URL del
 proveedor ni descarga archivos. Usa `defect photos` para descargar fotos.
+Review pending defects with `nova defect-review queue --limit 50`. Read the
+history with `nova defect-review history FD-1`. Use `nova defect-review approve
+FD-1` or `nova defect-review reject FD-1 --reject-reason-code duplicate` to record
+a decision. Run `nova capabilities --command "defect-review approve" --json` for
+all routing fields. Request the exact `defect_reviews.queue.list.v1`,
+`defect_reviews.list.v1`, `defect_reviews.approve.v1`, or
+`defect_reviews.reject.v1` operations at sign-in. Decisions require write scope.
