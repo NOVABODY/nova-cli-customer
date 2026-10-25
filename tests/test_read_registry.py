@@ -30,7 +30,7 @@ class Reader:
 
 
 def test_registry_contains_30_reads_27_full_scope_tools_and_4_events_without_admin_or_generic_api():
-    assert len(reads.BY_COMMAND) == 81
+    assert len(reads.BY_COMMAND) == 82
     assert {
         "defect photos",
         "defect pull",
