@@ -418,10 +418,14 @@ Use `nova vehicle decode-vin 1FTBR1C80MKA12345` to read VIN data. Use
 `nova vehicle update VAN-1 --data '{"plate":"NEW123"}'` to change van data.
 The MCP tools are `decode_vehicle_vin` and `update_vehicle`; the update tool
 accepts a closed `data` object. Omitted fields stay unchanged. Explicit `null`
-is sent to the API. Location changes use the existing check-in/check-out flow.
+is sent to the API. Human updates accept `location` values `parking_lot`,
+`offsite` and `checked_out` through the native partial update. Existing
+check-in/check-out commands retain their handoff and evidence workflow.
 Request `vehicles.decode_vin.v1` or `vehicles.update.v1` at sign-in. Updates
 require write scope. The API controls role, tenant, mileage and field permissions.
 Consulta los datos del VIN con `nova vehicle decode-vin`. Cambia los datos
 permitidos del van con `nova vehicle update`. Los campos omitidos no cambian.
-Usa el proceso de entrada y salida para cambiar la ubicación. La API aplica los
-permisos de función, organización y campos.
+El campo `location` acepta `parking_lot`, `offsite` y `checked_out` mediante
+la actualización nativa. Los comandos para registrar entrada y salida
+conservan su proceso de entrega y pruebas. La API aplica los permisos de
+rol, organización y campos.

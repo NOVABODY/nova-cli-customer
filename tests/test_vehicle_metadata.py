@@ -15,6 +15,7 @@ class Client:
 @pytest.mark.parametrize('argv,tool,arguments,expected_request', [
     (['vehicle', 'decode-vin', '1ftbr1c80mka12345'], 'decode_vehicle_vin', {'vin': '1ftbr1c80mka12345'}, ('GET', '/vehicles/decode-vin/1FTBR1C80MKA12345', {})),
     (['vehicle', 'decode-vin', '1FTBR1C80MKA12345'], 'decode_vehicle_vin', {'vin': '1FTBR1C80MKA12345'}, ('GET', '/vehicles/decode-vin/1FTBR1C80MKA12345', {})),
+    (['vehicle', 'update', 'VAN-1', '--data', '{"location":"offsite"}'], 'update_vehicle', {'vehicle_id': 'VAN-1', 'data': {'location': 'offsite'}}, ('PATCH', '/vehicles/VAN-1', {'json_body': {'location': 'offsite'}})),
     (['vehicle', 'update', 'VAN-1', '--data', '{"dsp_id":"DSP-1"}'], 'update_vehicle', {'vehicle_id': 'VAN-1', 'data': {'dsp_id': 'DSP-1'}}, ('PATCH', '/vehicles/VAN-1', {'json_body': {'dsp_id': 'DSP-1'}})),
     (['vehicle', 'update', 'VAN-1', '--data', '{"grounded":false,"fmc":null,"mileage":0}'], 'update_vehicle', {'vehicle_id': 'VAN-1', 'data': {'grounded': False, 'fmc': None, 'mileage': 0}}, ('PATCH', '/vehicles/VAN-1', {'json_body': {'grounded': False, 'fmc': None, 'mileage': 0}})),
 ])
