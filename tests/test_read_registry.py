@@ -32,6 +32,7 @@ class Reader:
 def test_registry_contains_30_reads_27_full_scope_tools_and_4_events_without_admin_or_generic_api():
     assert reads.BY_COMMAND["repair-request list"]["grant"] == "repair_requests.list.v1"
     assert reads.BY_COMMAND["defect set-cost"]["grant"] == "defects.cost.set.v1"
+    assert reads.BY_COMMAND["vehicle update-note"]["grant"] == "vehicles.notes.update.v1"
     assert {
         "defect photos",
         "defect pull",

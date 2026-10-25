@@ -119,6 +119,7 @@ def test_real_stdio_discovery_list_get_and_legacy_denial(tmp_path):
             tools = (await session.list_tools()).tools
             assert {"list_repair_requests", "get_repair_request", "list_repair_request_external_vendor_options"} <= {tool.name for tool in tools}
             assert "set_defect_cost" in {tool.name for tool in tools}
+            assert {"update_vehicle_note", "delete_vehicle_note"}.issubset({tool.name for tool in tools})
             assert all(t.outputSchema for t in tools)
             assert (await session.list_resources()).resources == []
             rows = await session.call_tool("list_vehicles", {"fleet_id": "NF001"})

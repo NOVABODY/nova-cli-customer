@@ -192,6 +192,14 @@ existing write consent and native API checks; `vehicles.create.v1` admission is
 a deployment dependency. Optional native defaults are not sent unless supplied.
 
 
+Use `vehicle update-note VAN-7 3 --body Fixed` or `vehicle delete-note VAN-7 3`
+for a note that you can manage. Request `vehicles.notes.update.v1` or
+`vehicles.notes.delete.v1` with write consent. The API checks note ownership
+and van access. List up to 200 notes with `vehicle list-notes VAN-7 --limit 200`.
+Cambia o elimina una nota que puedas gestionar con `vehicle update-note` o
+`vehicle delete-note`. La API comprueba la autoría y el acceso al van.
+Native service-account authorship and delegated admission are API deployment
+dependencies; these adapters do not publish packages or deploy the API.
 Native repair-request list, detail and external-vendor-option reads use separate
 `repair_requests.*.v1` grants through `repair-request` CLI commands and stdio
 MCP. Filters and response objects remain native. Existing Body and projected

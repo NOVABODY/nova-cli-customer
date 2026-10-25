@@ -449,6 +449,14 @@ VIN, matrícula, año, marca y modelo. Solicita el permiso `vehicles.create.v1`
 y el alcance de escritura. La API comprueba los permisos y los datos duplicados.
 
 
+Use `vehicle update-note VAN-7 3 --body Fixed` or `vehicle delete-note VAN-7 3`
+for a note that you can manage. Request `vehicles.notes.update.v1` or
+`vehicles.notes.delete.v1` with write consent. The API checks note ownership
+and van access. List up to 200 notes with `vehicle list-notes VAN-7 --limit 200`.
+Cambia o elimina una nota que puedas gestionar con `vehicle update-note` o
+`vehicle delete-note`. La API comprueba la autoría y el acceso al van.
+Native service-account authorship and delegated admission are API deployment
+dependencies; these adapters do not publish packages or deploy the API.
 Read native repair requests with `nova repair-request list`, `get RR-7`, or
 `external-vendor-options RR-7`. Stdio tools are `list_repair_requests`,
 `get_repair_request` and `list_repair_request_external_vendor_options`. Request

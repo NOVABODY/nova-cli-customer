@@ -12,6 +12,8 @@ from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 # Only effect/usage information lives here. Arguments come from the real parser;
 # fleet input/output contracts come from the same models used during execution.
 DETAILS = {
+    "vehicle update-note": ("Change a van note that you can manage.", ["remote_write"], "nova vehicle update-note VAN-7 3 --body Fixed"),
+    "vehicle delete-note": ("Delete a van note that you can manage.", ["remote_write"], "nova vehicle delete-note VAN-7 3"),
     "defect set-cost": ("Set the defect cost estimate.", ["remote_write"], "nova defect set-cost FD-7 --estimated-cost 12.3450"),
     "vehicle create": ("Add a van with the required identity data.", ["remote_write"], "nova vehicle create --data '{\"fleet_id\":\"NEW1\",\"vin\":\"1FTBR1C80MKA12345\",\"plate\":\"NEW123\",\"year\":2021,\"make\":\"Ford\",\"model\":\"Transit\"}'"),
     "vehicle decode-vin": ("Read van data from a VIN.", ["remote_read"], "nova vehicle decode-vin 1FTBR1C80MKA12345"),

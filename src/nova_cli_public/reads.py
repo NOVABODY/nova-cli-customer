@@ -17,6 +17,7 @@ from nova_cli_public import (
     pave_images,
     repair_requests,
     vehicle_metadata,
+    vehicle_note_edit,
 )
 from nova_cli_public import legacy_reads as handlers
 from nova_cli_public import legacy_writes as write_handlers
@@ -28,8 +29,8 @@ from nova_cli_public.events import run_event_tool
 from nova_cli_public.read_commands import READ_COMMANDS
 from nova_cli_public.write_commands import WRITE_COMMANDS
 
-ALL_COMMANDS = READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + defect_cost.COMMANDS + repair_requests.COMMANDS
-WRITE_TOOLS = {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review", "update_vehicle", "create_vehicle", "set_defect_cost"}
+ALL_COMMANDS = READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + vehicle_note_edit.COMMANDS + defect_cost.COMMANDS + repair_requests.COMMANDS
+WRITE_TOOLS = {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review", "update_vehicle", "create_vehicle", "update_vehicle_note", "delete_vehicle_note", "set_defect_cost"}
 
 BY_COMMAND = {entry["command"]: entry for entry in ALL_COMMANDS}
 BY_TOOL = {entry["tool"]: entry for entry in ALL_COMMANDS if entry.get("mcp", True)}
@@ -112,6 +113,8 @@ def _inspection_date_order(value, info):
 
 
 def input_model(entry, *, mcp=False):
+    if entry["tool"] in vehicle_note_edit.MODELS:
+        return vehicle_note_edit.MODELS[entry["tool"]]
     if entry["tool"] in repair_requests.MODELS:
         return repair_requests.MODELS[entry["tool"]]
     if entry["tool"] in defect_cost.MODELS:
@@ -160,7 +163,7 @@ def input_model(entry, *, mcp=False):
         if name == "per_page":
             constraints["le"] = 100 if entry["command"] in ("vehicle list", "inspection list") else 200
         if name == "limit":
-            constraints["le"] = 200 if entry["command"] == "body-repair list" else 500
+            constraints["le"] = 200 if entry["command"] in ("body-repair list", "vehicle list-notes") else 500
         if name == "offset":
             constraints["ge"] = 0
         if name in ("scheduled_within_hours", "returned_within_hours"):

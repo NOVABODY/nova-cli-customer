@@ -350,10 +350,10 @@ READ_COMMANDS = [
         "command": "vehicle list-notes",
         "tool": "list_vehicle_notes",
         "grant": "vehicles.notes.list.v1",
-        "arguments": [(["vehicle_id"], {})],
+        "arguments": [(["vehicle_id"], {}), (["--limit"], {"type": "int", "default": 50})],
         "groups": [],
         "handler": lambda args: handlers.client_from_args(args).request(
-            "GET", f"/vehicles/{args.vehicle_id}/notes"
+            "GET", f"/vehicles/{args.vehicle_id}/notes", query={"limit": args.limit}
         ),
     },
     {
