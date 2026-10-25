@@ -429,3 +429,12 @@ El campo `location` acepta `parking_lot`, `offsite` y `checked_out` mediante
 la actualización nativa. Los comandos para registrar entrada y salida
 conservan su proceso de entrega y pruebas. La API aplica los permisos de
 rol, organización y campos.
+
+Set a defect cost with `nova defect set-cost FD-7 --estimated-cost 12.3450`
+or stdio MCP `set_defect_cost({"defect_id":"FD-7","estimated_cost":"12.3450"})`.
+This uses native `POST /defects/{defect_id}/cost`, operation
+`defects.cost.set.v1`, and full `nova:read nova:write` consent. The API decides
+role, tenant, active work-order access and automatic approval. Input is a decimal
+string greater than zero and at most 999999.99; the native receipt is preserved.
+After an unknown outcome, read the defect before another attempt. This adapter
+depends on API PR #5215 and does not establish production deployment or broad parity.
