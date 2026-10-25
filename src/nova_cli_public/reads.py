@@ -92,6 +92,18 @@ def register_commands(root_subparsers):
         )
 
 
+def _inspection_reference(value):
+    if not 1 <= int(value.rsplit('-', 1)[-1]) <= 2147483647:
+        raise ValueError('Use a positive record ID. / Usa un ID de registro positivo.')
+    return value
+
+
+def _inspection_date_order(value, info):
+    if info.data.get('date_from') and value < info.data['date_from']:
+        raise ValueError('Use an end date on or after the start date. / Usa una fecha final igual o posterior a la fecha inicial.')
+    return value
+
+
 def input_model(entry, *, mcp=False):
     if mcp and entry["tool"] in EVENT_MODELS:
         return EVENT_MODELS[entry["tool"]]
@@ -131,7 +143,7 @@ def input_model(entry, *, mcp=False):
         if name in ("page", "per_page", "limit"):
             constraints["ge"] = 1
         if name == "per_page":
-            constraints["le"] = 100 if entry["command"] == "vehicle list" else 200
+            constraints["le"] = 100 if entry["command"] in ("vehicle list", "inspection list") else 200
         if name == "limit":
             constraints["le"] = 200 if entry["command"] == "body-repair list" else 500
         if name == "offset":
@@ -165,6 +177,14 @@ def input_model(entry, *, mcp=False):
             }
             if value_type is str:
                 constraints["pattern"] = rf"^(?:{prefixes[name]}-)?[0-9]+$"
+        if entry['tool'] in ('list_inspections', 'get_inspection'):
+            if name in ('inspection_id', 'dsp_id', 'vehicle_id'):
+                value_type = Annotated[str, AfterValidator(_inspection_reference)]
+                constraints['max_length'] = 14
+            if name == 'page':
+                constraints['le'] = 2147483647
+            if name == 'date_to':
+                value_type = Annotated[str, AfterValidator(handlers.iso_date_arg), AfterValidator(_inspection_date_order)]
         if name == "quote":
             constraints = {"pattern": r"^(?:BRQ-)?[0-9]+$"}
         if name == "request_ref":
@@ -330,15 +350,20 @@ class CustomerReadService:
 def validate_response(name, value):
     if not isinstance(value, (dict, list)):
         raise ApiError("Invalid read response")
-    if name in ("list_body_repair_requests", "get_body_repair_request"):
+    if name in ("list_body_repair_requests", "get_body_repair_request", "list_inspections", "get_inspection"):
         if not isinstance(value, dict):
             raise ApiError("Invalid read response")
-        if name == "list_body_repair_requests" and (
+        if name in ("list_body_repair_requests", "list_inspections") and (
             not isinstance(value.get("items"), list)
             or any(not isinstance(row, dict) for row in value["items"])
             or type(value.get("total")) is not int or value["total"] < 0
         ):
             raise ApiError("Invalid read response")
+    if name == 'list_inspections' and (
+        type(value.get('page')) is not int or value['page'] < 1
+        or type(value.get('per_page')) is not int or not 1 <= value['per_page'] <= 100
+    ):
+        raise ApiError('Invalid inspection page. / Página de inspecciones no válida.')
     core = {
         "list_vehicles": ("id",),
         "get_vehicle": ("id",),

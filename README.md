@@ -383,3 +383,12 @@ Consulta una imagen PAVE guardada con el mismo comando y el perfil público
 seleccionado. Límite de CLI: 64 MiB; límite de MCP local: 1 MiB.
 The API controls scope and POST evidence holds. This command does not run a scan,
 fetch a provider URL, or change a report. Explicit image-read consent is required.
+
+Read permitted inspection evidence with `nova inspection list --page 1 --per-page 20`
+and `nova inspection get INS-42`. List accepts DSP/van, date, result and status filters.
+An omitted status uses the API's submitted default. Pagination is explicit (1–100
+rows per page); no additional pages, photos or XLSX files are fetched. Complete API
+JSON is preserved. The two named reads require explicit inspection-operation consent.
+Consulta las inspecciones permitidas con `nova inspection list` y `nova inspection get`.
+Si no se indica el estado, se usa el estado enviado de la API. Usa la página y el
+número de filas por página para consultar más resultados. No se descargan fotos ni XLSX.
