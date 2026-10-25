@@ -44,3 +44,10 @@ def test_uncertain_receipt_is_unknown_without_retry(change):
         CustomerReadService(client).run('set_defect_cost', {'defect_id': '7', 'estimated_cost': '1'})
     assert error.value.code == 'outcome_unknown'
     assert len(client.calls) == 1
+
+
+@pytest.mark.parametrize('amount', ['0', 0, 0.0, '1000000.001', 1000000, 1.2345])
+def test_native_cost_receipt_is_not_rounded_capped_or_compared_to_input(amount):
+    client = Client({'defect_id': 7, 'estimated_cost': amount, 'auto_approved': True})
+    assert CustomerReadService(client).run('set_defect_cost', {'defect_id': '7', 'estimated_cost': '1'}) is client.receipt
+    assert len(client.calls) == 1
