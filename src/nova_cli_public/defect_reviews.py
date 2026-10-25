@@ -1,16 +1,23 @@
 """Native review adapters; authorization and routing remain in the API."""
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
 from nova_cli_public import legacy_reads
 
-DefectId = Annotated[str, Field(pattern=r"^(?:FD-)?[0-9]+$")]
+
+def positive_reference(value):
+    if not 1 <= int(value.rsplit("-", 1)[-1]) <= 2147483647:
+        raise ValueError("Use a positive record ID. / Usa un ID de registro positivo.")
+    return value
+
+
+DefectId = Annotated[str, Field(max_length=100, pattern=r"^(?:FD-)?[0-9]{1,14}$"), AfterValidator(positive_reference)]
 
 
 class Queue(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
-    dsp_id: Annotated[str, Field(pattern=r"^(?:DSP-)?[0-9]+$")] | None = None
+    dsp_id: Annotated[str, Field(max_length=100, pattern=r"^(?:DSP-)?[0-9]{1,14}$"), AfterValidator(positive_reference)] | None = None
     limit: int = Field(default=50, ge=1, le=200)
     offset: int = Field(default=0, ge=0)
 

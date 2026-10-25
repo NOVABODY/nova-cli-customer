@@ -3,8 +3,8 @@
 import re
 
 WRITE_ROUTES = {
-    ("POST", r"/defect-reviews/defect/(?:FD-)?[0-9]+/approve"): "defect_reviews.approve.v1",
-    ("POST", r"/defect-reviews/defect/(?:FD-)?[0-9]+/reject"): "defect_reviews.reject.v1",
+    ("POST", r"/defect-reviews/defect/(?:FD-)?[0-9]{1,14}/approve"): "defect_reviews.approve.v1",
+    ("POST", r"/defect-reviews/defect/(?:FD-)?[0-9]{1,14}/reject"): "defect_reviews.reject.v1",
     ("POST", r"/defects"): "defects.create.v1",
     ("POST", r"/vehicles/bulk-upsert"): "vehicles.fleet_import.apply.v1",
     ("POST", r"/work-orders/manual"): "work_orders.create.v1",

@@ -37,6 +37,11 @@ def test_cli_and_mcp_send_same_native_review_request(monkeypatch, action, tool, 
 
 @pytest.mark.parametrize("tool,args", [
     ("list_defect_review_queue", {"limit": 201}),
+    ("list_defect_review_queue", {"dsp_id": "DSP-0"}),
+    ("approve_defect_review", {"defect_id": "FD-0"}),
+    ("approve_defect_review", {"defect_id": "FD-2147483648"}),
+    ("approve_defect_review", {"defect_id": "1" * 101}),
+    ("approve_defect_review", {"defect_id": "FD-1", "additional_defect_ids": ["FD-0"]}),
     ("list_defect_review_queue", {"offset": -1}),
     ("approve_defect_review", {"defect_id": "../1"}),
     ("approve_defect_review", {"defect_id": "FD-1", "external_vendor_id": 0}),
@@ -52,4 +57,4 @@ def test_invalid_review_arguments_do_not_call_server(tool, args):
 
 def test_review_routes_require_distinct_operation_grants():
     assert READ_ROUTES[r"/defect-reviews/queue"] == "defect_reviews.queue.list.v1"
-    assert WRITE_ROUTES[("POST", r"/defect-reviews/defect/(?:FD-)?[0-9]+/approve")] == "defect_reviews.approve.v1"
+    assert WRITE_ROUTES[("POST", r"/defect-reviews/defect/(?:FD-)?[0-9]{1,14}/approve")] == "defect_reviews.approve.v1"
