@@ -3,6 +3,7 @@
 import re
 
 WRITE_ROUTES = {
+    ("POST", r"/defects/(?:FD-)?[0-9]{1,14}/cost"): "defects.cost.set.v1",
     ("POST", r"/vehicles"): "vehicles.create.v1",
     ("PATCH", r"/vehicles/(?:VAN-)?[0-9]{1,14}"): "vehicles.update.v1",
     ("POST", r"/defect-reviews/defect/(?:FD-)?[0-9]{1,14}/approve"): "defect_reviews.approve.v1",
