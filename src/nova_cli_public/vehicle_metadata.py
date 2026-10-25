@@ -23,7 +23,7 @@ class Vin(BaseModel):
 
 class Metadata(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
-    dsp_id: Positive | None = None
+    dsp_id: Positive | Annotated[str, Field(max_length=100, pattern=r"^(?:DSP-)?[0-9]{1,14}$"), AfterValidator(positive_reference)] | None = None
     fleet_id: Annotated[str, Field(min_length=1, max_length=50)] | None = None
     plate: Annotated[str, Field(min_length=1, max_length=20)] | None = None
     year: Annotated[int, Field(ge=1980, le=2100)] | None = None
