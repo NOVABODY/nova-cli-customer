@@ -176,3 +176,10 @@ commands retain their normal handoff and evidence workflow. Service-account
 custody remains read-only in the internal and hosted machine interfaces.
 Matching API operation admission is a deployment dependency; these adapters do
 not publish packages or deploy the API.
+
+Vehicle creation adds `vehicle create --data` / `create_vehicle` using the native
+14-field create body. Fleet ID, VIN, plate, year, make and model are required.
+Create inputs exclude update-only fields and custody state. Each call uses the
+existing write consent and native API checks; `vehicles.create.v1` admission is
+a deployment dependency. Optional native defaults are not sent unless supplied.
+

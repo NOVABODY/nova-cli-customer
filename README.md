@@ -429,3 +429,13 @@ El campo `location` acepta `parking_lot`, `offsite` y `checked_out` mediante
 la actualización nativa. Los comandos para registrar entrada y salida
 conservan su proceso de entrega y pruebas. La API aplica los permisos de
 rol, organización y campos.
+
+Add a van with `nova vehicle create --data '{"fleet_id":"NEW1","vin":"1FTBR1C80MKA12345","plate":"NEW123","year":2021,"make":"Ford","model":"Transit"}'`.
+The `create_vehicle` MCP tool accepts the same closed `data` object. Request
+`vehicles.create.v1` and write scope at sign-in. Optional fields stay omitted
+unless supplied. The API owns uniqueness, role and tenant checks. Update-only
+fields and custody changes are not accepted by this command.
+Añade un van con `nova vehicle create --data`. Se requieren el ID de flota,
+VIN, matrícula, año, marca y modelo. Solicita el permiso `vehicles.create.v1`
+y el alcance de escritura. La API comprueba los permisos y los datos duplicados.
+
