@@ -500,3 +500,12 @@ accepts `--subject-kind work_order` or `body_repair`; comparisons accept optiona
 rating release rules. Native fields and calculations remain unchanged. These
 reads do not submit feedback or create correction work. Request the matching
 `vendor_scorecard.get.v1` or `vendor_scorecard.benchmarks.get.v1` permission.
+
+Read the selected local day's scheduled work with
+`daily-work scheduled DSP-7 --service-date 2026-06-14` or the local MCP tool
+`list_dsp_scheduled_work`. The service date is required. The API controls the DSP
+role and tenant scope, timezone, live state, and labels. Native fields remain
+unchanged. Request `dashboards.dsp_scheduled_work.list.v1` read permission.
+
+Consulta el trabajo programado del día local con este comando o herramienta.
+Introduce la fecha del servicio. La API controla los permisos y los datos actuales.

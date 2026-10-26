@@ -12,6 +12,7 @@ from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 # Only effect/usage information lives here. Arguments come from the real parser;
 # fleet input/output contracts come from the same models used during execution.
 DETAILS = {
+    "daily-work scheduled": ("Read scheduled fleet work.", ["remote_read"], "nova daily-work scheduled DSP-7 --service-date 2026-06-14"),
     "vendor-scorecard get": ("Read vendor repair scores.", ["remote_read"], "nova vendor-scorecard get VW-7"),
     "vendor-scorecard benchmarks": ("Read vendor repair score comparisons.", ["remote_read"], "nova vendor-scorecard benchmarks VW-7"),
     **{'report ' + name: ('Read the ' + name.replace('-', ' ') + ' report.', ['remote_read'],
