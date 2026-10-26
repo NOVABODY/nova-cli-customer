@@ -9,6 +9,8 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/dashboards/inspector-performance": "reports.inspector_performance.list.v1",
+    r"/dashboards/driver-da-quality": "reports.driver_da_quality.list.v1",
     r"/vendor-scorecard/pending-feedback": "vendor_scorecard.pending_feedback.list.v1",
     r"/vendor-scorecard/problem-reports": "vendor_scorecard.problem_reports.list.v1",
     r"/vendor-scorecard/(?:VW-)?[0-9]{1,14}": "vendor_scorecard.get.v1",

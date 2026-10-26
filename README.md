@@ -506,3 +506,10 @@ reads do not submit feedback or create correction work. Request the matching
 `list_pending_vendor_feedback` reads native repairs that still need a rating. `list_vendor_problem_reports` reads native repair problem reports. The API owns the caller's role and tenant scope, active workshop scope, the pending-rating window and clamp, status normalization, and invalid-filter behavior. Optional filters stay omitted unless supplied. Native rows and fields are retained; MCP array results use the existing `items` envelope. These tools do not submit ratings or change reports.
 
 Use `nova vendor-scorecard pending-feedback [--days 30] [--dsp-id DSP-7]` and `nova vendor-scorecard problem-reports [--vendor-workshop-id VW-7] [--status open]`.
+
+
+### Report quality reads
+
+Use `nova report inspector-performance [--days 30] [--dsp-id DSP-7]` or `nova report driver-da-quality [--days 30]`. The read tools are `list_inspector_performance` and `list_driver_da_quality`. Inspector reports require a site administrator or vendor administrator. Driver reports require a DSP owner, manager or dispatcher and include their own fleet. Optional `days` accepts 1–365; omitted filters retain API defaults. The API owns role and tenant scope, invalid-report details, and calculations.
+
+Delegated reads require the exact live permissions `reports.inspector_performance.list.v1` and `reports.driver_da_quality.list.v1`. Service accounts retain the same authorized business outcome and native scope.
