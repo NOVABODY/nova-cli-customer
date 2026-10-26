@@ -12,6 +12,7 @@ from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 # Only effect/usage information lives here. Arguments come from the real parser;
 # fleet input/output contracts come from the same models used during execution.
 DETAILS = {
+    "repair-request dismiss-rental-routing": ("Dismiss a rental routing reminder.", ["remote_write"], "nova repair-request dismiss-rental-routing RR-7"),
     **{'report ' + name: ('Read the ' + name.replace('-', ' ') + ' report.', ['remote_read'],
         'nova report ' + name) for name in ('work-order-completion', 'repair-metrics', 'inspection-compliance')},
 

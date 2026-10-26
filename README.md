@@ -490,3 +490,10 @@ request after an unknown outcome before another attempt.
 Cancela una solicitud con `repair-request cancel RR-7`. La API cancela las
 órdenes de trabajo correspondientes y envía las notificaciones existentes.
 Consulta la solicitud tras un resultado desconocido antes de otro intento.
+
+Use `nova repair-request dismiss-rental-routing RR-7`, or local stdio tool
+`dismiss_rental_routing`, to dismiss an obsolete rental routing reminder.
+Request `repair_requests.rental_routing.dismiss.v1` with fresh write consent.
+The native request stays open; no cost is accepted, repair routed, or vendor
+email sent. Native role and DSP scope checks apply. After an unknown outcome,
+read the repair request before another attempt; the client never retries the write.
