@@ -466,6 +466,18 @@ the native status and rental routing fields; one page defaults to 100 records
 and permits at most 500. Native fields and totals stay unchanged. Routing and
 approval mutations are excluded. Companion API admission must be deployed.
 
+Aggregate reports use `report work-order-completion`, `report repair-metrics`, and
+`report inspection-compliance`. The local MCP tools are
+`get_work_order_completion_report`, `get_repair_metrics_report`, and
+`get_inspection_compliance_report`. Use optional `--date-from` and `--date-to`
+(`YYYY-MM-DD`) and `--dsp-id`; the first two reports also accept
+`--vendor-workshop-id`. Omit dates to use API defaults (UTC today and 30 days
+before it, or 7 days for compliance). Filters only narrow permitted records.
+Blank filters and invalid filter strings retain API behavior. The API rejects
+reversed dates and repair metric windows over 366 days. Reports retain all native
+fields, nullable metrics, SLA basis, timestamps, and series; the client does not
+calculate metrics. Each report requires its matching `reports.*.get.v1` grant.
+
 Read Fleet Updates with `nova fleet-updates list`. Use the native kind, status, group, limit and offset filters. Resolve an existing issue with `nova fleet-issue resolve 7 keep`. The other native actions are `inactive`, `update_plate` and `plate_correct`; the API checks which actions the issue permits. An inactive action can make the van inactive. These commands do not submit unlisted van reports or reconcile the fleet. Resolution requires full write consent and `fleet_issues.resolve.v1`; listing requires `fleet_updates.list.v1`.
 
 Consulta las actualizaciones de flota con `nova fleet-updates list`. Resuelve un problema con `nova fleet-issue resolve 7 keep`. La API comprueba el rol, la organización y las acciones permitidas. La acción `inactive` puede desactivar el van. Estas operaciones no envían informes de vans no incluidos ni concilian la flota.

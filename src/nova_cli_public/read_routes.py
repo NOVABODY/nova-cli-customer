@@ -9,6 +9,9 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    **{r"/dashboards/reports/" + name.replace("_", "-"): "reports." + name + ".get.v1"
+       for name in ("work_order_completion", "repair_metrics", "inspection_compliance")},
+
     r"/fleet-updates": "fleet_updates.list.v1",
     r"/repair-requests": "repair_requests.list.v1",
     r"/repair-requests/(?:RR-)?[0-9]{1,14}": "repair_requests.get.v1",
