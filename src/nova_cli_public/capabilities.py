@@ -12,6 +12,8 @@ from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 # Only effect/usage information lives here. Arguments come from the real parser;
 # fleet input/output contracts come from the same models used during execution.
 DETAILS = {
+    "fmc-company list": ("Read fleet and rental companies.", ["remote_read"], "nova fmc-company list"),
+    "vehicle set-fmc-company": ("Set the fleet or rental company for a van.", ["remote_write"], "nova vehicle set-fmc-company VAN-7 --company-id FMC-8"),
     "repair-request preview-external-vendor-options": ("Read external repair provider options before a request exists.", ["remote_read"], "nova repair-request preview-external-vendor-options --vehicle-id VAN-7 --repair-type mechanical"),
     "repair-request dismiss-rental-routing": ("Dismiss a rental routing reminder.", ["remote_write"], "nova repair-request dismiss-rental-routing RR-7"),
 
