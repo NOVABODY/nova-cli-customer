@@ -497,3 +497,13 @@ Request `repair_requests.rental_routing.dismiss.v1` with fresh write consent.
 The native request stays open; no cost is accepted, repair routed, or vendor
 email sent. Native role and DSP scope checks apply. After an unknown outcome,
 read the repair request before another attempt; the client never retries the write.
+
+Read vendor repair scores with `vendor-scorecard get VW-7` and comparisons with
+`vendor-scorecard benchmarks VW-7`. The local MCP tools are
+`get_vendor_scorecard` and `get_vendor_scorecard_benchmarks`. Both accept optional
+`--days` (1–365); omit it to use the platform scorecard window. The summary also
+accepts `--subject-kind work_order` or `body_repair`; comparisons accept optional
+`--dsp-id`. The API controls role, fleet, workshop, relationship, and anonymous
+rating release rules. Native fields and calculations remain unchanged. These
+reads do not submit feedback or create correction work. Request the matching
+`vendor_scorecard.get.v1` or `vendor_scorecard.benchmarks.get.v1` permission.
