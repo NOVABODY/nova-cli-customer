@@ -15,6 +15,7 @@ from nova_cli_public import (
     body_documents,
     defect_cost,
     defect_reviews,
+    external_preview,
     fleet_decisions,
     pave_images,
     rental_dismissal,
@@ -33,7 +34,7 @@ from nova_cli_public.events import run_event_tool
 from nova_cli_public.read_commands import READ_COMMANDS
 from nova_cli_public.write_commands import WRITE_COMMANDS
 
-ALL_COMMANDS = rental_dismissal.COMMANDS + fleet_decisions.COMMANDS + READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + vehicle_note_edit.COMMANDS + defect_cost.COMMANDS + repair_requests.COMMANDS + repair_cancel.COMMANDS + aggregate_reports.COMMANDS
+ALL_COMMANDS = external_preview.COMMANDS + rental_dismissal.COMMANDS + fleet_decisions.COMMANDS + READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + vehicle_note_edit.COMMANDS + defect_cost.COMMANDS + repair_requests.COMMANDS + repair_cancel.COMMANDS + aggregate_reports.COMMANDS
 WRITE_TOOLS = {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review", "update_vehicle", "create_vehicle", "update_vehicle_note", "delete_vehicle_note", "set_defect_cost", "resolve_fleet_issue", "cancel_repair_request", "dismiss_rental_routing"}
 
 BY_COMMAND = {entry["command"]: entry for entry in ALL_COMMANDS}
@@ -123,6 +124,8 @@ def input_model(entry, *, mcp=False):
     if entry["tool"] in fleet_decisions.MODELS:
         return fleet_decisions.MODELS[entry["tool"]]
 
+    if entry["tool"] in external_preview.MODELS:
+        return external_preview.MODELS[entry["tool"]]
     if entry["tool"] in rental_dismissal.MODELS:
         return rental_dismissal.MODELS[entry["tool"]]
     if entry["tool"] in repair_cancel.MODELS:

@@ -68,4 +68,4 @@ def admitted_read(path):
     return any(re.fullmatch(pattern, path) for pattern in READ_ROUTES)
 
 
-READ_POST_ROUTES = {"/vehicles/fleet-import/parse": "vehicles.fleet_import.review.v1"}
+READ_POST_ROUTES = {"/repair-requests/external-vendor-options/prepare": "repair_requests.external_vendor_options.preview.v1", "/vehicles/fleet-import/parse": "vehicles.fleet_import.review.v1"}

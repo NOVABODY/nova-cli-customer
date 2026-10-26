@@ -497,3 +497,11 @@ Request `repair_requests.rental_routing.dismiss.v1` with fresh write consent.
 The native request stays open; no cost is accepted, repair routed, or vendor
 email sent. Native role and DSP scope checks apply. After an unknown outcome,
 read the repair request before another attempt; the client never retries the write.
+
+`nova repair-request preview-external-vendor-options --vehicle-id VAN-7
+--repair-type mechanical` reads native vendor options before a request exists.
+Optional flags are `--defect-id` and `--service-station-code`. Local MCP tool
+`preview_repair_request_external_vendor_options` uses the same closed inputs.
+Request `repair_requests.external_vendor_options.preview.v1` read consent.
+The API owns Station, category, tenant, and contact selection. This creates no
+request, dispatch, or vendor email; recipient addresses are not returned.

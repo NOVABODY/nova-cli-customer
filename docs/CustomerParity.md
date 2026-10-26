@@ -212,3 +212,9 @@ and local MCP `dismiss_rental_routing`, using native
 fresh `repair_requests.rental_routing.dismiss.v1` write consent. This leaves the
 request open and does not accept cost or route work. Other rental routing and
 rental-cost acceptance operations remain separate coverage gaps.
+
+Pre-request external vendor discovery is available as
+`repair-request preview-external-vendor-options` and local MCP
+`preview_repair_request_external_vendor_options`, using native read-only
+`POST /repair-requests/external-vendor-options/prepare`. The typed body and
+address-free options remain API-owned. This does not route work.
