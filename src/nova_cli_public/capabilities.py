@@ -12,6 +12,9 @@ from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 # Only effect/usage information lives here. Arguments come from the real parser;
 # fleet input/output contracts come from the same models used during execution.
 DETAILS = {
+    "fleet-updates list": ("Read Fleet Updates.", ["remote_read"], "nova fleet-updates list --group decide"),
+    "fleet-issue resolve": ("Resolve a fleet issue with a native action.", ["remote_write"], "nova fleet-issue resolve 7 keep"),
+
     "repair-request cancel": ("Cancel a repair request and its open work orders. Completed requests stay fulfilled.", ["remote_write"], "nova repair-request cancel RR-7 --reason Done"),
     "vehicle update-note": ("Change a van note that you can manage.", ["remote_write"], "nova vehicle update-note VAN-7 3 --body Fixed"),
     "vehicle delete-note": ("Delete a van note that you can manage.", ["remote_write"], "nova vehicle delete-note VAN-7 3"),

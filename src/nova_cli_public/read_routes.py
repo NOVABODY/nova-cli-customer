@@ -9,6 +9,7 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/fleet-updates": "fleet_updates.list.v1",
     r"/repair-requests": "repair_requests.list.v1",
     r"/repair-requests/(?:RR-)?[0-9]{1,14}": "repair_requests.get.v1",
     r"/repair-requests/(?:RR-)?[0-9]{1,14}/external-vendor-options": "repair_requests.external_vendor_options.list.v1",

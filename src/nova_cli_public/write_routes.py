@@ -3,6 +3,8 @@
 import re
 
 WRITE_ROUTES = {
+    ("POST", r"/fleet-issues/[0-9]{1,14}/resolve"): "fleet_issues.resolve.v1",
+
     ("POST", r"/repair-requests/(?:RR-)?[0-9]{1,14}/cancel"): "repair_requests.cancel.v1",
     ("PATCH", r"/vehicles/(?:VAN-)?[0-9]{1,14}/notes/[0-9]{1,14}"): "vehicles.notes.update.v1",
     ("DELETE", r"/vehicles/(?:VAN-)?[0-9]{1,14}/notes/[0-9]{1,14}"): "vehicles.notes.delete.v1",
