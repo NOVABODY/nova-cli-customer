@@ -80,3 +80,63 @@ def test_bad_summary_is_not_success(value):
     with pytest.raises(ApiError):
         CustomerReadService(api).run('get_dsp_daily_work_summary', {'dsp_id': '7', 'service_date': DATE})
     assert len(api.calls) == 1
+
+
+@pytest.mark.parametrize('write', [False, True])
+def test_real_client_admission_and_capability_grant(write):
+    import io
+    import json
+    from email.message import Message
+
+    from nova_cli_public.client import ApiClient
+    from nova_cli_public.config import Profile
+    from nova_cli_public.read_routes import READ_ROUTES
+    from nova_cli_public.write_routes import WRITE_ROUTES
+    class Opener:
+        def __init__(self):
+            self.calls = []
+
+        def open(self, request, timeout):
+            self.calls.append(request)
+            response = io.BytesIO(json.dumps(ACK if write else SUMMARY).encode())
+            response.status, response.headers = 200, Message()
+            response.headers['Content-Type'] = 'application/json'
+            return response
+    opener = Opener()
+    api = ApiClient(Profile('test', 'https://nova.example/api'), object(), opener=opener)
+    api.access_token = 'synthetic-access'
+    name = 'acknowledge_dsp_daily_work_summary' if write else 'get_dsp_daily_work_summary'
+    assert CustomerReadService(api).run(name, {'dsp_id': '7', 'service_date': DATE}) == (ACK if write else SUMMARY)
+    async def check():
+        async with create_connected_server_and_client_session(create_server(CustomerReadService(api))) as sdk:
+            result = await sdk.call_tool(name, {'dsp_id': '7', 'service_date': DATE})
+            assert not result.isError and result.structuredContent == (ACK if write else SUMMARY)
+    asyncio.run(check())
+    assert len(opener.calls) == 2 and all(request.data is None for request in opener.calls)
+    grants = set(WRITE_ROUTES.values()) if write else set(READ_ROUTES.values())
+    assert 'dashboards.dsp_daily_work_summary.' + ('acknowledge' if write else 'get') + '.v1' in grants
+
+
+@pytest.mark.parametrize('status', [401, 500, 307])
+def test_real_ack_transport_has_no_auth_refresh_or_retry(status):
+    import io
+    from email.message import Message
+    from urllib.error import HTTPError
+
+    from nova_cli_public.client import ApiClient
+    from nova_cli_public.config import Profile
+    class Opener:
+        def __init__(self):
+            self.calls = []
+
+        def open(self, request, timeout):
+            self.calls.append(request)
+            raise HTTPError(request.full_url, status, 'synthetic', Message(), io.BytesIO(b'{}'))
+    opener = Opener()
+    api = ApiClient(Profile('test', 'https://nova.example/api'), object(), opener=opener)
+    api.access_token = 'synthetic-access'
+    with pytest.raises(ApiError) as error:
+        CustomerReadService(api).run('acknowledge_dsp_daily_work_summary', {'dsp_id': '7', 'service_date': DATE})
+    if status != 401:
+        assert error.value.code == 'outcome_unknown'
+    assert len(opener.calls) == 1

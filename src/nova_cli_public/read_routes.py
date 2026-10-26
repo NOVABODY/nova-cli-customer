@@ -9,6 +9,7 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/dashboards/dsp/(?:DSP-)?[0-9]{1,14}/daily-work-summary": "dashboards.dsp_daily_work_summary.get.v1",
     r"/dashboards/dsp/(?:DSP-)?[0-9]{1,14}/scheduled-work": "dashboards.dsp_scheduled_work.list.v1",
     r"/vendor-scorecard/(?:VW-)?[0-9]{1,14}": "vendor_scorecard.get.v1",
     r"/vendor-scorecard/(?:VW-)?[0-9]{1,14}/benchmarks": "vendor_scorecard.benchmarks.get.v1",

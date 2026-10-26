@@ -3,6 +3,7 @@
 import re
 
 WRITE_ROUTES = {
+    ("POST", r"/dashboards/dsp/(?:DSP-)?[0-9]{1,14}/daily-work-summary/[0-9]{4}-[0-9]{2}-[0-9]{2}/acknowledge"): "dashboards.dsp_daily_work_summary.acknowledge.v1",
     ("POST", r"/fleet-issues/[0-9]{1,14}/resolve"): "fleet_issues.resolve.v1",
 
     ("POST", r"/repair-requests/(?:RR-)?[0-9]{1,14}/cancel"): "repair_requests.cancel.v1",
