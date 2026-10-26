@@ -465,3 +465,12 @@ Read native repair requests with `nova repair-request list`, `get RR-7`, or
 the native status and rental routing fields; one page defaults to 100 records
 and permits at most 500. Native fields and totals stay unchanged. Routing and
 approval mutations are excluded. Companion API admission must be deployed.
+
+Cancel a repair request with `repair-request cancel RR-7 --reason Done`.
+Request `repair_requests.cancel.v1` and write consent. The API cancels eligible
+child work orders and sends the existing notifications. Completed requests
+remain fulfilled; the returned status reflects the native rollup. Read the
+request after an unknown outcome before another attempt.
+Cancela una solicitud con `repair-request cancel RR-7`. La API cancela las
+órdenes de trabajo correspondientes y envía las notificaciones existentes.
+Consulta la solicitud tras un resultado desconocido antes de otro intento.
