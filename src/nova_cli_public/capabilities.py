@@ -14,6 +14,9 @@ from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 DETAILS = {
     "repair-request preview-external-vendor-options": ("Read external repair provider options before a request exists.", ["remote_read"], "nova repair-request preview-external-vendor-options --vehicle-id VAN-7 --repair-type mechanical"),
     "repair-request dismiss-rental-routing": ("Dismiss a rental routing reminder.", ["remote_write"], "nova repair-request dismiss-rental-routing RR-7"),
+
+    "vendor-scorecard get": ("Read vendor repair scores.", ["remote_read"], "nova vendor-scorecard get VW-7"),
+    "vendor-scorecard benchmarks": ("Read vendor repair score comparisons.", ["remote_read"], "nova vendor-scorecard benchmarks VW-7"),
     **{'report ' + name: ('Read the ' + name.replace('-', ' ') + ' report.', ['remote_read'],
         'nova report ' + name) for name in ('work-order-completion', 'repair-metrics', 'inspection-compliance')},
 

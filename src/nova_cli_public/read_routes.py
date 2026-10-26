@@ -9,6 +9,8 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/vendor-scorecard/(?:VW-)?[0-9]{1,14}": "vendor_scorecard.get.v1",
+    r"/vendor-scorecard/(?:VW-)?[0-9]{1,14}/benchmarks": "vendor_scorecard.benchmarks.get.v1",
     **{r"/dashboards/reports/" + name.replace("_", "-"): "reports." + name + ".get.v1"
        for name in ("work_order_completion", "repair_metrics", "inspection_compliance")},
 

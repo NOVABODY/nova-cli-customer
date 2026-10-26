@@ -505,3 +505,13 @@ Optional flags are `--defect-id` and `--service-station-code`. Local MCP tool
 Request `repair_requests.external_vendor_options.preview.v1` read consent.
 The API owns Station, category, tenant, and contact selection. This creates no
 request, dispatch, or vendor email; recipient addresses are not returned.
+
+Read vendor repair scores with `vendor-scorecard get VW-7` and comparisons with
+`vendor-scorecard benchmarks VW-7`. The local MCP tools are
+`get_vendor_scorecard` and `get_vendor_scorecard_benchmarks`. Both accept optional
+`--days` (1–365); omit it to use the platform scorecard window. The summary also
+accepts `--subject-kind work_order` or `body_repair`; comparisons accept optional
+`--dsp-id`. The API controls role, fleet, workshop, relationship, and anonymous
+rating release rules. Native fields and calculations remain unchanged. These
+reads do not submit feedback or create correction work. Request the matching
+`vendor_scorecard.get.v1` or `vendor_scorecard.benchmarks.get.v1` permission.
