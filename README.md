@@ -490,3 +490,13 @@ request after an unknown outcome before another attempt.
 Cancela una solicitud con `repair-request cancel RR-7`. La API cancela las
 órdenes de trabajo correspondientes y envía las notificaciones existentes.
 Consulta la solicitud tras un resultado desconocido antes de otro intento.
+
+Read vendor repair scores with `vendor-scorecard get VW-7` and comparisons with
+`vendor-scorecard benchmarks VW-7`. The local MCP tools are
+`get_vendor_scorecard` and `get_vendor_scorecard_benchmarks`. Both accept optional
+`--days` (1–365); omit it to use the platform scorecard window. The summary also
+accepts `--subject-kind work_order` or `body_repair`; comparisons accept optional
+`--dsp-id`. The API controls role, fleet, workshop, relationship, and anonymous
+rating release rules. Native fields and calculations remain unchanged. These
+reads do not submit feedback or create correction work. Request the matching
+`vendor_scorecard.get.v1` or `vendor_scorecard.benchmarks.get.v1` permission.
