@@ -16,6 +16,9 @@ DETAILS = {
     "report driver-da-quality": ("Read driver report quality.", ["remote_read"], "nova report driver-da-quality"),
     "vendor-scorecard pending-feedback": ("Read repairs that need a rating.", ["remote_read"], "nova vendor-scorecard pending-feedback"),
     "vendor-scorecard problem-reports": ("Read vendor repair problem reports.", ["remote_read"], "nova vendor-scorecard problem-reports"),
+    "fmc-company list": ("Read fleet and rental companies.", ["remote_read"], "nova fmc-company list"),
+    "vehicle set-fmc-company": ("Set the fleet or rental company for a van.", ["remote_write"], "nova vehicle set-fmc-company VAN-7 --company-id FMC-8"),
+    "repair-request preview-external-vendor-options": ("Read external repair provider options before a request exists.", ["remote_read"], "nova repair-request preview-external-vendor-options --vehicle-id VAN-7 --repair-type mechanical"),
     "repair-request dismiss-rental-routing": ("Dismiss a rental routing reminder.", ["remote_write"], "nova repair-request dismiss-rental-routing RR-7"),
 
     "vendor-scorecard get": ("Read vendor repair scores.", ["remote_read"], "nova vendor-scorecard get VW-7"),
