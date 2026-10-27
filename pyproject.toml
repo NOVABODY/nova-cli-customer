@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nova-cli"
+version = "0.1.0"
+description = "Nova Fora customer command-line client"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "Nova Fora" }]
+dependencies = ["keyring>=25.0", "filelock>=3.16,<4", "pydantic>=2.9,<3"]
+
+[project.optional-dependencies]
+mcp = ["mcp>=1.30,<2"]
+dev = ["build>=1.2", "mcp>=1.30,<2", "pytest>=8.2", "ruff>=0.6"]
+
+[project.scripts]
+nova = "nova_cli_public.cli:main"
+nova-cli = "nova_cli_public.cli:main"
+nova-mcp = "nova_cli_public.mcp:main"
+
+[tool.hatch.build.targets.sdist]
+include = ["/src/nova_cli_public", "/README.md", "/docs/*.md", "/pyproject.toml"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nova_cli_public"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
