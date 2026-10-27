@@ -205,3 +205,10 @@ Native repair-request list, detail and external-vendor-option reads use separate
 MCP. Filters and response objects remain native. Existing Body and projected
 repair context reads retain their own operations. This adapter adds no routing
 mutation and does not claim deployment or complete parity.
+
+Rental reminder dismissal is available as `repair-request dismiss-rental-routing`
+and local MCP `dismiss_rental_routing`, using native
+`POST /repair-requests/{rr_id}/dismiss-rental-routing` with no body/query and
+fresh `repair_requests.rental_routing.dismiss.v1` write consent. This leaves the
+request open and does not accept cost or route work. Other rental routing and
+rental-cost acceptance operations remain separate coverage gaps.
