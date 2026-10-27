@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "nova-cli"
 version = "0.1.0"
-description = "Customer Nova Fora client with browser login and delegated customer reads"
+description = "Nova Fora customer command-line client"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Proprietary" }
@@ -20,6 +20,9 @@ dev = ["build>=1.2", "mcp>=1.30,<2", "pytest>=8.2", "ruff>=0.6"]
 nova = "nova_cli_public.cli:main"
 nova-cli = "nova_cli_public.cli:main"
 nova-mcp = "nova_cli_public.mcp:main"
+
+[tool.hatch.build.targets.sdist]
+include = ["/src/nova_cli_public", "/README.md", "/docs/*.md", "/pyproject.toml"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nova_cli_public"]

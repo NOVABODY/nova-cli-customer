@@ -1,39 +1,33 @@
 # Nova CLI
 
 The customer Nova Fora client signs in through your browser and uses the existing
-customer workflows. The CLI and local MCP share 58 named operations,
+customer workflows. The CLI and local MCP share named operations,
 including vehicle, work-order, defect and vehicle-report reads, photo downloads,
 cursor-based packages, notifications, search, team defaults, and health checks.
 It does not accept passwords or service keys or expose arbitrary API commands.
 The named customer write and photo-upload commands require explicit write consent.
 Workshop event tools provide durable delivery with explicit local acknowledgment.
 
-**Private preview:** This repository remains private. Public release requires a separate decision.
-
-**Deployment availability:** your Nova deployment must support native browser authorization and
-allow your account to connect. Publishing this client does not enable that API
-or approve a customer rollout. Contact your Nova administrator for availability.
-
 ## Install
 
-Requires Python 3.11 or later and a working OS credential store.
+Use Python 3.11 or later and a working OS credential store. Install the release
+wheel supplied by Nova in a dedicated environment:
 
 ```sh
-pip install 'nova-cli @ git+https://github.com/NOVABODY/nova-cli-customer.git'
+python3 -m venv .venv
+. .venv/bin/activate
+python3 -m pip install ./nova_cli-0.1.0-py3-none-any.whl
 nova --help
 ```
 
-This is a source install. No package-registry release is implied. If you used the
-older private operator package named `nova-cli`, replace it with the private
-`nova-cli-internal` package before installing this public package. Update operator
-scripts to `nova-internal`; `nova` now selects this public client. Do not copy
-internal profiles or credentials. The private repository's migration guide has
-the internal installation steps.
+Use the file name supplied with your release if its version differs. These steps
+do not assume that a package-registry release is available. Your Nova deployment
+must allow browser connections and the operations you request.
 
 ## Use
 
 ```sh
-nova profile set personal --api https://YOUR_NOVA_HOST/api
+nova profile set personal --api https://app.nova4a.com/api
 nova --profile personal auth login
 nova vehicle list --status grounded --json
 nova vehicle get VAN-0001 --json
@@ -41,6 +35,8 @@ nova auth status
 nova auth refresh
 nova auth logout
 ```
+
+Use `profile set NAME --api URL` when your account uses a different Nova deployment.
 
 Login opens Nova in your browser. Check the account and permissions, then approve
 or decline. The client uses S256 PKCE and a bound local callback. Refresh tokens
@@ -56,11 +52,13 @@ each Nova host. `NOVA_PUBLIC_PROFILE` can select a saved public profile.
 ## Local MCP
 
 ```sh
-pip install 'nova-cli[mcp] @ git+https://github.com/NOVABODY/nova-cli-customer.git'
+python3 -m pip install './nova_cli-0.1.0-py3-none-any.whl[mcp]'
 nova-mcp --profile personal
 ```
 
-Configure a local MCP host to launch that command over stdio. It exposes the same
+Use the same dedicated environment as the CLI. The separate HTTP MCP service
+also uses a `nova-mcp` command; install that service in a different environment.
+Configure a local MCP client to launch the command above over stdio. It exposes the same
 customer handlers as the CLI through named tools. Run `nova capabilities
 --json` for the tool names and schemas. API responses retain the fields authorized
 for your role; the client does not replace full vehicle records with a projection.
@@ -79,35 +77,6 @@ and connection; a new sign-in cannot reuse another account's cursor. A failed
 file or stdout write does not advance the cursor. Disconnect in Nova to deny
 subsequent calls, including from an already-running MCP process.
 
-## Separation from the private operator CLI
-
-| Boundary | Public client | Private operator client |
-| --- | --- | --- |
-| Distribution | `nova-cli` | `nova-cli-internal` |
-| Command | `nova` / `nova-cli` | `nova-internal` |
-| Python package | `nova_cli_public` | `nova_cli` |
-| Local MCP | `nova-mcp` | `nova-internal-mcp` |
-| Config/data/keyring/lock namespace | `nova-cli-public` | legacy `nova-cli` |
-| Profile environment | `NOVA_PUBLIC_PROFILE` | `NOVA_PROFILE` |
-
-The public client does not read internal profiles, credentials or environment
-selectors. Both packages can coexist. This is an accidental-use boundary; the
-API remains responsible for authorization on every request.
-
-## Development
-
-```sh
-uv sync --frozen --extra dev
-uv run ruff check .
-uv run pytest -q
-uv build
-```
-
-Tests use synthetic data and credentials. They exercise the real loopback callback
-and MCP SDK stdio, credential rotation and failure handling, route/argument
-restrictions and response projections. They do not prove customer activation or
-compatibility with every hosted assistant.
-
 ## Discover capabilities
 
 Run `nova capabilities` for the full command table of contents. Agents can use
@@ -117,9 +86,8 @@ to inspect one command. Discovery is offline and requires no credentials. It
 does not claim that an account or deployment permits an operation.
 
 The CLI provides named customer reads, changes, uploads, and workshop events.
-The parity ledger records implementation and verification status.
-See [customer workflow coverage](docs/CustomerParity.md) for the full inventory,
-missing workflows, browser handoffs, and implementation sequence.
+See the [command reference](docs/Commands.md) and [workflow coverage](docs/CustomerParity.md)
+for available actions and browser handoffs.
 
 ## Consent and legacy read commands
 
@@ -141,19 +109,14 @@ nova defect pull --vehicle VAN-0001 --out ./defects.json
 ```
 
 `wo` and `work-orders`, `defects`, and `notifications` retain the legacy aliases.
-The legacy `defect list --status` filter runs on the returned page, as before.
+The `defect list --status` filter runs on the returned page.
 Use `nova COMMAND --help` for each command's options. Capability discovery lists
 required operation IDs without granting access. A list-only grant cannot read
 record detail. Work-order waits and line-item reads use the work-order detail
 grant; package pulls use the corresponding list grant.
 
-The legacy read handlers and their behavioral tests were extracted from source
-tree `c2298bbf8b1c17e5f520dcc3aefa5ce172ab12ec`. They run entirely inside the
-public package; the private operator package is not a dependency. The shared
-registry supplies CLI registration, MCP tools and capability discovery.
-See [legacy parity](docs/LegacyCliParity.md) for the complete command ledger,
-verification evidence and explicit exclusions. Your deployment must
-support the declared delegated contracts before these operations can succeed.
+See [command compatibility](docs/LegacyCliParity.md) for aliases and client behavior.
+Your deployment must allow the requested operation before a command can succeed.
 
 ## Customer changes and photo uploads
 
@@ -243,8 +206,7 @@ Repeated calls return unacknowledged events. The result reports
 `pending_count` and `backpressure`; use `events_ack` after processing each item.
 Local inbox effects are declared in MCP annotations and offline capabilities.
 
-Vehicle-report pulls require API support for strict timestamp/ID keysets
-(API #5027). Each page confirms `keyset: true`. Older APIs fail without advancing
+Vehicle-report pulls use strict timestamp/ID keysets. Each page confirms `keyset: true`. Older APIs fail without advancing
 the cursor. Pulls use offset zero with the saved `(updated_at, id)` boundary so
 an earlier report moving forward does not hide an unprocessed report. A newer
 version replaces the earlier version within a pull; consumers upsert between
@@ -346,7 +308,7 @@ consent. Default permissions do not include these reads. List filters are
 `--status`, `--stage open`, `--limit` (1–200), `--offset` (0 or more), and
 `--vehicle-id`. These tools do not expose staff scope or fetch another page.
 For audience and losing-bidder shop rows, pass the returned `request_token` to
-`body-repair get`; those rows have no internal order ID. A token can start with
+`body-repair get`; use the token for those rows. A token can start with
 `-`. Put the token after `--` so the CLI reads it as a literal value:
 
 ```sh
@@ -359,9 +321,8 @@ queue can report `total` as the returned row count, so do not infer a complete
 queue from that value or assume offset pagination applies to every role.
 
 Local MCP tools are `list_body_repair_requests` and `get_body_repair_request`.
-The list keeps the API's `items` and `total` object. This slice adds no order
-changes, file downloads or automatic paging. API integration and installed-client
-verification are separate from source adapter tests.
+The list keeps the API's `items` and `total` object. These two tools read orders and do not fetch another page automatically.
+Use the separate document commands for file downloads.
 
 
 ### Body documentation ZIP
@@ -436,8 +397,7 @@ This uses native `POST /defects/{defect_id}/cost`, operation
 `defects.cost.set.v1`, and full `nova:read nova:write` consent. The API decides
 role, tenant, active work-order access and automatic approval. Input is a decimal
 string greater than zero and at most 999999.99; the native receipt is preserved.
-After an unknown outcome, read the defect before another attempt. This adapter
-depends on API PR #5215 and does not establish production deployment or broad parity.
+After an unknown outcome, read the defect before another attempt.
 
 Add a van with `nova vehicle create --data '{"fleet_id":"NEW1","vin":"1FTBR1C80MKA12345","plate":"NEW123","year":2021,"make":"Ford","model":"Transit"}'`.
 The `create_vehicle` MCP tool accepts the same closed `data` object. Request
@@ -455,8 +415,7 @@ for a note that you can manage. Request `vehicles.notes.update.v1` or
 and van access. List up to 200 notes with `vehicle list-notes VAN-7 --limit 200`.
 Cambia o elimina una nota que puedas gestionar con `vehicle update-note` o
 `vehicle delete-note`. La API comprueba la autoría y el acceso al van.
-Native service-account authorship and delegated admission are API deployment
-dependencies; these adapters do not publish packages or deploy the API.
+The server checks note ownership and the current connection permissions.
 Read native repair requests with `nova repair-request list`, `get RR-7`, or
 `external-vendor-options RR-7`. Stdio tools are `list_repair_requests`,
 `get_repair_request` and `list_repair_request_external_vendor_options`. Request

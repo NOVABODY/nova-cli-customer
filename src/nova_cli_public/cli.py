@@ -40,7 +40,7 @@ def globals_for(parser, *, child=False):
 
 def build_parser():
     parser = argparse.ArgumentParser(
-        prog="nova", description="Nova customer CLI. Browser sign-in and customer reads."
+        prog="nova", description="Nova Fora customer CLI. Use browser sign-in and permitted customer workflows."
     )
     parser.add_argument("--version", action="version", version=f"nova-cli {__version__}")
     globals_for(parser)
