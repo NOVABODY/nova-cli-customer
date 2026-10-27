@@ -3,6 +3,7 @@
 import re
 
 WRITE_ROUTES = {
+    ("POST", r"/repair-requests/(?:RR-)?[0-9]{1,14}/dismiss-rental-routing"): "repair_requests.rental_routing.dismiss.v1",
     ("POST", r"/fleet-issues/[0-9]{1,14}/resolve"): "fleet_issues.resolve.v1",
 
     ("POST", r"/repair-requests/(?:RR-)?[0-9]{1,14}/cancel"): "repair_requests.cancel.v1",
