@@ -12,6 +12,13 @@ from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 # Only effect/usage information lives here. Arguments come from the real parser;
 # fleet input/output contracts come from the same models used during execution.
 DETAILS = {
+    **{"inspection-confirmation " + action: (description, ["remote_write" if action in {"set-settings", "respond"} else "remote_read"], example)
+       for action, description, example in [
+           ("settings", "Read inspection confirmation settings.", "nova inspection-confirmation settings DSP-7"),
+           ("set-settings", "Change selected inspection confirmation settings.", "nova inspection-confirmation set-settings DSP-7 --enabled"),
+           ("get", "Read an inspection confirmation.", "nova inspection-confirmation get DVIC-7"),
+           ("respond", "Confirm or decline one inspection.", "nova inspection-confirmation respond DVIC-7 --response Y --expected-scheduled-at 2026-10-28T02:00:00Z"),
+       ]},
     "daily-work scheduled": ("Read scheduled fleet work.", ["remote_read"], "nova daily-work scheduled DSP-7 --service-date 2026-06-14"),
     "report inspector-performance": ("Read inspector report quality.", ["remote_read"], "nova report inspector-performance"),
     "report driver-da-quality": ("Read driver report quality.", ["remote_read"], "nova report driver-da-quality"),

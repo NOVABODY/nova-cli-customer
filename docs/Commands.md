@@ -6,6 +6,10 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova inspection-confirmation settings` | `get_inspection_confirmation_settings` | remote_read | `nova:read` |
+| `nova inspection-confirmation set-settings` | `update_inspection_confirmation_settings` | remote_write | `nova:read nova:write` |
+| `nova inspection-confirmation get` | `get_inspection_confirmation` | remote_read | `nova:read` |
+| `nova inspection-confirmation respond` | `respond_inspection_confirmation` | remote_write | `nova:read nova:write` |
 | `nova capabilities` | CLI setup | local_read | None |
 | `nova profile set` | CLI setup | local_config_write | None |
 | `nova profile use` | CLI setup | local_config_write | None |
@@ -123,3 +127,16 @@ client support; the server checks current account access.
 | `nova vendor-scorecard get` | `get_vendor_scorecard` | remote_read | `nova:read` |
 | `nova vendor-scorecard benchmarks` | `get_vendor_scorecard_benchmarks` | remote_read | `nova:read` |
 | `nova fmc-company list` | `list_fmc_companies` | remote_read | `nova:read` |
+
+
+Inspection confirmations are off until the DSP enables them. Enabling the DSP
+setting does not enroll any recipient or alter other notification preferences.
+Use `inspection-confirmation set-settings DSP-7 --enabled` to enable the DSP;
+use `--no-enabled` to disable it. Recipient roles are `owners`, `dispatchers`,
+or `owners_and_dispatchers`. Only supplied fields are sent.
+
+Use `inspection-confirmation respond DVIC-7 --response Y --expected-scheduled-at
+2026-10-28T02:00:00Z` to confirm one unchanged appointment. N declines that
+occurrence only. A response does not record a key count or complete an inspection.
+Read the confirmation before another attempt if the outcome is unknown. These
+operations require new explicit assistant consent and the caller's live scope.
