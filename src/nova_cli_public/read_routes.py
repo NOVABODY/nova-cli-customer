@@ -9,6 +9,13 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/dashboards/dsp/(?:DSP-)?[0-9]{1,14}/daily-work-summary": "dashboards.dsp_daily_work_summary.get.v1",
+    r"/dashboards/dsp/(?:DSP-)?[0-9]{1,14}/scheduled-work": "dashboards.dsp_scheduled_work.list.v1",
+    r"/dashboards/inspector-performance": "reports.inspector_performance.list.v1",
+    r"/dashboards/driver-da-quality": "reports.driver_da_quality.list.v1",
+    r"/vendor-scorecard/pending-feedback": "vendor_scorecard.pending_feedback.list.v1",
+    r"/vendor-scorecard/problem-reports": "vendor_scorecard.problem_reports.list.v1",
+    r"/fmc-companies": "fmc_companies.list.v1",
     r"/vendor-scorecard/(?:VW-)?[0-9]{1,14}": "vendor_scorecard.get.v1",
     r"/vendor-scorecard/(?:VW-)?[0-9]{1,14}/benchmarks": "vendor_scorecard.benchmarks.get.v1",
     **{r"/dashboards/reports/" + name.replace("_", "-"): "reports." + name + ".get.v1"
@@ -70,4 +77,4 @@ def admitted_read(path):
     return any(re.fullmatch(pattern, path) for pattern in READ_ROUTES)
 
 
-READ_POST_ROUTES = {"/vehicles/fleet-import/parse": "vehicles.fleet_import.review.v1"}
+READ_POST_ROUTES = {"/repair-requests/external-vendor-options/prepare": "repair_requests.external_vendor_options.preview.v1", "/vehicles/fleet-import/parse": "vehicles.fleet_import.review.v1"}
