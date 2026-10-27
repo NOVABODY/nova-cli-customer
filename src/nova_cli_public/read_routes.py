@@ -9,6 +9,8 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/inspection-confirmations/settings/(?:DSP-)?[0-9]{1,14}": "inspection_confirmations.settings.get.v1",
+    r"/inspection-confirmations/(?:DVIC-)?[0-9]{1,14}": "inspection_confirmations.get.v1",
     r"/dashboards/dsp/(?:DSP-)?[0-9]{1,14}/daily-work-summary": "dashboards.dsp_daily_work_summary.get.v1",
     r"/dashboards/dsp/(?:DSP-)?[0-9]{1,14}/scheduled-work": "dashboards.dsp_scheduled_work.list.v1",
     r"/dashboards/inspector-performance": "reports.inspector_performance.list.v1",
