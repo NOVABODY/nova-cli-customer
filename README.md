@@ -498,6 +498,14 @@ The native request stays open; no cost is accepted, repair routed, or vendor
 email sent. Native role and DSP scope checks apply. After an unknown outcome,
 read the repair request before another attempt; the client never retries the write.
 
+`nova repair-request preview-external-vendor-options --vehicle-id VAN-7
+--repair-type mechanical` reads native vendor options before a request exists.
+Optional flags are `--defect-id` and `--service-station-code`. Local MCP tool
+`preview_repair_request_external_vendor_options` uses the same closed inputs.
+Request `repair_requests.external_vendor_options.preview.v1` read consent.
+The API owns Station, category, tenant, and contact selection. This creates no
+request, dispatch, or vendor email; recipient addresses are not returned.
+
 Read vendor repair scores with `vendor-scorecard get VW-7` and comparisons with
 `vendor-scorecard benchmarks VW-7`. The local MCP tools are
 `get_vendor_scorecard` and `get_vendor_scorecard_benchmarks`. Both accept optional
@@ -516,3 +524,23 @@ unchanged. Request `dashboards.dsp_scheduled_work.list.v1` read permission.
 
 Consulta el trabajo programado del día local con este comando o herramienta.
 Introduce la fecha del servicio. La API controla los permisos y los datos actuales.
+### Repair rating and problem queues
+
+`list_pending_vendor_feedback` reads native repairs that still need a rating. `list_vendor_problem_reports` reads native repair problem reports. The API owns the caller's role and tenant scope, active workshop scope, the pending-rating window and clamp, status normalization, and invalid-filter behavior. Optional filters stay omitted unless supplied. Native rows and fields are retained; MCP array results use the existing `items` envelope. These tools do not submit ratings or change reports.
+
+Use `nova vendor-scorecard pending-feedback [--days 30] [--dsp-id DSP-7]` and `nova vendor-scorecard problem-reports [--vendor-workshop-id VW-7] [--status open]`.
+
+
+### Report quality reads
+
+Use `nova report inspector-performance [--days 30] [--dsp-id DSP-7]` or `nova report driver-da-quality [--days 30]`. The read tools are `list_inspector_performance` and `list_driver_da_quality`. Inspector reports require a site administrator or vendor administrator. Driver reports require a DSP owner, manager or dispatcher and include their own fleet. Optional `days` accepts 1–365; omitted filters retain API defaults. The API owns role and tenant scope, invalid-report details, and calculations.
+
+Delegated reads require the exact live permissions `reports.inspector_performance.list.v1` and `reports.driver_da_quality.list.v1`. Service accounts retain the same authorized business outcome and native scope.
+Read fleet/rental companies with `fmc-company list`; `--include-inactive`
+retains the platform's administrator-only inactive view. Set a van's company
+with `vehicle set-fmc-company VAN-7 --company-id FMC-8`. Local MCP tools are
+`list_fmc_companies` (`active_only` defaults to true) and
+`set_vehicle_fmc_company` (closed `vehicle_id`, `company_id` inputs). Request
+`fmc_companies.list.v1` read or `vehicles.fmc_company.update.v1` write consent.
+The API owns role, tenant, active-company and rental-scope checks. An uncertain
+assignment is not retried; read the van before another attempt.

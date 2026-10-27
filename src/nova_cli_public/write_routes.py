@@ -3,6 +3,7 @@
 import re
 
 WRITE_ROUTES = {
+    ("PUT", r"/vehicles/(?:VAN-)?[0-9]{1,14}/fmc-company"): "vehicles.fmc_company.update.v1",
     ("POST", r"/repair-requests/(?:RR-)?[0-9]{1,14}/dismiss-rental-routing"): "repair_requests.rental_routing.dismiss.v1",
     ("POST", r"/fleet-issues/[0-9]{1,14}/resolve"): "fleet_issues.resolve.v1",
 
