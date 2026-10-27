@@ -42,6 +42,7 @@ class Confirmation(BaseModel):
 
 
 class Respond(Confirmation):
+    expected_confirmation_id: Annotated[int, Field(ge=1, le=2147483647)]
     response: Literal['Y', 'N']
     expected_scheduled_at: Annotated[str, AfterValidator(aware_datetime)]
 
@@ -55,6 +56,7 @@ class SettingsResult(BaseModel):
 class Result(BaseModel):
     model_config = ConfigDict(strict=True)
     schedule_id: int
+    confirmation_id: Annotated[int, Field(ge=1)] | None
     status: STATUS
     responded_at: Annotated[str, AfterValidator(aware_datetime)] | None
     responded_by_id: int | None
@@ -84,7 +86,8 @@ def run(args):
         json.dumps(value, allow_nan=False)
         if not settings and result.schedule_id != int(query.schedule_id.rsplit('-', 1)[-1]):
             raise ValueError('Wrong appointment')
-        if isinstance(query, Respond) and result.status != ('confirmed' if query.response == 'Y' else 'declined'):
+        if isinstance(query, Respond) and (result.confirmation_id != query.expected_confirmation_id
+                or result.status != ('confirmed' if query.response == 'Y' else 'declined')):
             raise ValueError('Decision was not recorded')
         if isinstance(query, Update) and any(getattr(result, key) != val for key, val in body.items()):
             raise ValueError('Settings were not recorded')
@@ -103,7 +106,8 @@ for action, name, operation, arguments in [
     ('get', 'get_inspection_confirmation', 'get', [(['schedule_id'], {})]),
     ('respond', 'respond_inspection_confirmation', 'respond', [(['schedule_id'], {}),
         (['--response'], {'required': True, 'choices': ['Y', 'N']}),
-        (['--expected-scheduled-at'], {'required': True})]),
+        (['--expected-scheduled-at'], {'required': True}),
+        (['--expected-confirmation-id'], {'required': True, 'type': 'int'})]),
 ]:
     COMMANDS.append({'command': 'inspection-confirmation ' + action, 'tool': name,
         'grant': 'inspection_confirmations.' + operation + '.v1',

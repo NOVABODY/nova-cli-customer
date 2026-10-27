@@ -136,7 +136,10 @@ use `--no-enabled` to disable it. Recipient roles are `owners`, `dispatchers`,
 or `owners_and_dispatchers`. Only supplied fields are sent.
 
 Use `inspection-confirmation respond DVIC-7 --response Y --expected-scheduled-at
-2026-10-28T02:00:00Z` to confirm one unchanged appointment. N declines that
+2026-10-28T02:00:00Z --expected-confirmation-id 17` to confirm one unchanged appointment. N declines that
 occurrence only. A response does not record a key count or complete an inspection.
 Read the confirmation before another attempt if the outcome is unknown. These
 operations require new explicit assistant consent and the caller's live scope.
+
+Use the `confirmation_id` from the current read as `--expected-confirmation-id`.
+An old response cannot apply after the appointment changes, even if its time is restored.
