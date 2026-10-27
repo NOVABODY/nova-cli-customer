@@ -516,6 +516,11 @@ rating release rules. Native fields and calculations remain unchanged. These
 reads do not submit feedback or create correction work. Request the matching
 `vendor_scorecard.get.v1` or `vendor_scorecard.benchmarks.get.v1` permission.
 
+### Repair rating and problem queues
+
+`list_pending_vendor_feedback` reads native repairs that still need a rating. `list_vendor_problem_reports` reads native repair problem reports. The API owns the caller's role and tenant scope, active workshop scope, the pending-rating window and clamp, status normalization, and invalid-filter behavior. Optional filters stay omitted unless supplied. Native rows and fields are retained; MCP array results use the existing `items` envelope. These tools do not submit ratings or change reports.
+
+Use `nova vendor-scorecard pending-feedback [--days 30] [--dsp-id DSP-7]` and `nova vendor-scorecard problem-reports [--vendor-workshop-id VW-7] [--status open]`.
 
 Read fleet/rental companies with `fmc-company list`; `--include-inactive`
 retains the platform's administrator-only inactive view. Set a van's company

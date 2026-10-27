@@ -9,6 +9,8 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/vendor-scorecard/pending-feedback": "vendor_scorecard.pending_feedback.list.v1",
+    r"/vendor-scorecard/problem-reports": "vendor_scorecard.problem_reports.list.v1",
     r"/fmc-companies": "fmc_companies.list.v1",
     r"/vendor-scorecard/(?:VW-)?[0-9]{1,14}": "vendor_scorecard.get.v1",
     r"/vendor-scorecard/(?:VW-)?[0-9]{1,14}/benchmarks": "vendor_scorecard.benchmarks.get.v1",
