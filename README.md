@@ -524,6 +524,21 @@ unchanged. Request `dashboards.dsp_scheduled_work.list.v1` read permission.
 
 Consulta el trabajo programado del día local con este comando o herramienta.
 Introduce la fecha del servicio. La API controla los permisos y los datos actuales.
+
+Read a daily work summary with `daily-work summary DSP-7 [--service-date YYYY-MM-DD]`
+or `get_dsp_daily_work_summary`. Omit the date to use the DSP-local previous day.
+Mark the summary as read with `daily-work acknowledge DSP-7 --service-date YYYY-MM-DD`
+or `acknowledge_dsp_daily_work_summary`. The acknowledgment date is required.
+The API retains native work, defect, count, label, and role/tenant rules. Read and
+acknowledgment require the matching `dashboards.dsp_daily_work_summary.get.v1` and
+`dashboards.dsp_daily_work_summary.acknowledge.v1` grants; acknowledgment needs full
+write consent. It stores this principal's read state. No automatic write retry occurs;
+read the summary after an unknown outcome before another attempt.
+
+Consulta un resumen diario con `daily-work summary`. Omite la fecha para consultar
+el día anterior en la zona horaria de la flota. Marca el resumen como leído con
+`daily-work acknowledge` y su fecha. Se requiere permiso completo para marcarlo.
+Consulta el resumen tras un resultado desconocido antes de otro intento.
 ### Repair rating and problem queues
 
 `list_pending_vendor_feedback` reads native repairs that still need a rating. `list_vendor_problem_reports` reads native repair problem reports. The API owns the caller's role and tenant scope, active workshop scope, the pending-rating window and clamp, status normalization, and invalid-filter behavior. Optional filters stay omitted unless supplied. Native rows and fields are retained; MCP array results use the existing `items` envelope. These tools do not submit ratings or change reports.
