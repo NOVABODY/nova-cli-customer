@@ -212,3 +212,19 @@ and local MCP `dismiss_rental_routing`, using native
 fresh `repair_requests.rental_routing.dismiss.v1` write consent. This leaves the
 request open and does not accept cost or route work. Other rental routing and
 rental-cost acceptance operations remain separate coverage gaps.
+
+Pre-request external vendor discovery is available as
+`repair-request preview-external-vendor-options` and local MCP
+`preview_repair_request_external_vendor_options`, using native read-only
+`POST /repair-requests/external-vendor-options/prepare`. The typed body and
+address-free options remain API-owned. This does not route work.
+
+
+Read fleet/rental companies with `fmc-company list`; `--include-inactive`
+retains the platform's administrator-only inactive view. Set a van's company
+with `vehicle set-fmc-company VAN-7 --company-id FMC-8`. Local MCP tools are
+`list_fmc_companies` (`active_only` defaults to true) and
+`set_vehicle_fmc_company` (closed `vehicle_id`, `company_id` inputs). Request
+`fmc_companies.list.v1` read or `vehicles.fmc_company.update.v1` write consent.
+The API owns role, tenant, active-company and rental-scope checks. An uncertain
+assignment is not retried; read the van before another attempt.
