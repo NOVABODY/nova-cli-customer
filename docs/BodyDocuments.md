@@ -22,7 +22,7 @@ contains an embedded application/pdf binary resource plus size, SHA-256 and
 content-addressed URN metadata. Original bytes are base64 encoded, not rendered
 as JSON text or returned through a file:// path. Local embedding has a 1 MiB
 raw byte product limit; larger documents require the CLI --out download. This
-limit is not a universal MCP host guarantee. Hosted MCP is not implemented here.
+limit is not a universal MCP host guarantee. The HTTP MCP service uses its own file limits.
 
 
 ## Invoice or receipt

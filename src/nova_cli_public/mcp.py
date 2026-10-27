@@ -149,7 +149,7 @@ async def run_stdio(server):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="nova-mcp", description="Nova customer read tools over local stdio."
+        prog="nova-mcp", description="Nova Fora customer tools over local stdio."
     )
     parser.add_argument("--profile", required=True)
     args = parser.parse_args()
