@@ -47,8 +47,15 @@ repeat writes after a 401, timeout, or unknown result. No file
 credential fallback is available. Unlock your OS credential store if access fails.
 
 `auth status` reports local credential presence, not server verification.
-`auth logout` removes the local credential. To revoke the connection on the
-server, disconnect it in Nova account settings. `profile remove NAME` also
+`auth logout` removes the local credential and requests server disconnect at
+`/oauth/revoke`. Check `server_revoked`: if false, the server disconnect is not
+confirmed. Disconnect the connection in Nova account settings. A timeout does
+not restore local credentials or retry the request. The API must include the
+revocation endpoint before this client can confirm server disconnect.
+
+`auth logout` elimina la credencial local y solicita la desconexión del servidor.
+Compruebe `server_revoked`: si es false, no se confirmó la desconexión. Desconecte
+la conexión en la configuración de su cuenta de Nova. `profile remove NAME` also
 removes only the local profile and its credential. Use a separate profile for
 each Nova host. `NOVA_PUBLIC_PROFILE` can select a saved public profile.
 
