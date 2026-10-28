@@ -481,9 +481,23 @@ def test_defect_transport_denies_writes_and_path_escape(client, method, path):
     assert not client.opener.requests
 
 
+def test_issued_access_token_records_its_refresh_deadline(monkeypatch):
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(delegated.time, 'monotonic', lambda: 100)
+    stored = []
+    client = SimpleNamespace(profile=Profile('test', 'https://nova.example/api'),
+        _send=lambda *args, **kwargs: SimpleNamespace(body=pair()),
+        token_store=SimpleNamespace(set_refresh_token=lambda *args: stored.append(args)))
+    delegated._token(client, {'grant_type': 'authorization_code', 'code': 'synthetic'})
+    assert client.access_token_expires_at == 400
+    assert client.access_token == 'opaque-access' and len(stored) == 1
+
+
 def test_logout_revokes_bound_connection_and_clears_only_local_delegated_credentials(client):
     seed(client)
     client.access_token = 'synthetic-access'
+    client.access_token_expires_at = 400
     client.opener.responses = [{}]
     assert client.logout() is True
     request = client.opener.requests[0]
@@ -494,6 +508,7 @@ def test_logout_revokes_bound_connection_and_clears_only_local_delegated_credent
     }
     assert request.get_header('Authorization') is None
     assert client.access_token is None
+    assert client.access_token_expires_at is None
     assert delegated._read(client) is None
     assert client.test_values[('nova-cli', 'personal')] == 'password-refresh'
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import json
 import re
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -87,6 +88,7 @@ class ApiClient:
         self.timeout = timeout
         self.opener = opener or urllib.request.build_opener(NoRedirects())
         self.access_token: str | None = None
+        self.access_token_expires_at: float | None = None
 
     def _validate_authenticated_target(self, path: str) -> None:
         """Prevent bearer credentials from being sent to another origin."""
@@ -318,7 +320,8 @@ class ApiClient:
         mutation = admitted_write(method, path)
         if not (mutation or (method == "GET" and admitted_read(path)) or (method == "POST" and path in READ_POST_ROUTES)):
             raise UsageError("This command is not available in the public CLI.")
-        if not self.access_token:
+        if (not self.access_token or (self.access_token_expires_at is not None
+                and time.monotonic() + 5 >= self.access_token_expires_at)):
             self.refresh()
         try:
             return self._send(
