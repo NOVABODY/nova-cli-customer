@@ -140,7 +140,7 @@ class ApiClient:
         if pdf:
             _pdf_target(method, path, query, json_body, raw_body, pdf_max_bytes)
         customer_read = (method == "GET" and (admitted_read(path) or path in PUBLIC_READS)) or (method == "POST" and path in READ_POST_ROUTES)
-        token_request = method == "POST" and path == "/oauth/token" and raw_body is not None
+        token_request = method == "POST" and path in ("/oauth/token", "/oauth/revoke") and raw_body is not None
         customer_write = admitted_write(method, path)
         if not (customer_read or customer_write or token_request):
             raise UsageError("This route is not available in the public CLI.")

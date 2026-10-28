@@ -101,8 +101,20 @@ def refresh(client):
 
 def logout(client):
     with profile_lock(client.profile.name):
+        token = _read(client)
         _delete(client)
         client.access_token = None
+        client.access_token_expires_at = None
+        if not token:
+            return False
+        try:
+            response = client._send("POST", "/oauth/revoke", raw_body=urlencode({
+                "token": token, "token_type_hint": "refresh_token", "client_id": CLIENT_ID,
+                "resource": issuer(client.profile) + "/api",
+            }).encode(), raw_content_type="application/x-www-form-urlencoded")
+            return response.status == 200
+        except Exception:  # noqa: BLE001 - transport errors may contain credentials
+            return False
 
 
 def status(client):
