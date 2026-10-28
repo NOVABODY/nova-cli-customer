@@ -20,5 +20,18 @@ jobs:
       - run: ruff check .
       - run: pytest -q
       - run: python -m build
+      - name: Install the built wheel for entry-point checks
+        run: python -m pip install --force-reinstall --no-deps dist/*.whl
       - run: nova --help
+      - run: nova-cli --help
       - run: nova-mcp --help
+      - name: Record every source and wheel file at the tested revision
+        run: python scripts/release_receipt.py --wheel dist/*.whl --revision "${{ github.sha }}" --out dist/release-receipt.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: customer-cli-${{ github.sha }}-python-${{ matrix.python-version }}
+          path: |
+            dist/*.whl
+            dist/release-receipt.json
+          if-no-files-found: error
+          retention-days: 14
