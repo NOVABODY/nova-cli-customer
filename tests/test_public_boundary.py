@@ -120,3 +120,15 @@ def test_transport_rejects_internal_or_foreign_routes_without_opening_network(me
     client = ApiClient(Profile("test", "https://nova.example/api"), object(), opener=NeverOpen())
     with pytest.raises(UsageError):
         client._send(method, path)
+
+
+def test_distribution_uses_nova_fora_name_and_retains_customer_entry_points():
+    import tomllib
+    from pathlib import Path
+
+    project = tomllib.loads((Path(__file__).parents[1] / 'pyproject.toml').read_text())['project']
+    assert project['name'] == 'nova-fora-cli', 'The customer distribution must not use the unrelated nova-cli package name'
+    assert project['scripts'] == {
+        'nova': 'nova_cli_public.cli:main', 'nova-cli': 'nova_cli_public.cli:main',
+        'nova-mcp': 'nova_cli_public.mcp:main',
+    }
