@@ -1,6 +1,6 @@
 # Nova CLI
 
-The customer Nova Fora client signs in through your browser and uses the existing
+The `nova-fora-cli` distribution provides the customer Nova Fora client. It signs in through your browser and uses the existing
 customer workflows. The CLI and local MCP share named operations,
 including vehicle, work-order, defect and vehicle-report reads, photo downloads,
 cursor-based packages, notifications, search, team defaults, and health checks.
@@ -16,12 +16,16 @@ wheel supplied by Nova in a dedicated environment:
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python3 -m pip install ./nova_cli-0.1.0-py3-none-any.whl
+python3 -m pip install ./nova_fora_cli-0.1.0-py3-none-any.whl
 nova --help
 ```
 
 Use the file name supplied with your release if its version differs. These steps
-do not assume that a package-registry release is available. Your Nova deployment
+do not assume that a package-registry release is available. Do not install the
+unrelated `nova-cli` package from a registry. Use only the wheel supplied by Nova.
+The distribution name does not change the browser client ID, keyring service,
+profile storage, or command names. Registry ownership must be verified separately
+before Nova publishes registry installation instructions. Your Nova deployment
 must allow browser connections and the operations you request.
 
 ## Use
@@ -52,9 +56,16 @@ each Nova host. `NOVA_PUBLIC_PROFILE` can select a saved public profile.
 ## Local MCP
 
 ```sh
-python3 -m pip install './nova_cli-0.1.0-py3-none-any.whl[mcp]'
-nova-mcp --profile personal
+python3 -m pip install './nova_fora_cli-0.1.0-py3-none-any.whl[mcp]'
+nova-mcp --profile personal --file-root "$PWD/agent-files"
 ```
+
+Create the input folder before you start the server. Use `--file-root` to select
+the folder for files that tools can read and upload. Paths are relative to this
+folder or absolute paths inside it. File and directory links are refused. If you
+omit `--file-root`, local input files are disabled. The model cannot change this
+setting. The server takes a bounded copy before a tool reads a file; a file swap
+cannot change that copy. Direct CLI file arguments are unchanged.
 
 Use the same dedicated environment as the CLI. The separate HTTP MCP service
 also uses a `nova-mcp` command; install that service in a different environment.

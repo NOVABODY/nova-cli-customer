@@ -264,7 +264,7 @@ def manifest(parser, selected=None):
         "mcp": {
             "command": "nova-mcp --profile PROFILE",
             "transport": "stdio",
-            "install_extra": "nova-cli[mcp]",
+            "install_extra": "nova-fora-cli[mcp]",
             "requires": "Saved profile and browser login",
             "tools": list(BY_TOOL),
             "authorization": "not_checked",
