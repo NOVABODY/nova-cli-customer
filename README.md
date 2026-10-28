@@ -57,8 +57,15 @@ each Nova host. `NOVA_PUBLIC_PROFILE` can select a saved public profile.
 
 ```sh
 python3 -m pip install './nova_fora_cli-0.1.0-py3-none-any.whl[mcp]'
-nova-mcp --profile personal
+nova-mcp --profile personal --file-root "$PWD/agent-files"
 ```
+
+Create the input folder before you start the server. Use `--file-root` to select
+the folder for files that tools can read and upload. Paths are relative to this
+folder or absolute paths inside it. File and directory links are refused. If you
+omit `--file-root`, local input files are disabled. The model cannot change this
+setting. The server takes a bounded copy before a tool reads a file; a file swap
+cannot change that copy. Direct CLI file arguments are unchanged.
 
 Use the same dedicated environment as the CLI. The separate HTTP MCP service
 also uses a `nova-mcp` command; install that service in a different environment.
