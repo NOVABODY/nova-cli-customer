@@ -82,12 +82,14 @@ def _token(client, fields, previous=None):
         raise AuthError("Delegated sign-in failed. Run `nova auth login` again.") from None
     client.token_store.set_refresh_token(credential_profile(client.profile), body["refresh_token"])
     client.access_token = body["access_token"]
+    client.access_token_expires_at = time.monotonic() + body["expires_in"]
     return body
 
 
 def refresh(client):
     with profile_lock(client.profile.name):
         client.access_token = None
+        client.access_token_expires_at = None
         token = _read(client)
         if not token:
             raise AuthError("No delegated credential is stored. Run `nova auth login`.")
@@ -101,8 +103,22 @@ def refresh(client):
 
 def logout(client):
     with profile_lock(client.profile.name):
+        token = _read(client)
         _delete(client)
         client.access_token = None
+        client.access_token_expires_at = None
+
+
+        if not token:
+            return False
+        try:
+            response = client._send("POST", "/oauth/revoke", raw_body=urlencode({
+                "token": token, "token_type_hint": "refresh_token", "client_id": CLIENT_ID,
+                "resource": issuer(client.profile) + "/api",
+            }).encode(), raw_content_type="application/x-www-form-urlencoded")
+            return response.status == 200
+        except Exception:  # noqa: BLE001 - transport errors may contain credentials
+            return False
 
 
 def status(client):

@@ -479,3 +479,69 @@ def test_defect_transport_denies_writes_and_path_escape(client, method, path):
     with pytest.raises(UsageError):
         client.request(method, path)
     assert not client.opener.requests
+
+
+def test_issued_access_token_records_its_refresh_deadline(monkeypatch):
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(delegated.time, 'monotonic', lambda: 100)
+    stored = []
+    client = SimpleNamespace(profile=Profile('test', 'https://nova.example/api'),
+        _send=lambda *args, **kwargs: SimpleNamespace(body=pair()),
+        token_store=SimpleNamespace(set_refresh_token=lambda *args: stored.append(args)))
+    delegated._token(client, {'grant_type': 'authorization_code', 'code': 'synthetic'})
+    assert client.access_token_expires_at == 400
+    assert client.access_token == 'opaque-access' and len(stored) == 1
+
+
+def test_logout_revokes_bound_connection_and_clears_only_local_delegated_credentials(client):
+    seed(client)
+    client.access_token = 'synthetic-access'
+    client.access_token_expires_at = 400
+    client.opener.responses = [{}]
+    assert client.logout() is True
+    request = client.opener.requests[0]
+    assert request.full_url == 'https://nova.example/api/oauth/revoke'
+    assert urllib.parse.parse_qs(request.data.decode()) == {
+        'token': ['old-refresh'], 'token_type_hint': ['refresh_token'], 'client_id': ['nova-cli'],
+        'resource': ['https://nova.example/api'],
+    }
+    assert request.get_header('Authorization') is None
+    assert client.access_token is None
+    assert client.access_token_expires_at is None
+    assert delegated._read(client) is None
+    assert client.test_values[('nova-cli', 'personal')] == 'password-refresh'
+
+
+def test_logout_clears_local_credentials_but_does_not_claim_revocation_after_transport_failure(client):
+    seed(client)
+    client.access_token = 'synthetic-access'
+    client.opener.responses = [TimeoutError('PRIVATE SECRET')]
+    assert client.logout() is False
+    assert client.access_token is None
+    assert delegated._read(client) is None
+    assert len(client.opener.requests) == 1
+
+
+@pytest.mark.parametrize('confirmed', [True, False])
+def test_logout_command_reports_server_confirmation_without_disclosing_credentials(client, monkeypatch, confirmed):
+    from types import SimpleNamespace
+
+    from nova_cli_public import cli
+
+    seed(client)
+    client.opener.responses = [{} if confirmed else TimeoutError('PRIVATE SECRET')]
+    monkeypatch.setattr(cli, 'client_from_args', lambda args: client)
+    result = cli.cmd_auth(SimpleNamespace(action='logout'))
+    assert result['local_credentials_cleared'] is True
+    assert result['server_revoked'] is confirmed
+    assert 'PRIVATE SECRET' not in result['message']
+    assert 'old-refresh' not in json.dumps(result)
+    assert ('not confirmed' in result['message']) is (not confirmed)
+
+
+def test_logout_without_a_saved_refresh_token_clears_memory_without_claiming_server_revocation(client):
+    client.access_token = 'synthetic-access'
+    assert client.logout() is False
+    assert client.access_token is None
+    assert not client.opener.requests

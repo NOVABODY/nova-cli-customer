@@ -19,7 +19,7 @@ client support; the server checks current account access.
 | `nova auth login` | CLI setup | browser_handoff, remote_authorization, local_credentials_write | `nova:read` |
 | `nova auth status` | CLI setup | local_credentials_read | None |
 | `nova auth refresh` | CLI setup | remote_authorization, local_credentials_write | `nova:read` |
-| `nova auth logout` | CLI setup | local_credentials_delete | None |
+| `nova auth logout` | CLI setup | local_credentials_delete, remote_authorization | None |
 | `nova auth whoami` | `whoami` | remote_read | `nova:read` |
 | `nova daily-work scheduled` | `list_dsp_scheduled_work` | remote_read | `nova:read` |
 | `nova daily-work summary` | `get_dsp_daily_work_summary` | remote_read | `nova:read` |
