@@ -20,6 +20,14 @@ python3 -m pip install ./nova_cli-0.1.0-py3-none-any.whl
 nova --help
 ```
 
+Each successful Check job retains its tested wheel and `release-receipt.json`
+for 14 days. The receipt identifies the source revision and includes SHA-256
+hashes for every tracked source file and every wheel file. It also checks that
+the complete packaged client matches that source. A receipt is build evidence;
+it does not authorize release or package-registry publication. Use an approved
+release from a reviewed main-branch revision. A pull-request artifact is a test
+candidate.
+
 Use the file name supplied with your release if its version differs. These steps
 do not assume that a package-registry release is available. Your Nova deployment
 must allow browser connections and the operations you request.
