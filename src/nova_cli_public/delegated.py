@@ -82,12 +82,14 @@ def _token(client, fields, previous=None):
         raise AuthError("Delegated sign-in failed. Run `nova auth login` again.") from None
     client.token_store.set_refresh_token(credential_profile(client.profile), body["refresh_token"])
     client.access_token = body["access_token"]
+    client.access_token_expires_at = time.monotonic() + body["expires_in"]
     return body
 
 
 def refresh(client):
     with profile_lock(client.profile.name):
         client.access_token = None
+        client.access_token_expires_at = None
         token = _read(client)
         if not token:
             raise AuthError("No delegated credential is stored. Run `nova auth login`.")
@@ -103,6 +105,7 @@ def logout(client):
     with profile_lock(client.profile.name):
         _delete(client)
         client.access_token = None
+        client.access_token_expires_at = None
 
 
 def status(client):

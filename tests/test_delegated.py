@@ -479,3 +479,16 @@ def test_defect_transport_denies_writes_and_path_escape(client, method, path):
     with pytest.raises(UsageError):
         client.request(method, path)
     assert not client.opener.requests
+
+
+def test_issued_access_token_records_its_refresh_deadline(monkeypatch):
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(delegated.time, 'monotonic', lambda: 100)
+    stored = []
+    client = SimpleNamespace(profile=Profile('test', 'https://nova.example/api'),
+        _send=lambda *args, **kwargs: SimpleNamespace(body=pair()),
+        token_store=SimpleNamespace(set_refresh_token=lambda *args: stored.append(args)))
+    delegated._token(client, {'grant_type': 'authorization_code', 'code': 'synthetic'})
+    assert client.access_token_expires_at == 400
+    assert client.access_token == 'opaque-access' and len(stored) == 1

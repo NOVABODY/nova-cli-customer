@@ -40,7 +40,10 @@ Use `profile set NAME --api URL` when your account uses a different Nova deploym
 
 Login opens Nova in your browser. Check the account and permissions, then approve
 or decline. The client uses S256 PKCE and a bound local callback. Refresh tokens
-stay in the OS credential store; access tokens stay in process memory. No file
+stay in the OS credential store; access tokens stay in process memory. The client
+uses the returned lifetime to refresh access before it expires, including before
+a write in a long-running MCP session. It sends each write once and does not
+repeat writes after a 401, timeout, or unknown result. No file
 credential fallback is available. Unlock your OS credential store if access fails.
 
 `auth status` reports local credential presence, not server verification.
