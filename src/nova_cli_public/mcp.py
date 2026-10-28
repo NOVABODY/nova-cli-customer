@@ -174,7 +174,7 @@ def main():
     except ModuleNotFoundError as exc:
         if exc.name != "mcp":
             raise
-        print("Install the MCP extra: pip install 'nova-cli[mcp]'", file=sys.stderr)
+        print("Install the MCP extra from the approved release wheel: python3 -m pip install './nova_fora_cli-0.1.0-py3-none-any.whl[mcp]'. / Instala MCP desde el archivo wheel de la versión aprobada.", file=sys.stderr)
         raise SystemExit(2) from None
     except NovaCliError as exc:
         parser.error(str(exc))
