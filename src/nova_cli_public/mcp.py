@@ -8,6 +8,7 @@ import base64
 import json
 import shlex
 import sys
+from pathlib import Path
 from typing import Any
 
 from nova_cli_public.body_documents import EmbeddedDocument
@@ -16,15 +17,23 @@ from nova_cli_public.config import ConfigStore
 from nova_cli_public.errors import ApiError, AuthError, NovaCliError, UsageError
 from nova_cli_public.event_commands import EVENT_LOCAL_TOOLS
 from nova_cli_public.events import EventInboxError, cursor_reset_detail
+from nova_cli_public.local_inputs import local_inputs
 from nova_cli_public.reads import BY_TOOL, FILE_TOOLS, WRITE_TOOLS
 from nova_cli_public.reads import CustomerReadService as DelegatedService
 from nova_cli_public.tokens import KeyringTokenStore
 
 
-def create_server(service):
+def create_server(service, *, file_root=None):
     from mcp import types
     from mcp.server import Server
     from pydantic import ValidationError
+
+    try:
+        root = Path(file_root).expanduser().resolve(strict=True) if file_root is not None else None
+        if root is not None and not root.is_dir():
+            raise OSError()
+    except OSError:
+        raise UsageError("Select a folder with --file-root. / Selecciona una carpeta con --file-root.") from None
 
     server = Server(
         "nova-fora",
@@ -81,7 +90,10 @@ def create_server(service):
     @server.call_tool(validate_input=False)
     async def call_tool(name: str, arguments: dict[str, Any]):
         try:
-            data = await asyncio.to_thread(service.run, name, arguments)
+            def run():
+                with local_inputs(arguments, root) as inputs:
+                    return service.run(name, inputs)
+            data = await asyncio.to_thread(run)
             if isinstance(data, EmbeddedDocument):
                 descriptor = data.descriptor()
                 if data.mime_type.startswith('image/'):
@@ -152,11 +164,12 @@ def main():
         prog="nova-mcp", description="Nova Fora customer tools over local stdio."
     )
     parser.add_argument("--profile", required=True)
+    parser.add_argument("--file-root", help="Folder for local input files. / Carpeta para archivos de entrada locales.")
     args = parser.parse_args()
     try:
         profile = ConfigStore().get_profile(args.profile)
         asyncio.run(
-            run_stdio(create_server(DelegatedService(ApiClient(profile, KeyringTokenStore()))))
+            run_stdio(create_server(DelegatedService(ApiClient(profile, KeyringTokenStore())), file_root=args.file_root))
         )
     except ModuleNotFoundError as exc:
         if exc.name != "mcp":
