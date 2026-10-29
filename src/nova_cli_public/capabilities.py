@@ -12,6 +12,8 @@ from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 # Only effect/usage information lives here. Arguments come from the real parser;
 # fleet input/output contracts come from the same models used during execution.
 DETAILS = {
+    "vendor-agreement status": ("Read agreement status and the personal-signature link.",
+        ["remote_read"], "nova vendor-agreement status"),
     **{"inspection-confirmation " + action: (description, ["remote_write" if action in {"set-settings", "respond"} else "remote_read"], example)
        for action, description, example in [
            ("settings", "Read inspection confirmation settings.", "nova inspection-confirmation settings DSP-7"),

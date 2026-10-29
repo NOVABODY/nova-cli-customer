@@ -6,6 +6,7 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova vendor-agreement status` | `get_vendor_agreement_status` | remote_read | `nova:read` |
 | `nova inspection-confirmation settings` | `get_inspection_confirmation_settings` | remote_read | `nova:read` |
 | `nova inspection-confirmation set-settings` | `update_inspection_confirmation_settings` | remote_write | `nova:read nova:write` |
 | `nova inspection-confirmation get` | `get_inspection_confirmation` | remote_read | `nova:read` |
@@ -143,3 +144,12 @@ operations require new explicit assistant consent and the caller's live scope.
 
 Use the `confirmation_id` from the current read as `--expected-confirmation-id`.
 An old response cannot apply after the appointment changes, even if its time is restored.
+
+## Vendor agreement
+
+Run `nova vendor-agreement status` to read whether your organization must accept
+an agreement. The result includes the version label and `review_url`. A vendor
+administrator must open that link and sign personally. One signature applies to
+the organization; a new published version requires a new signature. This command
+and its local MCP tool cannot sign. New connections must consent to
+`vendor_agreement.status.get.v1`; existing connections need renewed consent.
