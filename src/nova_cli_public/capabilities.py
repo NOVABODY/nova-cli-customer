@@ -239,10 +239,9 @@ def manifest(parser, selected=None):
             entry["mcp_execution"] = (
                 "One page per call; managed local inbox; explicit acknowledgment."
             )
-        if name in ("fleet-import review", "fleet-import preview", "fleet-import apply"):
+        if any(arg["name"] == "file" or (arg["name"].endswith("_file") and arg["name"] not in ("cursor_file", "state_file")) for arg in arguments):
             entry["effects"].append("local_file_read")
         if name == "upload photo":
-            entry["effects"].append("local_file_read")
             entry["conditional_operations"] = PHOTO_COMMIT_GRANTS
         if name in ("auth login", "auth refresh"):
             entry["required_scope"] = "nova:read"

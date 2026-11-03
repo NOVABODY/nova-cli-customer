@@ -83,7 +83,19 @@ the folder for files that tools can read and upload. Paths are relative to this
 folder or absolute paths inside it. File and directory links are refused. If you
 omit `--file-root`, local input files are disabled. The model cannot change this
 setting. The server takes a bounded copy before a tool reads a file; a file swap
-cannot change that copy. Direct CLI file arguments are unchanged.
+cannot change that copy. MCP JSON inputs have a 1 MiB limit. Photo inputs have a
+50 MiB limit, source spreadsheets have a 20 MiB limit, and saved import reviews
+have a 100 MiB limit. MCP photo uploads require a JPEG, PNG, HEIC, or WebP
+signature and use its detected type instead of the supplied MIME type. This
+signature check does not decode or certify the image. Cortex source extensions
+must match the declared CSV or XLSX format. File-reading tools disclose local
+reads and external effects even when they do not change server records.
+
+CLI JSON file and stdin inputs also have a 1 MiB limit; file paths must refer to
+regular files. Direct CLI photo arguments retain their existing behavior.
+Human-readable terminal output escapes control characters. JSON output preserves
+record values. Photo downloads accept portable IDs and refuse linked destinations;
+ordinary existing photo files can still be replaced safely.
 
 Use the same dedicated environment as the CLI. The separate HTTP MCP service
 also uses a `nova-mcp` command; install that service in a different environment.

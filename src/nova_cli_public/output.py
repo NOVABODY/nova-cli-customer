@@ -11,7 +11,7 @@ def emit(value: Any, *, as_json: bool = False, quiet: bool = False) -> None:
     if as_json:
         print(json.dumps(value, indent=2, sort_keys=True))
         return
-    print(humanize(value))
+    print(safe_text(humanize(value)))
 
 
 def humanize(value: Any) -> str:
@@ -38,7 +38,7 @@ def humanize(value: Any) -> str:
 
 
 def warn(message: str) -> None:
-    print(message, file=sys.stderr)
+    print(safe_text(message), file=sys.stderr)
 
 
 def _looks_like_page(value: dict[str, Any]) -> bool:
@@ -75,3 +75,9 @@ def format_scalar(value: Any) -> str:
     if value is None:
         return ""
     return str(value)
+
+
+def safe_text(text: str) -> str:
+    """Render terminal control bytes visibly; retain ordinary multiline output."""
+    return ''.join(f'\\x{ord(char):02x}' if (ord(char) < 32 and char not in '\n\t')
+                   or 127 <= ord(char) <= 159 else char for char in text)

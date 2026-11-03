@@ -426,7 +426,8 @@ def test_removed_discovery_routes_fail_before_transport(client, path):
     assert not client.opener.requests
 
 
-@pytest.mark.parametrize('operations', [None, 'work_orders.list.v1', 'defects.list.v1'])
+@pytest.mark.parametrize('operations', [None, 'work_orders.list.v1', 'defects.list.v1',
+    'vehicles.fleet_import.review.v1', 'repair_requests.external_vendor_options.preview.v1'])
 def test_browser_requests_only_explicit_operation_grants(monkeypatch, operations):
     captured = []
     monkeypatch.setattr(delegated.webbrowser, 'open', lambda url: captured.append(url) or False)

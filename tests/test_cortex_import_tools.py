@@ -109,7 +109,7 @@ def test_apply_error_never_retries_and_preserves_denial(tmp_path, status, unknow
     assert (error.value.code == 'outcome_unknown') is unknown and len(api.calls) == 1
 
 
-def test_preview_is_read_only_but_requires_full_import_consent():
+def test_preview_discloses_file_read_and_requires_full_import_consent():
     import asyncio
 
     from mcp import types
@@ -119,7 +119,7 @@ def test_preview_is_read_only_but_requires_full_import_consent():
     server = create_server(CustomerReadService(Importer()))
     result = asyncio.run(server.request_handlers[types.ListToolsRequest](types.ListToolsRequest(method='tools/list')))
     tools = {tool.name: tool for tool in result.root.tools}
-    assert tools['preview_fleet_import'].annotations.readOnlyHint and not tools['preview_fleet_import'].annotations.destructiveHint
+    assert not tools['preview_fleet_import'].annotations.readOnlyHint and not tools['preview_fleet_import'].annotations.destructiveHint
     assert not tools['apply_fleet_import'].annotations.readOnlyHint and tools['apply_fleet_import'].annotations.destructiveHint
     entry, = manifest(build_parser(), selected='fleet-import preview')['commands']
     assert entry['effects'] == ['remote_read', 'local_file_read'] and entry['required_scope'] == 'nova:read nova:write'

@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
+import tempfile
 import time
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -238,12 +240,24 @@ def download_defect_photos(
         saved = []
         for item in items:
             photo_id = str(item.get("id") or "").strip()
-            if not photo_id or "/" in photo_id or photo_id.startswith("."):
+            if (not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}", photo_id)
+                    or photo_id.upper() in {"CON", "PRN", "AUX", "NUL",
+                        *(f"COM{i}" for i in range(10)), *(f"LPT{i}" for i in range(10))}):
                 continue
             ext = PHOTO_EXTENSIONS.get(str(item.get("content_type") or "").lower(), ".bin")
             folder.mkdir(parents=True, exist_ok=True)
             path = folder / f"{photo_id}{ext}"
-            path.write_bytes(fetch(resolve_photo_url(str(item.get("url") or ""), client)))
+            if not path.resolve().is_relative_to(out.resolve()) or path.is_symlink():
+                raise UsageError("Use a photo folder without links. / Use una carpeta de fotos sin enlaces.")
+            data = fetch(resolve_photo_url(str(item.get("url") or ""), client))
+            descriptor, temporary = tempfile.mkstemp(prefix='.nova-photo-', dir=folder)
+            try:
+                with os.fdopen(descriptor, 'wb') as target:
+                    target.write(data)
+                os.replace(temporary, path)
+            finally:
+                if os.path.exists(temporary):
+                    os.unlink(temporary)
             saved.append(
                 {
                     "photo_id": photo_id,

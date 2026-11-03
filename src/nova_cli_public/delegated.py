@@ -126,10 +126,10 @@ def status(client):
         return {"credential_stored": bool(_read(client)), "server_verified": False}
 
 
-from nova_cli_public.read_routes import READ_ROUTES
+from nova_cli_public.read_routes import READ_POST_ROUTES, READ_ROUTES
 from nova_cli_public.write_routes import WRITE_ROUTES
 
-OPERATIONS = set(READ_ROUTES.values()) | set(WRITE_ROUTES.values())
+OPERATIONS = set(READ_ROUTES.values()) | set(READ_POST_ROUTES.values()) | set(WRITE_ROUTES.values())
 DEFAULT_OPERATIONS = "vehicles.list_full.v1 vehicles.get_full.v1"
 
 

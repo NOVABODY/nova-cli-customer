@@ -15,7 +15,7 @@ from nova_cli_public.config import ConfigStore, require_profile_name
 from nova_cli_public.errors import ApiError, NovaCliError
 from nova_cli_public.events import cursor_reset_detail
 from nova_cli_public.locking import profile_lock
-from nova_cli_public.output import emit
+from nova_cli_public.output import emit, safe_text
 from nova_cli_public.reads import register_commands
 from nova_cli_public.tokens import KeyringTokenStore
 
@@ -103,13 +103,14 @@ def client_from_args(args):
 
 
 def cmd_profile_set(args):
-    with profile_lock(require_profile_name(args.name)):
+    name = require_profile_name(args.name)
+    with profile_lock(name):
         store = ConfigStore()
         # Changing the origin would orphan the old connection. Require a new profile.
-        existing = store.load()["profiles"].get(args.name)
+        existing = store.load()["profiles"].get(name)
         if existing:
-            store.get_profile(args.name, api_override=args.api)
-        profile = store.set_profile(args.name, args.api)
+            store.get_profile(name, api_override=args.api)
+        profile = store.set_profile(name, args.api)
     return {"profile": profile.name, "api": profile.api, "auth": "delegated"}
 
 
@@ -231,5 +232,5 @@ def main(argv=None):
     except KeyboardInterrupt:
         message = "Interrupted."
         code = 130
-    print(json.dumps({"ok": False, "error": message}) if args.json else message, file=sys.stderr)
+    print(json.dumps({"ok": False, "error": message}) if args.json else safe_text(message), file=sys.stderr)
     return code
