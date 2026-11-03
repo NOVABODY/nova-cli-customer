@@ -91,7 +91,7 @@ def test_partial_import_is_an_mcp_error_with_actionable_rows(tmp_path):
     from nova_cli_public.mcp import create_server
     source, api = reviewed(tmp_path), Importer()
     api.response = {'results': [{'action': 'error', 'code': 'station_not_assigned'}], 'summary': {'error': 1}}
-    server = create_server(CustomerReadService(api))
+    server = create_server(CustomerReadService(api), file_root=tmp_path)
     result = asyncio.run(server.request_handlers[types.CallToolRequest](types.CallToolRequest(
         method='tools/call', params=types.CallToolRequestParams(name='apply_fleet_import', arguments={'review_file': str(source)}))))
     assert result.root.isError and result.root.structuredContent['results'] == api.response['results']

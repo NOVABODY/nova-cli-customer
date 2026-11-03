@@ -3,7 +3,7 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "nova-cli"
+name = "nova-fora-cli"
 version = "0.1.0"
 description = "Nova Fora customer command-line client"
 readme = "README.md"
