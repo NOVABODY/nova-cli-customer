@@ -152,13 +152,19 @@ def cmd_auth(args):
     if args.action == "refresh":
         client.refresh()
         return {"ok": True, "refreshed": True}
-    client.logout()
+    server_revoked = client.logout()
     return {
         "ok": True,
         "local_credentials_cleared": True,
-        "server_revoked": False,
+        "server_revoked": server_revoked,
         "disconnect_url": delegated.issuer(client.profile) + "/user-settings",
-        "message": "Local credentials deleted. Use browser settings to disconnect the server connection.",
+        "message": (
+            "Local credentials deleted. The server accepted the disconnect request. / "
+            "Credenciales locales eliminadas. El servidor aceptó la solicitud de desconexión."
+            if server_revoked else
+            "Local credentials deleted. Server disconnect was not confirmed. Disconnect in browser settings. / "
+            "Credenciales locales eliminadas. No se confirmó la desconexión del servidor. Desconecte en la configuración del navegador."
+        ),
     }
 
 

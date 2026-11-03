@@ -117,3 +117,25 @@ def test_signed_upload_redirect_is_not_followed():
         client.put_bytes("https://storage.example/photo", b"photo", content_type="image/png")
     assert raised.value.status == 307
     assert len(opener.calls) == 1
+
+
+def test_expired_write_token_refreshes_before_the_only_mutation_send(monkeypatch):
+    import time
+
+    opener = Opener()
+    client = ApiClient(Profile('test', 'https://nova.example/api'), object(), opener=opener)
+    client.access_token = 'old-access'
+    client.access_token_expires_at = 99
+    monkeypatch.setattr(time, 'monotonic', lambda: 100)
+    refreshed = []
+
+    def refresh():
+        refreshed.append(True)
+        client.access_token = 'new-access'
+        client.access_token_expires_at = 400
+
+    monkeypatch.setattr(client, 'refresh', refresh)
+    client.request('POST', '/vehicles/VAN-1/notes', json_body={'body': 'Synthetic note'})
+    assert refreshed == [True], 'Refresh a known expired token before sending a write'
+    assert len(opener.calls) == 1
+    assert opener.calls[0].get_header('Authorization') == 'Bearer new-access'

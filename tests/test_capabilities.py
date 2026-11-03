@@ -47,10 +47,10 @@ def test_discovery_uses_execution_contract_and_explicit_grant(capsys, command, t
     assert entry["output_schema"]["additionalProperties"] is True
 
 
-def test_local_logout_discovery_does_not_claim_server_revocation(capsys):
+def test_logout_discovery_reports_remote_revocation_attempt(capsys):
     (entry,) = manifest(capsys, "--command", "auth logout")["commands"]
-    assert entry["effects"] == ["local_credentials_delete"]
-    assert "server connection remains" in entry["description"]
+    assert entry["effects"] == ["local_credentials_delete", "remote_authorization"]
+    assert "Check server_revoked" in entry["description"]
 
 
 def test_unknown_capability_is_an_error_not_a_successful_empty_result(capsys):

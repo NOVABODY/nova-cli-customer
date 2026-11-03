@@ -101,8 +101,8 @@ DETAILS = {
         "nova auth refresh",
     ),
     "auth logout": (
-        "Delete local credentials; the server connection remains. Disconnect it in browser settings.",
-        ["local_credentials_delete"],
+        "Delete local credentials and request server disconnect. Check server_revoked; use browser settings if it is false.",
+        ["local_credentials_delete", "remote_authorization"],
         "nova auth logout",
     ),
     "defect list": (
