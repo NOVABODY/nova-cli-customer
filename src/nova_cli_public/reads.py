@@ -262,6 +262,9 @@ def input_model(entry, *, mcp=False):
 
 MODELS = {name: input_model(entry, mcp=True) for name, entry in BY_TOOL.items()}
 
+LOCAL_READ_TOOLS = {name for name, model in MODELS.items() if any(
+    field == 'file' or field.endswith('_file') for field in model.model_fields)}
+
 
 class BoundedReader:
     def __init__(self, client):

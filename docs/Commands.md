@@ -89,16 +89,16 @@ client support; the server checks current account access.
 | `nova vehicle-report list` | `list_vehicle_reports` | remote_read | `nova:read` |
 | `nova vehicle-report get` | `get_vehicle_report` | remote_read | `nova:read` |
 | `nova vehicle-report pull` | `pull_vehicle_reports` | remote_read, local_file_write | `nova:read` |
-| `nova vehicle-report create` | `create_vehicle_report` | remote_write | `nova:read nova:write` |
+| `nova vehicle-report create` | `create_vehicle_report` | remote_write, local_file_read | `nova:read nova:write` |
 | `nova vehicle-report resolve-vehicle` | `resolve_vehicle_report` | remote_write | `nova:read nova:write` |
-| `nova vehicle-report promote` | `promote_vehicle_report` | remote_write | `nova:read nova:write` |
+| `nova vehicle-report promote` | `promote_vehicle_report` | remote_write, local_file_read | `nova:read nova:write` |
 | `nova vehicle-report dismiss` | `dismiss_vehicle_report` | remote_write | `nova:read nova:write` |
 | `nova notification list` | `list_notifications` | remote_read | `nova:read` |
 | `nova notification unread-count` | `get_notification_counts` | remote_read | `nova:read` |
 | `nova notification preferences` | `get_notification_preferences` | remote_read | `nova:read` |
 | `nova notification read` | `mark_notification_read` | remote_write | `nova:read nova:write` |
 | `nova notification read-all` | `mark_all_notifications_read` | remote_write | `nova:read nova:write` |
-| `nova notification update-preferences` | `update_notification_preferences` | remote_write | `nova:read nova:write` |
+| `nova notification update-preferences` | `update_notification_preferences` | remote_write, local_file_read | `nova:read nova:write` |
 | `nova notification turn-off-optional-delivery` | `turn_off_optional_notifications` | remote_write | `nova:read nova:write` |
 | `nova upload photo` | `upload_photo` | remote_write, local_file_read | `nova:read nova:write` |
 | `nova events head` | `events_head` | remote_read | `nova:read` |

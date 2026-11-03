@@ -9,7 +9,9 @@ from __future__ import annotations
 import argparse
 import json
 import mimetypes
+import os
 import re
+import stat
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -485,11 +487,7 @@ def build_body(data: str | None, data_file: str | None, fields: list[str]) -> di
         return parsed
     if data_file:
         try:
-            text = (
-                sys.stdin.read()
-                if data_file == "-"
-                else Path(data_file).read_text(encoding="utf-8")
-            )
+            text = read_json_text(data_file)
         except OSError as exc:
             raise UsageError(f"Could not read JSON body from {data_file}: {exc}") from exc
         try:
@@ -542,7 +540,7 @@ def parse_decimal_arg(value: str) -> str:
 
 def read_json_object_file(path: str, label: str) -> dict[str, Any]:
     try:
-        text = sys.stdin.read() if path == "-" else Path(path).read_text(encoding="utf-8")
+        text = read_json_text(path)
     except OSError as exc:
         raise UsageError(f"Could not read {label} JSON from {path}: {exc}") from exc
     try:
@@ -580,3 +578,22 @@ def parse_notification_id(value: str) -> int:
     if match is None or int(match.group(1)) < 1:
         raise UsageError("Notification ID must be a positive integer or NOTIF-XXXXX.")
     return int(match.group(1))
+
+
+def read_json_text(path):
+    """Bound CLI JSON inputs too; never read a device or FIFO as a file."""
+    limit = 1024 * 1024
+    if path == '-':
+        text = sys.stdin.read(limit + 1)
+    else:
+        descriptor = os.open(Path(path).expanduser(), os.O_RDONLY | getattr(os, 'O_NONBLOCK', 0))
+        with os.fdopen(descriptor, 'rb') as source:
+            if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
+                raise UsageError("Use a regular JSON file. / Use un archivo JSON normal.")
+            try:
+                text = source.read(limit + 1).decode('utf-8')
+            except UnicodeDecodeError:
+                raise UsageError("Use UTF-8 JSON. / Use JSON UTF-8.") from None
+    if len(text.encode('utf-8')) > limit:
+        raise UsageError("Use JSON of at most 1 MiB. / Use JSON de 1 MiB como máximo.")
+    return text

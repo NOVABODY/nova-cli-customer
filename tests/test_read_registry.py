@@ -200,7 +200,7 @@ def test_mcp_photo_files_have_count_bound_and_no_binary_in_result(monkeypatch, t
     assert result["files"][0]["size_bytes"] == 9
     assert Path(result["files"][0]["path"]).read_bytes() == b"PNG bytes"
     assert "PNG bytes" not in json.dumps(result)
-    client.rows *= 21
+    client.rows = [{**client.rows[0], 'id': f'P-{i}'} for i in range(21)]
     with pytest.raises(UsageError, match="count limit"):
         reads.CustomerReadService(client).run("download_defect_photos", {"defect_ids": ["FD-1"]})
 
@@ -234,7 +234,7 @@ def test_mcp_annotations_disclose_file_writes():
     )
     for tool in result.root.tools:
         assert tool.annotations.readOnlyHint == (
-            tool.name == "preview_fleet_import" or tool.name not in reads.FILE_TOOLS | reads.WRITE_TOOLS | EVENT_LOCAL_TOOLS
+            tool.name not in reads.LOCAL_READ_TOOLS and (tool.name == "preview_fleet_import" or tool.name not in reads.FILE_TOOLS | reads.WRITE_TOOLS | EVENT_LOCAL_TOOLS)
         )
         assert tool.annotations.idempotentHint == (
             tool.name == "preview_fleet_import" or tool.name not in reads.FILE_TOOLS | reads.WRITE_TOOLS | EVENT_LOCAL_TOOLS

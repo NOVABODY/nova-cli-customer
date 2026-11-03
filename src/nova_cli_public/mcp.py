@@ -18,7 +18,7 @@ from nova_cli_public.errors import ApiError, AuthError, NovaCliError, UsageError
 from nova_cli_public.event_commands import EVENT_LOCAL_TOOLS
 from nova_cli_public.events import EventInboxError, cursor_reset_detail
 from nova_cli_public.local_inputs import local_inputs
-from nova_cli_public.reads import BY_TOOL, FILE_TOOLS, WRITE_TOOLS
+from nova_cli_public.reads import BY_TOOL, FILE_TOOLS, LOCAL_READ_TOOLS, WRITE_TOOLS
 from nova_cli_public.reads import CustomerReadService as DelegatedService
 from nova_cli_public.tokens import KeyringTokenStore
 
@@ -78,10 +78,10 @@ def create_server(service, *, file_root=None):
                 inputSchema=schema,
                 outputSchema=service.output_schema(name),
                 annotations=types.ToolAnnotations(
-                    readOnlyHint=BY_TOOL[name].get("read_only", name not in FILE_TOOLS | WRITE_TOOLS | EVENT_LOCAL_TOOLS),
+                    readOnlyHint=name not in LOCAL_READ_TOOLS and BY_TOOL[name].get("read_only", name not in FILE_TOOLS | WRITE_TOOLS | EVENT_LOCAL_TOOLS),
                     destructiveHint=name in WRITE_TOOLS and not BY_TOOL[name].get("read_only", False),
                     idempotentHint=BY_TOOL[name].get("read_only", name not in FILE_TOOLS | WRITE_TOOLS | EVENT_LOCAL_TOOLS),
-                    openWorldHint=False,
+                    openWorldHint=name in LOCAL_READ_TOOLS,
                 ),
             )
             for name, schema in service.tool_schemas().items()
@@ -91,7 +91,7 @@ def create_server(service, *, file_root=None):
     async def call_tool(name: str, arguments: dict[str, Any]):
         try:
             def run():
-                with local_inputs(arguments, root) as inputs:
+                with local_inputs(arguments, root, tool=name) as inputs:
                     return service.run(name, inputs)
             data = await asyncio.to_thread(run)
             if isinstance(data, EmbeddedDocument):
