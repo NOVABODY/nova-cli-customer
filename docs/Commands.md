@@ -6,6 +6,8 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova bundle-sharing get` | `get_bundle_sharing` | remote_read | `nova:read` |
+| `nova bundle-sharing set` | `set_bundle_sharing` | remote_write | `nova:read nova:write` |
 | `nova vendor-agreement status` | `get_vendor_agreement_status` | remote_read | `nova:read` |
 | `nova inspection-confirmation settings` | `get_inspection_confirmation_settings` | remote_read | `nova:read` |
 | `nova inspection-confirmation set-settings` | `update_inspection_confirmation_settings` | remote_write | `nova:read nova:write` |
@@ -153,3 +155,14 @@ administrator must open that link and sign personally. One signature applies to
 the organization; a new published version requires a new signature. This command
 and its local MCP tool cannot sign. New connections must consent to
 `vendor_agreement.status.get.v1`; existing connections need renewed consent.
+
+## Shared DSP bundle setting
+
+`nova bundle-sharing get DSP-7` reads the one setting.
+`nova bundle-sharing set DSP-7 --enabled` enables it; `--no-enabled` disables it
+and withdraws open offers containing that DSP's vans. It defaults on. The DSP's
+owner/admin or a site admin can change it. No second opt-in is required.
+
+MCP exposes `get_bundle_sharing` and `set_bundle_sharing` with a required boolean
+`enabled` for writes. The API owns role, tenant, credential revocation and audit
+checks. The server must support the shared setting. No second permission is required.

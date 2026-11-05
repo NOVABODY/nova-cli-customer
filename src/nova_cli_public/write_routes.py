@@ -3,6 +3,7 @@
 import re
 
 WRITE_ROUTES = {
+    ("PATCH", r"/dsp-settings/(?:DSP-)?[0-9]{1,14}/defect-data-sharing"): "dsp.bundle_sharing.update.v1",
     ("PATCH", r"/inspection-confirmations/settings/(?:DSP-)?[0-9]{1,14}"): "inspection_confirmations.settings.update.v1",
     ("POST", r"/inspection-confirmations/(?:DVIC-)?[0-9]{1,14}/respond"): "inspection_confirmations.respond.v1",
     ("POST", r"/dashboards/dsp/(?:DSP-)?[0-9]{1,14}/daily-work-summary/[0-9]{4}-[0-9]{2}-[0-9]{2}/acknowledge"): "dashboards.dsp_daily_work_summary.acknowledge.v1",
