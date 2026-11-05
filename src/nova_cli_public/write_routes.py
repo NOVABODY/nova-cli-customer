@@ -3,6 +3,9 @@
 import re
 
 WRITE_ROUTES = {
+    ('POST', r'/onboarding/dsp/tire-vendors'): 'onboarding.tire_vendors.add.v1',
+    ('POST', r'/onboarding/dsp/tire-vendor-requests'): 'vendor_setup_requests.create.v1',
+    ('PATCH', r'/vendor-setup-requests/[0-9]+'): 'vendor_setup_requests.handle.v1',
     ("PATCH", r"/inspection-confirmations/settings/(?:DSP-)?[0-9]{1,14}"): "inspection_confirmations.settings.update.v1",
     ("POST", r"/inspection-confirmations/(?:DVIC-)?[0-9]{1,14}/respond"): "inspection_confirmations.respond.v1",
     ("POST", r"/dashboards/dsp/(?:DSP-)?[0-9]{1,14}/daily-work-summary/[0-9]{4}-[0-9]{2}-[0-9]{2}/acknowledge"): "dashboards.dsp_daily_work_summary.acknowledge.v1",

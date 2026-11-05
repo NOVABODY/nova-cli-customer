@@ -559,3 +559,22 @@ with `vehicle set-fmc-company VAN-7 --company-id FMC-8`. Local MCP tools are
 `fmc_companies.list.v1` read or `vehicles.fmc_company.update.v1` write consent.
 The API owns role, tenant, active-company and rental-scope checks. An uncertain
 assignment is not retried; read the van before another attempt.
+
+
+## Station tire vendor setup
+
+List tire vendors for each selected Station. Add an eligible vendor, or share a
+local vendor contact when no vendor is available. Contact sharing submits a
+setup request and queues email to site admins; it does not add a vendor or
+create a referral. Reload choices after an availability conflict. Use the saved
+request or choices to check an unknown write outcome before another attempt.
+Site admins can list requests, create or associate the vendor through vendor
+administration, and mark a request handled. The server checks role, DSP and
+Station access on every call.
+
+Use `nova tire-vendor list`, `add`, `share-contact`, `requests`, or `handle`.
+Read each subcommand's `--help` for explicit arguments. An email address or phone
+number is required for contact sharing. Local MCP exposes
+`list_station_tire_vendors`, `add_station_tire_vendor`,
+`share_tire_vendor_contact`, `list_vendor_setup_requests`, and
+`handle_vendor_setup_request` with the same fields and result checks.
