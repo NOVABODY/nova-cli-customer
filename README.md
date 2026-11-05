@@ -630,3 +630,11 @@ Solicita un escaneo con `pave-scan request VAN-7`. El personal autorizado o el
 taller configura la fecha. Usa `request-change` para solicitar otro día.
 La fecha programada no cambia hasta que el equipo la cambie. Una persona
 debe hacer el escaneo. Consulta el programa después de un resultado desconocido.
+`nova inspection-recap report DSP_ID` reads the released first-platform recap
+within the current recipient's station scope. It cannot generate, release, or
+send a recap. `nova vendor-referral list` and `nova vendor-referral submit` use
+the existing referral workflow. Submission requires `--contact-consent` and
+repeated `--repair-types` options. These actions do not scope a vendor or dispatch
+repairs. Each command and matching stdio MCP tool has its own delegated operation
+consent. Existing browser/S256 login and public profile storage are unchanged.
+

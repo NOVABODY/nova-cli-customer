@@ -222,3 +222,6 @@ Los permisos existentes no incluyen estas operaciones nuevas. Autoriza la conexi
 | `nova pave-scan workshop-schedule` | `set_workshop_pave_scan_schedule` | remote_write | `nova:read nova:write` |
 | `nova pave-scan platform-cancel` | `cancel_platform_pave_scan` | remote_write | `nova:read nova:write` |
 | `nova pave-scan workshop-cancel` | `cancel_workshop_pave_scan` | remote_write | `nova:read nova:write` |
+| `nova inspection-recap report` | `get_first_inspection_recap_report` | remote_read | `nova:read` |
+| `nova vendor-referral list` | `list_vendor_referrals` | remote_read | `nova:read` |
+| `nova vendor-referral submit` | `submit_vendor_referral` | remote_write | `nova:read nova:write` |

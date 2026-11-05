@@ -15,6 +15,8 @@ READ_ROUTES = {
     r"/vendor-workshops": "vendor_workshops.list.v1",
     r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/dropoff-address": "capacity.dropoff_address.get.v1",
     r"/bundle-offers/schedules": "capacity.schedules.list.v1",
+    r"/first-inspection-recaps/[0-9]{1,14}/report": "first_recaps.report.v1",
+    r"/vendor-referrals": "vendor_referrals.list.v1",
     r"/terms/contract/vendor/status": "vendor_agreement.status.get.v1",
     r"/dsp-settings/(?:DSP-)?[0-9]{1,14}/defect-data-sharing": "dsp.bundle_sharing.get.v1",
     r'/bundle-offers': 'capacity.offers.list.v1',

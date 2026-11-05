@@ -23,6 +23,7 @@ from nova_cli_public import (
     defect_reviews,
     defect_routing,
     external_preview,
+    first_recap,
     fleet_decisions,
     fmc_choice,
     inspection_confirmations,
@@ -48,8 +49,8 @@ from nova_cli_public.events import run_event_tool
 from nova_cli_public.read_commands import READ_COMMANDS
 from nova_cli_public.write_commands import WRITE_COMMANDS
 
-ALL_COMMANDS = pave_scheduling.COMMANDS + body_intake.COMMANDS + defect_routing.COMMANDS + bundle_workflow.COMMANDS + bundle_address.COMMANDS + bundle_returns.COMMANDS + bundle_schedules.COMMANDS + bundle_sharing.COMMANDS + vendor_agreement.COMMANDS + inspection_confirmations.COMMANDS + scheduled_work.COMMANDS + fleet_decisions.COMMANDS + READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + vehicle_note_edit.COMMANDS + defect_cost.COMMANDS + repair_requests.COMMANDS + repair_cancel.COMMANDS + aggregate_reports.COMMANDS + scorecard_reads.COMMANDS + rental_dismissal.COMMANDS + quality_reports.COMMANDS + fmc_choice.COMMANDS + external_preview.COMMANDS
-WRITE_TOOLS = pave_scheduling.WRITES | body_intake.WRITES | {"route_repair_request"} | bundle_address.WRITES | {bundle_returns.NAME} | bundle_schedules.WRITES | bundle_sharing.WRITES | inspection_confirmations.WRITES | {"acknowledge_dsp_daily_work_summary"} | {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review", "update_vehicle", "create_vehicle", "update_vehicle_note", "delete_vehicle_note", "set_defect_cost", "resolve_fleet_issue", "cancel_repair_request", "dismiss_rental_routing", "set_vehicle_fmc_company"}
+ALL_COMMANDS = first_recap.COMMANDS + pave_scheduling.COMMANDS + body_intake.COMMANDS + defect_routing.COMMANDS + bundle_workflow.COMMANDS + bundle_address.COMMANDS + bundle_returns.COMMANDS + bundle_schedules.COMMANDS + bundle_sharing.COMMANDS + vendor_agreement.COMMANDS + inspection_confirmations.COMMANDS + scheduled_work.COMMANDS + fleet_decisions.COMMANDS + READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + vehicle_note_edit.COMMANDS + defect_cost.COMMANDS + repair_requests.COMMANDS + repair_cancel.COMMANDS + aggregate_reports.COMMANDS + scorecard_reads.COMMANDS + rental_dismissal.COMMANDS + quality_reports.COMMANDS + fmc_choice.COMMANDS + external_preview.COMMANDS
+WRITE_TOOLS = first_recap.WRITES | pave_scheduling.WRITES | body_intake.WRITES | {"route_repair_request"} | bundle_address.WRITES | {bundle_returns.NAME} | bundle_schedules.WRITES | bundle_sharing.WRITES | inspection_confirmations.WRITES | {"acknowledge_dsp_daily_work_summary"} | {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review", "update_vehicle", "create_vehicle", "update_vehicle_note", "delete_vehicle_note", "set_defect_cost", "resolve_fleet_issue", "cancel_repair_request", "dismiss_rental_routing", "set_vehicle_fmc_company"}
 
 BY_COMMAND = {entry["command"]: entry for entry in ALL_COMMANDS}
 BY_TOOL = {entry["tool"]: entry for entry in ALL_COMMANDS if entry.get("mcp", True)}
@@ -148,6 +149,8 @@ def input_model(entry, *, mcp=False):
 
     if entry['tool'] in bundle_workflow.MODELS:
         return bundle_workflow.MODELS[entry['tool']]
+    if entry["tool"] in first_recap.MODELS:
+        return first_recap.MODELS[entry["tool"]]
     if entry["tool"] in inspection_confirmations.MODELS:
         return inspection_confirmations.MODELS[entry["tool"]]
 
@@ -343,6 +346,13 @@ class CustomerReadService:
             return bundle_sharing.OUTPUTS[name].model_json_schema()
         if name in bundle_workflow.OUTPUTS:
             return bundle_workflow.OUTPUTS[name].model_json_schema()
+        if name in first_recap.OUTPUTS:
+            from pydantic import TypeAdapter
+            schema = TypeAdapter(first_recap.OUTPUTS[name]).json_schema()
+            if name == 'list_vendor_referrals':
+                definitions = schema.pop('$defs', {})
+                return {'type': 'object', 'properties': {'items': schema}, 'required': ['items'], '$defs': definitions}
+            return schema
         if name in inspection_confirmations.OUTPUTS:
             return inspection_confirmations.OUTPUTS[name].model_json_schema()
 
