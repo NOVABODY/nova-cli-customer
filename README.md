@@ -559,3 +559,12 @@ with `vehicle set-fmc-company VAN-7 --company-id FMC-8`. Local MCP tools are
 `fmc_companies.list.v1` read or `vehicles.fmc_company.update.v1` write consent.
 The API owns role, tenant, active-company and rental-scope checks. An uncertain
 assignment is not retried; read the van before another attempt.
+
+`nova inspection-recap report DSP_ID` reads the released first-platform recap
+within the current recipient's station scope. It cannot generate, release, or
+send a recap. `nova vendor-referral list` and `nova vendor-referral submit` use
+the existing referral workflow. Submission requires `--contact-consent` and
+repeated `--repair-types` options. These actions do not scope a vendor or dispatch
+repairs. Each command and matching stdio MCP tool has its own delegated operation
+consent. Existing browser/S256 login and public profile storage are unchanged.
+

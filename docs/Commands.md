@@ -153,3 +153,7 @@ administrator must open that link and sign personally. One signature applies to
 the organization; a new published version requires a new signature. This command
 and its local MCP tool cannot sign. New connections must consent to
 `vendor_agreement.status.get.v1`; existing connections need renewed consent.
+
+| `nova inspection-recap report` | `get_first_inspection_recap_report` | remote_read | `nova:read` |
+| `nova vendor-referral list` | `list_vendor_referrals` | remote_read | `nova:read` |
+| `nova vendor-referral submit` | `submit_vendor_referral` | remote_write | `nova:read nova:write` |

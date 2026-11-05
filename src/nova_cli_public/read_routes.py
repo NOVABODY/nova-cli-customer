@@ -9,6 +9,8 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/first-inspection-recaps/[0-9]{1,14}/report": "first_recaps.report.v1",
+    r"/vendor-referrals": "vendor_referrals.list.v1",
     r"/terms/contract/vendor/status": "vendor_agreement.status.get.v1",
     r"/inspection-confirmations/settings/(?:DSP-)?[0-9]{1,14}": "inspection_confirmations.settings.get.v1",
     r"/inspection-confirmations/(?:DVIC-)?[0-9]{1,14}": "inspection_confirmations.get.v1",
