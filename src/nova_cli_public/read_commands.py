@@ -563,6 +563,7 @@ for entry in READ_COMMANDS:
             (["--grounded"], {"action": "store_true", "default": None}),
         ]
     elif entry["command"] == "defect list":
+        entry["arguments"] += [(["--first-recap-dsp-id"], {"type": "positive_id"})]
         entry["arguments"] += [
             (["--" + name.replace("_", "-")], {}) for name in ("dsp_id", "inspection_id", "source")
         ]
