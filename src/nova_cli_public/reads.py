@@ -26,6 +26,7 @@ from nova_cli_public import (
     repair_requests,
     scheduled_work,
     scorecard_reads,
+    tire_vendor_setup,
     vehicle_metadata,
     vehicle_note_edit,
     vendor_agreement,
@@ -40,8 +41,8 @@ from nova_cli_public.events import run_event_tool
 from nova_cli_public.read_commands import READ_COMMANDS
 from nova_cli_public.write_commands import WRITE_COMMANDS
 
-ALL_COMMANDS = vendor_agreement.COMMANDS + inspection_confirmations.COMMANDS + scheduled_work.COMMANDS + fleet_decisions.COMMANDS + READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + vehicle_note_edit.COMMANDS + defect_cost.COMMANDS + repair_requests.COMMANDS + repair_cancel.COMMANDS + aggregate_reports.COMMANDS + scorecard_reads.COMMANDS + rental_dismissal.COMMANDS + quality_reports.COMMANDS + fmc_choice.COMMANDS + external_preview.COMMANDS
-WRITE_TOOLS = inspection_confirmations.WRITES | {"acknowledge_dsp_daily_work_summary"} | {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review", "update_vehicle", "create_vehicle", "update_vehicle_note", "delete_vehicle_note", "set_defect_cost", "resolve_fleet_issue", "cancel_repair_request", "dismiss_rental_routing", "set_vehicle_fmc_company"}
+ALL_COMMANDS = tire_vendor_setup.COMMANDS + vendor_agreement.COMMANDS + inspection_confirmations.COMMANDS + scheduled_work.COMMANDS + fleet_decisions.COMMANDS + READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + vehicle_note_edit.COMMANDS + defect_cost.COMMANDS + repair_requests.COMMANDS + repair_cancel.COMMANDS + aggregate_reports.COMMANDS + scorecard_reads.COMMANDS + rental_dismissal.COMMANDS + quality_reports.COMMANDS + fmc_choice.COMMANDS + external_preview.COMMANDS
+WRITE_TOOLS = tire_vendor_setup.WRITES | inspection_confirmations.WRITES | {"acknowledge_dsp_daily_work_summary"} | {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review", "update_vehicle", "create_vehicle", "update_vehicle_note", "delete_vehicle_note", "set_defect_cost", "resolve_fleet_issue", "cancel_repair_request", "dismiss_rental_routing", "set_vehicle_fmc_company"}
 
 BY_COMMAND = {entry["command"]: entry for entry in ALL_COMMANDS}
 BY_TOOL = {entry["tool"]: entry for entry in ALL_COMMANDS if entry.get("mcp", True)}
@@ -124,6 +125,9 @@ def _inspection_date_order(value, info):
 
 
 def input_model(entry, *, mcp=False):
+    if entry["tool"] in tire_vendor_setup.MODELS:
+        return tire_vendor_setup.MODELS[entry["tool"]]
+
     if entry["tool"] in inspection_confirmations.MODELS:
         return inspection_confirmations.MODELS[entry["tool"]]
 
@@ -304,6 +308,9 @@ class CustomerReadService:
         return {name: model.model_json_schema() for name, model in MODELS.items()}
 
     def output_schema(self, name):
+        if name in tire_vendor_setup.OUTPUTS:
+            return tire_vendor_setup.OUTPUTS[name].model_json_schema()
+
         if name == "get_vendor_agreement_status":
             return vendor_agreement.Status.model_json_schema()
 
