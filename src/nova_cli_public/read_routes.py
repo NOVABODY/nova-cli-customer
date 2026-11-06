@@ -9,6 +9,7 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/dropoff-address": "capacity.dropoff_address.get.v1",
     r"/bundle-offers/schedules": "capacity.schedules.list.v1",
     r"/terms/contract/vendor/status": "vendor_agreement.status.get.v1",
     r"/dsp-settings/(?:DSP-)?[0-9]{1,14}/defect-data-sharing": "dsp.bundle_sharing.get.v1",

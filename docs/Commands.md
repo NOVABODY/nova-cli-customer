@@ -6,6 +6,8 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova bundle-address get` | `get_bundle_dropoff_address` | remote_read | `nova:read` |
+| `nova bundle-address set` | `update_bundle_dropoff_address` | remote_write | `nova:read nova:write` |
 | `nova bundle-schedules list` | `list_bundle_schedules` | remote_read | `nova:read` |
 | `nova bundle-schedules decide` | `decide_bundle_schedule` | remote_write | `nova:read nova:write` |
 | `nova bundle-sharing get` | `get_bundle_sharing` | remote_read | `nova:read` |
@@ -178,3 +180,12 @@ midnight to 5 a.m. The API validates pickup dates and DSP approval versions. Use
 --decision approved` (or `declined`) for that exact proposal. A changed schedule
 needs a new decision. The same named MCP tools require the listed operation
 permissions. Read the schedule again after a conflict or an unknown outcome.
+
+### Bundle drop-off address
+
+Change every van's drop-off address before any van in that bundle is scheduled or
+charged. `bundle-address set REF --delivery-address ADDRESS --save-profile` also
+saves the shop profile only when you have profile access. Without `--save-profile`,
+the profile stays unchanged. Read after an uncertain outcome before trying again.
+New connections need explicit consent. Service-account credentials can edit the
+bundle destination, but cannot save the profile because its API does not admit them.
