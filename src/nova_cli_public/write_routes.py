@@ -3,6 +3,8 @@
 import re
 
 WRITE_ROUTES = {
+    ("POST", r"/defect-bundle-offers/staff/evidence/[0-9]+/review"): "capacity.evidence.review.v1",
+    ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[0-9]+/evidence-content"): "capacity.evidence.upload.v1",
     ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[0-9]{1,14}/schedule-decision"): "capacity.schedules.decide.v1",
     ("PATCH", r"/dsp-settings/(?:DSP-)?[0-9]{1,14}/defect-data-sharing"): "dsp.bundle_sharing.update.v1",
     ("PATCH", r"/inspection-confirmations/settings/(?:DSP-)?[0-9]{1,14}"): "inspection_confirmations.settings.update.v1",

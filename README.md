@@ -559,3 +559,14 @@ with `vehicle set-fmc-company VAN-7 --company-id FMC-8`. Local MCP tools are
 `fmc_companies.list.v1` read or `vehicles.fmc_company.update.v1` write consent.
 The API owns role, tenant, active-company and rental-scope checks. An uncertain
 assignment is not retried; read the van before another attempt.
+
+Use `nova capacity-evidence list`, `get`, `file`, `review`, or `upload` and the
+matching local MCP tools to read or submit FMC evidence. Staff review accepts
+`--evidence-id` and `--decision accepted|rejected`. Acceptance needs no note;
+rejection requires `--note`. Upload accepts `--ref`, `--unit`, `--kind`,
+`--content-type`, `--content-base64`, optional `--lines`, and
+`--authorization-number`. The API checks the shop, van, role and tenant.
+Request the matching `capacity.evidence.list.v1`, `get.v1`, `content.v1`,
+`review.v1` or `upload.v1` operation. Writes require explicit write consent.
+File output contains private base64 bytes. Local MCP keeps its existing response
+size limits. After an unknown write outcome, read the record before another attempt.
