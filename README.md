@@ -578,3 +578,28 @@ These reads never buy a bundle, record authorization, charge a payment or book
 transport. The server owns account access and current operation consent.
 
 Commands: `bundle-workflow list`, `bundle-workflow report REF`, and `bundle-workflow vans REF`.
+
+
+### Body repair intake and capture links
+
+Use `body-repair create --data JSON` to submit a repair request. The `data`
+object uses the native intake fields: `vehicle_id` (numeric), `mode`,
+`text_description`, `issues`, `defect_items`, PAVE reports and capture links.
+Use `ownership: rental` when you add a rental van. Rental ownership does not
+mean the `rental` submission mode: that mode is for return damage comparisons.
+
+The matching tools are `create_body_repair_request`,
+`add_body_repair_inspection_link`, `replace_body_repair_inspection_link`, and
+`request_body_repair_inspection_link`. The link commands are
+`body-repair add-inspection-link`, `body-repair replace-inspection-link`, and
+`body-repair request-inspection-link`; use `--help` for their fields.
+New explicit write consent is required. The API checks roles, fleet scope,
+PAVE evidence and order state. Only assigned shop roles can generate or cancel
+redo links. A person must complete the scan. Provider fees can apply.
+After an unknown outcome, read the van or Body request before trying again.
+A submitted request does not prove shop acceptance or a completed scan.
+
+Envía una solicitud con `body-repair create --data JSON`. Los comandos y las
+herramientas conservan los permisos, el alcance de flota y los requisitos de
+PAVE. Una persona debe completar el escaneo. Después de un resultado desconocido,
+consulta el van o la solicitud antes de intentar de nuevo.
