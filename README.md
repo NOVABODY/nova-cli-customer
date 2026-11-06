@@ -559,3 +559,11 @@ with `vehicle set-fmc-company VAN-7 --company-id FMC-8`. Local MCP tools are
 `fmc_companies.list.v1` read or `vehicles.fmc_company.update.v1` write consent.
 The API owns role, tenant, active-company and rental-scope checks. An uncertain
 assignment is not retried; read the van before another attempt.
+
+Bundle van returns use `record_bundle_return` (CLI: `bundle-return record`).
+This adapter requires the API return receipt `{task_id, status: checked_in, mileage}`
+and `capacity.transport.check_in.v1`. The API keeps platform custody role,
+Station, evidence and mileage checks. Old delegated consent does not gain this
+operation. Calls do not retry mutations; an unconfirmed receipt reports an
+unknown outcome. Release after the matching Nova API contract. No package or
+hosted deployment is part of this source change.

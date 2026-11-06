@@ -59,6 +59,7 @@ client support; the server checks current account access.
 | `nova vehicle list-checkouts` | `list_vehicle_checkouts` | remote_read | `nova:read` |
 | `nova vehicle add-note` | `add_vehicle_note` | remote_write | `nova:read nova:write` |
 | `nova vehicle check-out` | `check_out_vehicle` | remote_write | `nova:read nova:write` |
+| `nova bundle-return record` | `record_bundle_return` | remote_write | `nova:read nova:write` |
 | `nova vehicle check-in` | `check_in_vehicle` | remote_write | `nova:read nova:write` |
 | `nova vehicle create` | `create_vehicle` | remote_write | `nova:read nova:write` |
 | `nova vehicle decode-vin` | `decode_vehicle_vin` | remote_read | `nova:read` |
