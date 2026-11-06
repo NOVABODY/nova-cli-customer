@@ -171,8 +171,9 @@ checks. The server must support the shared setting. No second permission is requ
 
 ### Bundle pickup and return schedules
 
-Use `nova bundle-schedules list` to read both overnight windows and the current
-version. Use `nova bundle-schedules decide REF UNIT --version VERSION
+Use `nova bundle-schedules list` to read the pickup and return windows and the current
+version. Pickup can use a shop-selected time window; the return window remains
+midnight to 5 a.m. The API validates pickup dates and DSP approval versions. Use `nova bundle-schedules decide REF UNIT --version VERSION
 --decision approved` (or `declined`) for that exact proposal. A changed schedule
 needs a new decision. The same named MCP tools require the listed operation
 permissions. Read the schedule again after a conflict or an unknown outcome.
