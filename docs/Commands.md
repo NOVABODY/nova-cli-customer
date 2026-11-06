@@ -209,3 +209,16 @@ A successful approval can wait for rental approval; inspect the returned routing
 Usa `defect-routing shops` para comprobar los talleres elegibles. Usa `defect-review approve` para
 aprobar un defecto pendiente y `defect-routing resume` para asignar una solicitud abierta.
 Los permisos existentes no incluyen estas operaciones nuevas. Autoriza la conexión de nuevo.
+
+| Command | MCP tool | Effects | Scope |
+| --- | --- | --- | --- |
+| `nova pave-scan request` | `request_vehicle_pave_scan` | remote_write | `nova:read nova:write` |
+| `nova pave-scan cancel-request` | `cancel_vehicle_pave_scan_request` | remote_write | `nova:read nova:write` |
+| `nova pave-scan upcoming` | `list_dsp_pave_scans` | remote_read | `nova:read` |
+| `nova pave-scan request-change` | `request_pave_scan_schedule_change` | remote_write | `nova:read nova:write` |
+| `nova pave-scan platform-list` | `list_platform_pave_scans` | remote_read | `nova:read` |
+| `nova pave-scan workshop-list` | `list_workshop_pave_scans` | remote_read | `nova:read` |
+| `nova pave-scan platform-schedule` | `set_platform_pave_scan_schedule` | remote_write | `nova:read nova:write` |
+| `nova pave-scan workshop-schedule` | `set_workshop_pave_scan_schedule` | remote_write | `nova:read nova:write` |
+| `nova pave-scan platform-cancel` | `cancel_platform_pave_scan` | remote_write | `nova:read nova:write` |
+| `nova pave-scan workshop-cancel` | `cancel_workshop_pave_scan` | remote_write | `nova:read nova:write` |

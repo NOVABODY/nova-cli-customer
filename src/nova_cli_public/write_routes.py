@@ -3,6 +3,13 @@
 import re
 
 WRITE_ROUTES = {
+    ("POST", r"/vehicles/(?:VAN-)?[0-9]{1,14}/pave-scan-requests"): "vehicles.pave_scan_requests.create.v1",
+    ("POST", r"/vehicles/(?:VAN-)?[0-9]{1,14}/pave-scan-requests/[0-9]{1,10}/cancel"): "vehicles.pave_scan_requests.cancel.v1",
+    ("POST", r"/dashboards/dsp/(?:DSP-)?[0-9]{1,14}/pave-scans/[0-9]{1,10}/change-request"): "pave_scans.dsp.change.v1",
+    ("POST", r"/dashboards/platform-pave-scans/[0-9]{1,10}/schedule"): "pave_scans.platform.schedule.v1",
+    ("POST", r"/dashboards/vendor-workshops/(?:VW-)?[0-9]{1,14}/pave-scans/[0-9]{1,10}/schedule"): "pave_scans.workshop.schedule.v1",
+    ("POST", r"/dashboards/platform-pave-scans/[0-9]{1,10}/cancel"): "pave_scans.platform.cancel.v1",
+    ("POST", r"/dashboards/vendor-workshops/(?:VW-)?[0-9]{1,14}/pave-scans/[0-9]{1,10}/cancel"): "pave_scans.workshop.cancel.v1",
     ('POST', r'/body-repair/requests'): 'body_repair.requests.create.v1',
     ('POST', r'/body-repair/requests/[A-Za-z0-9_-]{1,64}/inspection-links'): 'body_repair.inspection_links.add.v1',
     ('PATCH', r'/body-repair/requests/[A-Za-z0-9_-]{1,64}/inspection-links'): 'body_repair.inspection_links.replace.v1',
