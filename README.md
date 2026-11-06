@@ -578,3 +578,14 @@ Station, evidence and mileage checks. Old delegated consent does not gain this
 operation. Calls do not retry mutations; an unconfirmed receipt reports an
 unknown outcome. Release after the matching Nova API contract. No package or
 hosted deployment is part of this source change.
+
+### Bundle workflow reads
+
+Named read-only tools `list_bundle_offers`, `get_bundle_offer_report`, and
+`list_bought_bundle_vans` use fixed bundle routes. They preserve responsibility
+counts, shop-local deadlines, current steps, human fleet labels when permitted,
+and frozen pricing terms. Lapsed vans keep the server's masked response.
+These reads never buy a bundle, record authorization, charge a payment or book
+transport. The server owns account access and current operation consent.
+
+Commands: `bundle-workflow list`, `bundle-workflow report REF`, and `bundle-workflow vans REF`.
