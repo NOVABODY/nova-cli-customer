@@ -13,6 +13,7 @@ from pydantic import AfterValidator, ConfigDict, Field, create_model
 from nova_cli_public import (
     aggregate_reports,
     body_documents,
+    bundle_returns,
     bundle_schedules,
     bundle_sharing,
     capacity_evidence,
@@ -43,8 +44,8 @@ from nova_cli_public.events import run_event_tool
 from nova_cli_public.read_commands import READ_COMMANDS
 from nova_cli_public.write_commands import WRITE_COMMANDS
 
-ALL_COMMANDS = capacity_evidence.COMMANDS + bundle_schedules.COMMANDS + bundle_sharing.COMMANDS + vendor_agreement.COMMANDS + inspection_confirmations.COMMANDS + scheduled_work.COMMANDS + fleet_decisions.COMMANDS + READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + vehicle_note_edit.COMMANDS + defect_cost.COMMANDS + repair_requests.COMMANDS + repair_cancel.COMMANDS + aggregate_reports.COMMANDS + scorecard_reads.COMMANDS + rental_dismissal.COMMANDS + quality_reports.COMMANDS + fmc_choice.COMMANDS + external_preview.COMMANDS
-WRITE_TOOLS = capacity_evidence.WRITES | bundle_schedules.WRITES | bundle_sharing.WRITES | inspection_confirmations.WRITES | {"acknowledge_dsp_daily_work_summary"} | {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review", "update_vehicle", "create_vehicle", "update_vehicle_note", "delete_vehicle_note", "set_defect_cost", "resolve_fleet_issue", "cancel_repair_request", "dismiss_rental_routing", "set_vehicle_fmc_company"}
+ALL_COMMANDS = capacity_evidence.COMMANDS + bundle_returns.COMMANDS + bundle_schedules.COMMANDS + bundle_sharing.COMMANDS + vendor_agreement.COMMANDS + inspection_confirmations.COMMANDS + scheduled_work.COMMANDS + fleet_decisions.COMMANDS + READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + vehicle_note_edit.COMMANDS + defect_cost.COMMANDS + repair_requests.COMMANDS + repair_cancel.COMMANDS + aggregate_reports.COMMANDS + scorecard_reads.COMMANDS + rental_dismissal.COMMANDS + quality_reports.COMMANDS + fmc_choice.COMMANDS + external_preview.COMMANDS
+WRITE_TOOLS = capacity_evidence.WRITES | {bundle_returns.NAME} | bundle_schedules.WRITES | bundle_sharing.WRITES | inspection_confirmations.WRITES | {"acknowledge_dsp_daily_work_summary"} | {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review", "update_vehicle", "create_vehicle", "update_vehicle_note", "delete_vehicle_note", "set_defect_cost", "resolve_fleet_issue", "cancel_repair_request", "dismiss_rental_routing", "set_vehicle_fmc_company"}
 
 BY_COMMAND = {entry["command"]: entry for entry in ALL_COMMANDS}
 BY_TOOL = {entry["tool"]: entry for entry in ALL_COMMANDS if entry.get("mcp", True)}
@@ -273,6 +274,7 @@ def input_model(entry, *, mcp=False):
 
 
 MODELS = {name: input_model(entry, mcp=True) for name, entry in BY_TOOL.items()}
+MODELS[bundle_returns.NAME] = bundle_returns.Return
 
 LOCAL_READ_TOOLS = {name for name, model in MODELS.items() if any(
     field == 'file' or field.endswith('_file') for field in model.model_fields)}
@@ -339,6 +341,8 @@ class CustomerReadService:
         }
 
     def run(self, name, arguments):
+        if name == bundle_returns.NAME:
+            return bundle_returns.execute(self.client, arguments)
         if name not in BY_TOOL:
             raise ValueError("Unknown tool")
         entry = BY_TOOL[name]

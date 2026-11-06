@@ -64,6 +64,7 @@ client support; the server checks current account access.
 | `nova vehicle list-checkouts` | `list_vehicle_checkouts` | remote_read | `nova:read` |
 | `nova vehicle add-note` | `add_vehicle_note` | remote_write | `nova:read nova:write` |
 | `nova vehicle check-out` | `check_out_vehicle` | remote_write | `nova:read nova:write` |
+| `nova bundle-return record` | `record_bundle_return` | remote_write | `nova:read nova:write` |
 | `nova vehicle check-in` | `check_in_vehicle` | remote_write | `nova:read nova:write` |
 | `nova vehicle create` | `create_vehicle` | remote_write | `nova:read nova:write` |
 | `nova vehicle decode-vin` | `decode_vehicle_vin` | remote_read | `nova:read` |
@@ -176,8 +177,9 @@ checks. The server must support the shared setting. No second permission is requ
 
 ### Bundle pickup and return schedules
 
-Use `nova bundle-schedules list` to read both overnight windows and the current
-version. Use `nova bundle-schedules decide REF UNIT --version VERSION
+Use `nova bundle-schedules list` to read the pickup and return windows and the current
+version. Pickup can use a shop-selected time window; the return window remains
+midnight to 5 a.m. The API validates pickup dates and DSP approval versions. Use `nova bundle-schedules decide REF UNIT --version VERSION
 --decision approved` (or `declined`) for that exact proposal. A changed schedule
 needs a new decision. The same named MCP tools require the listed operation
 permissions. Read the schedule again after a conflict or an unknown outcome.

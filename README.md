@@ -570,3 +570,11 @@ Request the matching `capacity.evidence.list.v1`, `get.v1`, `content.v1`,
 `review.v1` or `upload.v1` operation. Writes require explicit write consent.
 File output contains private base64 bytes. Local MCP keeps its existing response
 size limits. After an unknown write outcome, read the record before another attempt.
+
+Bundle van returns use `record_bundle_return` (CLI: `bundle-return record`).
+This adapter requires the API return receipt `{task_id, status: checked_in, mileage}`
+and `capacity.transport.check_in.v1`. The API keeps platform custody role,
+Station, evidence and mileage checks. Old delegated consent does not gain this
+operation. Calls do not retry mutations; an unconfirmed receipt reports an
+unknown outcome. Release after the matching Nova API contract. No package or
+hosted deployment is part of this source change.
