@@ -603,3 +603,26 @@ Envía una solicitud con `body-repair create --data JSON`. Los comandos y las
 herramientas conservan los permisos, el alcance de flota y los requisitos de
 PAVE. Una persona debe completar el escaneo. Después de un resultado desconocido,
 consulta el van o la solicitud antes de intentar de nuevo.
+
+
+### Scan-team requests and scheduling
+
+Use `pave-scan request VAN-7` to ask the scan team to scan a van. Read
+`vehicle pave-reports VAN-7` to check its request and report. The scan request
+has no date until authorized staff or the responsible workshop sets one.
+Use `pave-scan upcoming DSP-7 --window-hours 1440` to read booked dates.
+Use `pave-scan request-change DSP-7 7 --preferred-at 2026-11-09T02:00:00Z`
+to ask for another day; the booked day stays until the team changes it.
+
+Authorized scheduling agents use `pave-scan platform-list`, `platform-schedule`,
+`platform-cancel`, or the corresponding `workshop-` actions. Use `--help` for
+IDs and date fields. Dates require an explicit UTC offset. Site-admin service
+accounts can schedule Nova work; platform human delegation remains unavailable.
+Shop agents can schedule only their own workshop. The API checks the active
+scan switch, saved PAVE link, roles and booking state. A person performs the scan.
+After `outcome_unknown`, read the current schedule before another write.
+
+Solicita un escaneo con `pave-scan request VAN-7`. El personal autorizado o el
+taller configura la fecha. Usa `request-change` para solicitar otro día.
+La fecha programada no cambia hasta que el equipo la cambie. Una persona
+debe hacer el escaneo. Consulta el programa después de un resultado desconocido.
