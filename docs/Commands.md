@@ -118,6 +118,8 @@ client support; the server checks current account access.
 | `nova fleet-import review` | `review_cortex_file` | remote_read, local_file_read | `nova:read` |
 | `nova fleet-import preview` | `preview_fleet_import` | remote_read, local_file_read | `nova:read nova:write` |
 | `nova fleet-import apply` | `apply_fleet_import` | remote_write, local_file_read | `nova:read nova:write` |
+| `nova defect-routing shops` | `list_defect_routing_shops` | remote_read | `nova:read` |
+| `nova defect-routing resume` | `route_repair_request` | remote_write | `nova:read nova:write` |
 | `nova defect-review queue` | `list_defect_review_queue` | remote_read | `nova:read` |
 | `nova defect-review history` | `list_defect_reviews` | remote_read | `nova:read` |
 | `nova defect-review approve` | `approve_defect_review` | remote_write | `nova:read nova:write` |
@@ -192,3 +194,14 @@ saves the shop profile only when you have profile access. Without `--save-profil
 the profile stays unchanged. Read after an uncertain outcome before trying again.
 New connections need explicit consent. Service-account credentials can edit the
 bundle destination, but cannot save the profile because its API does not admit them.
+
+
+Use `defect-routing shops --vehicle-id VAN-7 --repair-type mechanical` to check the shop's
+`eligible_for_repair_type` value. Use the existing `defect-review approve FD-7 --vendor-workshop-id 3`
+for an unapproved defect. Use `defect-routing resume RR-7 --vendor-workshop-id 3` for an open request.
+Both new tools require fresh consent for `vendor_workshops.list.v1` and `repair_requests.route.v1`.
+A successful approval can wait for rental approval; inspect the returned routing state.
+
+Usa `defect-routing shops` para comprobar los talleres elegibles. Usa `defect-review approve` para
+aprobar un defecto pendiente y `defect-routing resume` para asignar una solicitud abierta.
+Los permisos existentes no incluyen estas operaciones nuevas. Autoriza la conexión de nuevo.

@@ -3,6 +3,7 @@
 import re
 
 WRITE_ROUTES = {
+    ("POST", r"/repair-requests/(?:RR-)?[0-9]{1,14}/route"): "repair_requests.route.v1",
     ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/dropoff-address"): "capacity.dropoff_address.update.v1",
     ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[0-9]{1,14}/schedule-decision"): "capacity.schedules.decide.v1",
     ("PATCH", r"/dsp-settings/(?:DSP-)?[0-9]{1,14}/defect-data-sharing"): "dsp.bundle_sharing.update.v1",
