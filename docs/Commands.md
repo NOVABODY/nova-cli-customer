@@ -6,6 +6,8 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova bundle-schedules list` | `list_bundle_schedules` | remote_read | `nova:read` |
+| `nova bundle-schedules decide` | `decide_bundle_schedule` | remote_write | `nova:read nova:write` |
 | `nova bundle-sharing get` | `get_bundle_sharing` | remote_read | `nova:read` |
 | `nova bundle-sharing set` | `set_bundle_sharing` | remote_write | `nova:read nova:write` |
 | `nova vendor-agreement status` | `get_vendor_agreement_status` | remote_read | `nova:read` |
@@ -166,3 +168,11 @@ owner/admin or a site admin can change it. No second opt-in is required.
 MCP exposes `get_bundle_sharing` and `set_bundle_sharing` with a required boolean
 `enabled` for writes. The API owns role, tenant, credential revocation and audit
 checks. The server must support the shared setting. No second permission is required.
+
+### Bundle pickup and return schedules
+
+Use `nova bundle-schedules list` to read both overnight windows and the current
+version. Use `nova bundle-schedules decide REF UNIT --version VERSION
+--decision approved` (or `declined`) for that exact proposal. A changed schedule
+needs a new decision. The same named MCP tools require the listed operation
+permissions. Read the schedule again after a conflict or an unknown outcome.

@@ -3,6 +3,7 @@
 import re
 
 WRITE_ROUTES = {
+    ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[0-9]{1,14}/schedule-decision"): "capacity.schedules.decide.v1",
     ("PATCH", r"/dsp-settings/(?:DSP-)?[0-9]{1,14}/defect-data-sharing"): "dsp.bundle_sharing.update.v1",
     ("PATCH", r"/inspection-confirmations/settings/(?:DSP-)?[0-9]{1,14}"): "inspection_confirmations.settings.update.v1",
     ("POST", r"/inspection-confirmations/(?:DVIC-)?[0-9]{1,14}/respond"): "inspection_confirmations.respond.v1",
