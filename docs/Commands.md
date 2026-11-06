@@ -13,6 +13,9 @@ client support; the server checks current account access.
 | `nova bundle-sharing get` | `get_bundle_sharing` | remote_read | `nova:read` |
 | `nova bundle-sharing set` | `set_bundle_sharing` | remote_write | `nova:read nova:write` |
 | `nova vendor-agreement status` | `get_vendor_agreement_status` | remote_read | `nova:read` |
+| `nova bundle-workflow list` | `list_bundle_offers` | remote_read | `nova:read` |
+| `nova bundle-workflow report` | `get_bundle_offer_report` | remote_read | `nova:read` |
+| `nova bundle-workflow vans` | `list_bought_bundle_vans` | remote_read | `nova:read` |
 | `nova inspection-confirmation settings` | `get_inspection_confirmation_settings` | remote_read | `nova:read` |
 | `nova inspection-confirmation set-settings` | `update_inspection_confirmation_settings` | remote_write | `nova:read nova:write` |
 | `nova inspection-confirmation get` | `get_inspection_confirmation` | remote_read | `nova:read` |
