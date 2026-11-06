@@ -54,6 +54,10 @@ client support; the server checks current account access.
 | `nova body-repair quote` | `download_body_repair_quote` | remote_read, local_file_write | `nova:read` |
 | `nova body-repair scope` | `download_body_repair_scope` | remote_read, local_file_write | `nova:read` |
 | `nova body-repair list` | `list_body_repair_requests` | remote_read | `nova:read` |
+| `nova body-repair create` | `create_body_repair_request` | remote_write | `nova:read nova:write` |
+| `nova body-repair add-inspection-link` | `add_body_repair_inspection_link` | remote_write | `nova:read nova:write` |
+| `nova body-repair replace-inspection-link` | `replace_body_repair_inspection_link` | remote_write | `nova:read nova:write` |
+| `nova body-repair request-inspection-link` | `request_body_repair_inspection_link` | remote_write | `nova:read nova:write` |
 | `nova body-repair get` | `get_body_repair_request` | remote_read | `nova:read` |
 | `nova body-repair pave-reports` | `list_body_repair_pave_reports` | remote_read | `nova:read` |
 | `nova body-repair pave-comparison` | `compare_body_repair_pave_reports` | remote_read | `nova:read` |

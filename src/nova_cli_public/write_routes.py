@@ -3,6 +3,10 @@
 import re
 
 WRITE_ROUTES = {
+    ('POST', r'/body-repair/requests'): 'body_repair.requests.create.v1',
+    ('POST', r'/body-repair/requests/[A-Za-z0-9_-]{1,64}/inspection-links'): 'body_repair.inspection_links.add.v1',
+    ('PATCH', r'/body-repair/requests/[A-Za-z0-9_-]{1,64}/inspection-links'): 'body_repair.inspection_links.replace.v1',
+    ('POST', r'/body-repair/requests/[A-Za-z0-9_-]{1,64}/request-inspection-link'): 'body_repair.inspection_links.request.v1',
     ("POST", r"/repair-requests/(?:RR-)?[0-9]{1,14}/route"): "repair_requests.route.v1",
     ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/dropoff-address"): "capacity.dropoff_address.update.v1",
     ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[0-9]{1,14}/schedule-decision"): "capacity.schedules.decide.v1",
