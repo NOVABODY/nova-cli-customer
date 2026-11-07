@@ -254,7 +254,7 @@ def browser_code(origin, timeout=180, operations=None, scope="nova:read", manual
         except Exception:  # noqa: BLE001 - launcher errors may contain the authorization URL
             opened = False
         if not opened:
-            raise AuthError("Could not open the browser. Run login from a desktop session.")
+            raise AuthError("Cannot open the browser. Run nova auth login --manual. / No se puede abrir el navegador. Ejecute nova auth login --manual.")
         while not outcome and time.monotonic() < deadline:
             server.timeout = max(0.01, deadline - time.monotonic())
             server.handle_request()
