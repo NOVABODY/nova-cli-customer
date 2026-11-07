@@ -546,3 +546,68 @@ def test_logout_without_a_saved_refresh_token_clears_memory_without_claiming_ser
     assert client.logout() is False
     assert client.access_token is None
     assert not client.opener.requests
+
+
+def test_loopback_bind_denial_is_an_actionable_auth_error(monkeypatch):
+    def denied(*args, **kwargs):
+        raise PermissionError("private diagnostic")
+    monkeypatch.setattr(delegated.HTTPServer, "__init__", denied)
+    with pytest.raises(AuthError, match="manual"):
+        delegated.browser_code("https://nova.example")
+
+
+def test_profile_lock_directory_denial_is_sanitized(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    from nova_cli_public.locking import profile_lock
+
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    def denied(*args, **kwargs):
+        raise PermissionError("private diagnostic")
+    monkeypatch.setattr(Path, "mkdir", denied)
+    with pytest.raises(UsageError, match="lock") as failure, profile_lock("personal"):
+        pytest.fail("Lock denial must stop credential access")
+    assert "private diagnostic" not in str(failure.value)
+
+
+@pytest.mark.parametrize("change", [None, "state", "iss", "host", "path", "duplicate", "fragment"])
+def test_manual_login_binds_pasted_callback_without_browser_or_listener(monkeypatch, capsys, change):
+    def forbidden(*args, **kwargs):
+        pytest.fail("Manual login must not launch a browser or bind a socket")
+    monkeypatch.setattr(delegated.HTTPServer, "__init__", forbidden)
+    monkeypatch.setattr(delegated.webbrowser, "open", forbidden)
+    captured = {}
+    def paste(prompt):
+        url = capsys.readouterr().err.splitlines()[-1]
+        query = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query)
+        captured.update(query)
+        fields = {"state": query["state"][0], "iss": "https://nova.example", "code": "opaque-code"}
+        if change in ("state", "iss"):
+            fields[change] = "wrong"
+        callback = query["redirect_uri"][0]
+        if change == "host":
+            callback = callback.replace("127.0.0.1", "evil.example")
+        if change == "path":
+            callback += "/wrong"
+        return callback + "?" + urllib.parse.urlencode(fields) + (
+            "&code=second" if change == "duplicate" else "#fragment" if change == "fragment" else "")
+    monkeypatch.setattr(delegated.getpass, "getpass", paste)
+    if change:
+        with pytest.raises(AuthError):
+            delegated.browser_code("https://nova.example", manual=True)
+    else:
+        code, verifier, redirect_uri = delegated.browser_code("https://nova.example", manual=True)
+        assert code == "opaque-code"
+        assert redirect_uri == "http://127.0.0.1/oauth/callback"
+        assert verifier and captured["code_challenge_method"] == ["S256"]
+
+
+def test_manual_login_refuses_echoing_callback_input(monkeypatch):
+    import warnings
+
+    def insecure_prompt(prompt):
+        warnings.warn("cannot hide input", delegated.getpass.GetPassWarning)
+        pytest.fail("Never read the callback with echo enabled")
+    monkeypatch.setattr(delegated.getpass, "getpass", insecure_prompt)
+    with pytest.raises(AuthError):
+        delegated.browser_code("https://nova.example", manual=True)

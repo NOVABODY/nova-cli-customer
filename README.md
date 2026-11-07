@@ -10,30 +10,26 @@ Workshop event tools provide durable delivery with explicit local acknowledgment
 
 ## Install
 
-Use Python 3.11 or later and a working OS credential store. Install the release
-wheel supplied by Nova in a dedicated environment:
+Use Python 3.11 or later and a working OS credential store. Install from the customer repository in a dedicated environment:
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python3 -m pip install ./nova_fora_cli-0.1.0-py3-none-any.whl
+python3 -m pip install "nova-fora-cli @ git+https://github.com/NOVABODY/nova-cli-customer.git@main"
 nova --help
 ```
 
-Each successful Check job retains its tested wheel and `release-receipt.json`
-for 14 days. The receipt identifies the source revision and includes SHA-256
-hashes for every tracked source file and every wheel file. It also checks that
-the complete packaged client matches that source. A receipt is build evidence;
-it does not authorize release or package-registry publication. Use an approved
-release from a reviewed main-branch revision. A pull-request artifact is a test
-candidate.
+Use a reviewed tag or full commit SHA instead of `main` to pin an installation.
+Release wheels supplied by Nova can also be installed by file path. Each
+successful Check job retains its tested wheel and `release-receipt.json` for
+14 days. The receipt records the source revision and source/package hashes.
+Use an approved release from a reviewed main-branch revision. A pull-request
+artifact is a test candidate.
 
-Use the file name supplied with your release if its version differs. These steps
-do not assume that a package-registry release is available. Do not install the
-unrelated `nova-cli` package from a registry. Use only the wheel supplied by Nova.
-The distribution name does not change the browser client ID, keyring service,
-profile storage, or command names. Registry ownership must be verified separately
-before Nova publishes registry installation instructions. Your Nova deployment
+Do not install the unrelated `nova-cli` package from PyPI. The distribution name
+`nova-fora-cli` does not change the OAuth client ID, keyring service, profiles or
+command names. Registry ownership must be verified before publishing registry
+installation instructions. Your Nova deployment
 must allow browser connections and the operations you request.
 
 ## Use
@@ -58,6 +54,14 @@ a write in a long-running MCP session. It sends each write once and does not
 repeat writes after a 401, timeout, or unknown result. No file
 credential fallback is available. Unlock your OS credential store if access fails.
 
+For SSH sessions, containers, or blocked local callbacks, use `nova auth login
+--manual`. Use an interactive terminal with a private input prompt. Open the printed URL in your browser. Approve the request in Nova.
+The browser may show a connection error at the final loopback URL. Copy that
+complete URL from its address bar and paste it at the hidden CLI prompt. The CLI
+checks the issuer, state and exact callback before it exchanges the code. Do not
+share or save the callback URL. Manual login still requires an unlocked OS
+credential store; it does not save credentials in files.
+
 `auth status` reports local credential presence, not server verification.
 `auth logout` removes the local credential and requests server disconnect at
 `/oauth/revoke`. Check `server_revoked`: if false, the server disconnect is not
@@ -74,7 +78,7 @@ each Nova host. `NOVA_PUBLIC_PROFILE` can select a saved public profile.
 ## Local MCP
 
 ```sh
-python3 -m pip install './nova_fora_cli-0.1.0-py3-none-any.whl[mcp]'
+python3 -m pip install "nova-fora-cli[mcp] @ git+https://github.com/NOVABODY/nova-cli-customer.git@main"
 nova-mcp --profile personal --file-root "$PWD/agent-files"
 ```
 
