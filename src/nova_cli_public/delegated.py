@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import base64
+import getpass
 import hashlib
 import secrets
+import sys
 import time
+import warnings
 import webbrowser
 from dataclasses import replace
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -117,7 +120,7 @@ OPERATIONS = set(READ_ROUTES.values()) | set(WRITE_ROUTES.values())
 DEFAULT_OPERATIONS = "vehicles.list_full.v1 vehicles.get_full.v1"
 
 
-def browser_code(origin, timeout=180, operations=None, scope="nova:read"):
+def browser_code(origin, timeout=180, operations=None, scope="nova:read", manual=False):
     operations = DEFAULT_OPERATIONS if operations is None else operations
     if operations is not None and (
         not operations.split() or not set(operations.split()) <= OPERATIONS
@@ -178,9 +181,8 @@ def browser_code(origin, timeout=180, operations=None, scope="nova:read"):
             self.end_headers()
             self.wfile.write(b"You can close this window. / Puede cerrar esta ventana.")
 
-    with Server(("127.0.0.1", 0), Callback) as server:
-        redirect_uri = f"http://127.0.0.1:{server.server_port}/oauth/callback"
-        url = (
+    def authorization_url(redirect_uri):
+        return (
             origin
             + "/api/oauth/authorize?"
             + urlencode(
@@ -197,6 +199,40 @@ def browser_code(origin, timeout=180, operations=None, scope="nova:read"):
                 }
             )
         )
+
+    if manual:
+        redirect_uri = "http://127.0.0.1/oauth/callback"
+        print("Open this URL in your browser. / Abra esta URL en su navegador.", file=sys.stderr)
+        print(authorization_url(redirect_uri), file=sys.stderr)
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", getpass.GetPassWarning)
+                returned = getpass.getpass(
+                    "Paste the final callback URL. / Pegue la URL final de retorno: "
+                )
+            parsed = urlsplit(returned)
+            pairs = parse_qsl(parsed.query, strict_parsing=True, max_num_fields=5)
+            fields = dict(pairs)
+            if (len(returned) > 8192 or returned.split("?", 1)[0] != redirect_uri
+                    or parsed.fragment or len(fields) != len(pairs)
+                    or set(fields) != {"state", "iss", "code"}
+                    or not secrets.compare_digest(fields.get("state", ""), state)
+                    or fields.get("iss") != origin or not 1 <= len(fields.get("code", "")) <= 2048):
+                raise ValueError()
+        except (ValueError, TypeError, EOFError, getpass.GetPassWarning):
+            raise AuthError("Sign-in was not completed. / No se completó el inicio de sesión.") from None
+        return fields["code"], verifier, redirect_uri
+
+    try:
+        listener = Server(("127.0.0.1", 0), Callback)
+    except OSError:
+        raise AuthError(
+            "Cannot open a local callback. Run nova auth login --manual. / "
+            "No se puede abrir un retorno local. Ejecute nova auth login --manual."
+        ) from None
+    with listener as server:
+        redirect_uri = f"http://127.0.0.1:{server.server_port}/oauth/callback"
+        url = authorization_url(redirect_uri)
         try:
             opened = webbrowser.open(url)
         except Exception:  # noqa: BLE001 - launcher errors may contain the authorization URL
@@ -211,7 +247,7 @@ def browser_code(origin, timeout=180, operations=None, scope="nova:read"):
     return outcome["code"], verifier, redirect_uri
 
 
-def login(client, operations=None, scope="nova:read"):
+def login(client, operations=None, scope="nova:read", manual=False):
     if scope not in ("nova:read", "nova:read nova:write"):
         raise AuthError("Use nova:read or nova:read nova:write.")
     _read(client)  # Fail before opening the browser when the configured keyring is unavailable.
@@ -219,9 +255,10 @@ def login(client, operations=None, scope="nova:read"):
         browser_code(
             issuer(client.profile),
             operations=operations,
+            **({"manual": True} if manual else {}),
             **({"scope": scope} if scope != "nova:read" else {}),
         )
-        if operations is not None or scope != "nova:read"
+        if operations is not None or scope != "nova:read" or manual
         else browser_code(issuer(client.profile))
     )
     with profile_lock(client.profile.name):

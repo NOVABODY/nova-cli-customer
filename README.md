@@ -10,18 +10,18 @@ Workshop event tools provide durable delivery with explicit local acknowledgment
 
 ## Install
 
-Use Python 3.11 or later and a working OS credential store. Install the release
-wheel supplied by Nova in a dedicated environment:
+Use Python 3.11 or later and a working OS credential store. Install from the customer repository in a dedicated environment:
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python3 -m pip install ./nova_cli-0.1.0-py3-none-any.whl
+python3 -m pip install "nova-cli @ git+https://github.com/NOVABODY/nova-cli-customer.git@main"
 nova --help
 ```
 
-Use the file name supplied with your release if its version differs. These steps
-do not assume that a package-registry release is available. Your Nova deployment
+Use a reviewed tag or full commit SHA instead of `main` to pin an installation.
+Do not install the unrelated `nova-cli` package from PyPI. Release wheels supplied
+by Nova can also be installed by file path. Your Nova deployment
 must allow browser connections and the operations you request.
 
 ## Use
@@ -43,6 +43,14 @@ or decline. The client uses S256 PKCE and a bound local callback. Refresh tokens
 stay in the OS credential store; access tokens stay in process memory. No file
 credential fallback is available. Unlock your OS credential store if access fails.
 
+For SSH sessions, containers, or blocked local callbacks, use `nova auth login
+--manual`. Use an interactive terminal with a private input prompt. Open the printed URL in your browser. Approve the request in Nova.
+The browser may show a connection error at the final loopback URL. Copy that
+complete URL from its address bar and paste it at the hidden CLI prompt. The CLI
+checks the issuer, state and exact callback before it exchanges the code. Do not
+share or save the callback URL. Manual login still requires an unlocked OS
+credential store; it does not save credentials in files.
+
 `auth status` reports local credential presence, not server verification.
 `auth logout` removes the local credential. To revoke the connection on the
 server, disconnect it in Nova account settings. `profile remove NAME` also
@@ -52,7 +60,7 @@ each Nova host. `NOVA_PUBLIC_PROFILE` can select a saved public profile.
 ## Local MCP
 
 ```sh
-python3 -m pip install './nova_cli-0.1.0-py3-none-any.whl[mcp]'
+python3 -m pip install "nova-cli[mcp] @ git+https://github.com/NOVABODY/nova-cli-customer.git@main"
 nova-mcp --profile personal
 ```
 
