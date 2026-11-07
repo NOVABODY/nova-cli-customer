@@ -14,7 +14,13 @@ from typing import Any
 from nova_cli_public.body_documents import EmbeddedDocument
 from nova_cli_public.client import ApiClient
 from nova_cli_public.config import ConfigStore
-from nova_cli_public.errors import ApiError, AuthError, NovaCliError, UsageError
+from nova_cli_public.errors import (
+    ApiError,
+    AuthError,
+    NovaCliError,
+    TokenStoreUnavailable,
+    UsageError,
+)
 from nova_cli_public.event_commands import EVENT_LOCAL_TOOLS
 from nova_cli_public.events import EventInboxError, cursor_reset_detail
 from nova_cli_public.local_inputs import local_inputs
@@ -47,6 +53,7 @@ def create_server(service, *, file_root=None):
             "authentication_required": "Run nova auth login, then try again.",
             "forbidden": "Your Nova account cannot perform this operation.",
             "not_found": "This record is not available to your account.",
+            "credential_store_unavailable": "Unlock the OS credential store. / Desbloquee el almacén de credenciales del sistema.",
             "invalid_arguments": "Check the tool arguments. Use a record ID from the list.",
             "unavailable": "Nova could not complete the request.",
             "outcome_unknown": "The change outcome is unknown. Check the record before trying again.",
@@ -140,6 +147,8 @@ def create_server(service, *, file_root=None):
             )
         except EventInboxError as exc:
             return error("event_inbox_error", {"message": str(exc)})
+        except TokenStoreUnavailable:
+            return error("credential_store_unavailable")
         except UsageError:
             return error("invalid_arguments")
         except (NovaCliError, OSError):

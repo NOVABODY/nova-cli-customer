@@ -182,3 +182,19 @@ def test_stdio_handler_validates_before_api_reads():
     )
     assert result.root.structuredContent == {"error": {"code": "invalid_arguments"}}
     assert reader.calls == []
+
+
+def test_locked_credential_store_has_specific_recovery_guidance():
+    from nova_cli_public.errors import TokenStoreUnavailable
+
+    reader = Reader()
+    def fail(*args, **kwargs):
+        raise TokenStoreUnavailable("PRIVATE diagnostic")
+    reader.request = fail
+    server = create_server(DelegatedService(reader))
+    result = asyncio.run(server.request_handlers[types.CallToolRequest](types.CallToolRequest(
+        method="tools/call", params=types.CallToolRequestParams(name="list_vehicles", arguments={}),
+    )))
+    assert result.root.structuredContent == {"error": {"code": "credential_store_unavailable"}}
+    assert "Unlock" in result.root.content[0].text
+    assert "PRIVATE" not in result.model_dump_json()

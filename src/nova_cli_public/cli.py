@@ -67,6 +67,7 @@ def build_parser():
                 "--scope", choices=["nova:read", "nova:read nova:write"], default="nova:read"
             )
             command.add_argument("--operations", help="Space-separated operation IDs for consent.")
+            command.add_argument("--manual", action="store_true", help="Open the sign-in URL and paste the callback URL. / Abra la URL de acceso y pegue la URL de retorno.")
     register_commands(commands)
 
     seen = set()
@@ -142,9 +143,10 @@ def cmd_auth(args):
             delegated.login(
                 client,
                 operations=args.operations,
+                **({"manual": True} if args.manual else {}),
                 **({"scope": args.scope} if args.scope != "nova:read" else {}),
             )
-            if args.operations is not None or args.scope != "nova:read"
+            if args.operations is not None or args.scope != "nova:read" or args.manual
             else delegated.login(client)
         )
         return {"ok": True, "profile": client.profile.name, "connection": connection}
