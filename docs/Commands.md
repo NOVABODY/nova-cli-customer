@@ -16,6 +16,11 @@ client support; the server checks current account access.
 | `nova bundle-workflow list` | `list_bundle_offers` | remote_read | `nova:read` |
 | `nova bundle-workflow report` | `get_bundle_offer_report` | remote_read | `nova:read` |
 | `nova bundle-workflow vans` | `list_bought_bundle_vans` | remote_read | `nova:read` |
+| `nova tire-vendor list` | `list_station_tire_vendors` | remote_read | `nova:read` |
+| `nova tire-vendor add` | `add_station_tire_vendor` | remote_write | `nova:read nova:write` |
+| `nova tire-vendor share-contact` | `share_tire_vendor_contact` | remote_write | `nova:read nova:write` |
+| `nova tire-vendor requests` | `list_vendor_setup_requests` | remote_read | `nova:read` |
+| `nova tire-vendor handle` | `handle_vendor_setup_request` | remote_write | `nova:read nova:write` |
 | `nova inspection-confirmation settings` | `get_inspection_confirmation_settings` | remote_read | `nova:read` |
 | `nova inspection-confirmation set-settings` | `update_inspection_confirmation_settings` | remote_write | `nova:read nova:write` |
 | `nova inspection-confirmation get` | `get_inspection_confirmation` | remote_read | `nova:read` |

@@ -18,6 +18,7 @@ Availability in discovery does not grant account access.
 | Body repair | Read permitted orders, PAVE reports/comparisons and images; download quote, scope, invoice/receipt and documentation files. |
 | Inspections | Read permitted inspection lists and details. Use the browser for inspection capture and submission. |
 | Notifications and events | Read and manage supported notifications/preferences; consume workshop events with durable local acknowledgment. |
+| Tire vendor setup | Read Station choices, add an eligible vendor, submit contacts, and handle requests as site admin. |
 | Account | Manage local profiles, browser sign-in, credential status/refresh/logout, identity reads and health checks. |
 
 ## Permission and state limits

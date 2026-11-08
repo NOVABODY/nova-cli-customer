@@ -640,3 +640,21 @@ consent. Existing browser/S256 login and public profile storage are unchanged.
 
 
 `nova defect list --first-recap-dsp-id 7 --no-open-only` reads the released recap critical cohort under current recipient scope. The same optional MCP filter uses `defects.list.v1`. Membership is historical; repair status and critical labels are current. Resolved records remain unless another filter excludes them. This does not grant access to another DSP.
+
+## Station tire vendor setup
+
+List tire vendors for each selected Station. Add an eligible vendor, or share a
+local vendor contact when no vendor is available. Contact sharing submits a
+setup request and queues email to site admins; it does not add a vendor or
+create a referral. Reload choices after an availability conflict. Use the saved
+request or choices to check an unknown write outcome before another attempt.
+Site admins can list requests, create or associate the vendor through vendor
+administration, and mark a request handled. The server checks role, DSP and
+Station access on every call.
+
+Use `nova tire-vendor list`, `add`, `share-contact`, `requests`, or `handle`.
+Read each subcommand's `--help` for explicit arguments. An email address or phone
+number is required for contact sharing. Local MCP exposes
+`list_station_tire_vendors`, `add_station_tire_vendor`,
+`share_tire_vendor_contact`, `list_vendor_setup_requests`, and
+`handle_vendor_setup_request` with the same fields and result checks.
