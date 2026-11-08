@@ -16,6 +16,11 @@ client support; the server checks current account access.
 | `nova bundle-workflow list` | `list_bundle_offers` | remote_read | `nova:read` |
 | `nova bundle-workflow report` | `get_bundle_offer_report` | remote_read | `nova:read` |
 | `nova bundle-workflow vans` | `list_bought_bundle_vans` | remote_read | `nova:read` |
+| `nova tire-vendor list` | `list_station_tire_vendors` | remote_read | `nova:read` |
+| `nova tire-vendor add` | `add_station_tire_vendor` | remote_write | `nova:read nova:write` |
+| `nova tire-vendor share-contact` | `share_tire_vendor_contact` | remote_write | `nova:read nova:write` |
+| `nova tire-vendor requests` | `list_vendor_setup_requests` | remote_read | `nova:read` |
+| `nova tire-vendor handle` | `handle_vendor_setup_request` | remote_write | `nova:read nova:write` |
 | `nova inspection-confirmation settings` | `get_inspection_confirmation_settings` | remote_read | `nova:read` |
 | `nova inspection-confirmation set-settings` | `update_inspection_confirmation_settings` | remote_write | `nova:read nova:write` |
 | `nova inspection-confirmation get` | `get_inspection_confirmation` | remote_read | `nova:read` |
@@ -68,6 +73,10 @@ client support; the server checks current account access.
 | `nova body-repair quote` | `download_body_repair_quote` | remote_read, local_file_write | `nova:read` |
 | `nova body-repair scope` | `download_body_repair_scope` | remote_read, local_file_write | `nova:read` |
 | `nova body-repair list` | `list_body_repair_requests` | remote_read | `nova:read` |
+| `nova body-repair create` | `create_body_repair_request` | remote_write | `nova:read nova:write` |
+| `nova body-repair add-inspection-link` | `add_body_repair_inspection_link` | remote_write | `nova:read nova:write` |
+| `nova body-repair replace-inspection-link` | `replace_body_repair_inspection_link` | remote_write | `nova:read nova:write` |
+| `nova body-repair request-inspection-link` | `request_body_repair_inspection_link` | remote_write | `nova:read nova:write` |
 | `nova body-repair get` | `get_body_repair_request` | remote_read | `nova:read` |
 | `nova body-repair pave-reports` | `list_body_repair_pave_reports` | remote_read | `nova:read` |
 | `nova body-repair pave-comparison` | `compare_body_repair_pave_reports` | remote_read | `nova:read` |
@@ -132,6 +141,8 @@ client support; the server checks current account access.
 | `nova fleet-import review` | `review_cortex_file` | remote_read, local_file_read | `nova:read` |
 | `nova fleet-import preview` | `preview_fleet_import` | remote_read, local_file_read | `nova:read nova:write` |
 | `nova fleet-import apply` | `apply_fleet_import` | remote_write, local_file_read | `nova:read nova:write` |
+| `nova defect-routing shops` | `list_defect_routing_shops` | remote_read | `nova:read` |
+| `nova defect-routing resume` | `route_repair_request` | remote_write | `nova:read nova:write` |
 | `nova defect-review queue` | `list_defect_review_queue` | remote_read | `nova:read` |
 | `nova defect-review history` | `list_defect_reviews` | remote_read | `nova:read` |
 | `nova defect-review approve` | `approve_defect_review` | remote_write | `nova:read nova:write` |
@@ -207,3 +218,30 @@ saves the shop profile only when you have profile access. Without `--save-profil
 the profile stays unchanged. Read after an uncertain outcome before trying again.
 New connections need explicit consent. Service-account credentials can edit the
 bundle destination, but cannot save the profile because its API does not admit them.
+
+
+Use `defect-routing shops --vehicle-id VAN-7 --repair-type mechanical` to check the shop's
+`eligible_for_repair_type` value. Use the existing `defect-review approve FD-7 --vendor-workshop-id 3`
+for an unapproved defect. Use `defect-routing resume RR-7 --vendor-workshop-id 3` for an open request.
+Both new tools require fresh consent for `vendor_workshops.list.v1` and `repair_requests.route.v1`.
+A successful approval can wait for rental approval; inspect the returned routing state.
+
+Usa `defect-routing shops` para comprobar los talleres elegibles. Usa `defect-review approve` para
+aprobar un defecto pendiente y `defect-routing resume` para asignar una solicitud abierta.
+Los permisos existentes no incluyen estas operaciones nuevas. Autoriza la conexión de nuevo.
+
+| Command | MCP tool | Effects | Scope |
+| --- | --- | --- | --- |
+| `nova pave-scan request` | `request_vehicle_pave_scan` | remote_write | `nova:read nova:write` |
+| `nova pave-scan cancel-request` | `cancel_vehicle_pave_scan_request` | remote_write | `nova:read nova:write` |
+| `nova pave-scan upcoming` | `list_dsp_pave_scans` | remote_read | `nova:read` |
+| `nova pave-scan request-change` | `request_pave_scan_schedule_change` | remote_write | `nova:read nova:write` |
+| `nova pave-scan platform-list` | `list_platform_pave_scans` | remote_read | `nova:read` |
+| `nova pave-scan workshop-list` | `list_workshop_pave_scans` | remote_read | `nova:read` |
+| `nova pave-scan platform-schedule` | `set_platform_pave_scan_schedule` | remote_write | `nova:read nova:write` |
+| `nova pave-scan workshop-schedule` | `set_workshop_pave_scan_schedule` | remote_write | `nova:read nova:write` |
+| `nova pave-scan platform-cancel` | `cancel_platform_pave_scan` | remote_write | `nova:read nova:write` |
+| `nova pave-scan workshop-cancel` | `cancel_workshop_pave_scan` | remote_write | `nova:read nova:write` |
+| `nova inspection-recap report` | `get_first_inspection_recap_report` | remote_read | `nova:read` |
+| `nova vendor-referral list` | `list_vendor_referrals` | remote_read | `nova:read` |
+| `nova vendor-referral submit` | `submit_vendor_referral` | remote_write | `nova:read nova:write` |

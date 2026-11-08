@@ -10,30 +10,26 @@ Workshop event tools provide durable delivery with explicit local acknowledgment
 
 ## Install
 
-Use Python 3.11 or later and a working OS credential store. Install the release
-wheel supplied by Nova in a dedicated environment:
+Use Python 3.11 or later and a working OS credential store. Install from the customer repository in a dedicated environment:
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python3 -m pip install ./nova_fora_cli-0.1.0-py3-none-any.whl
+python3 -m pip install "nova-fora-cli @ git+https://github.com/NOVABODY/nova-cli-customer.git@main"
 nova --help
 ```
 
-Each successful Check job retains its tested wheel and `release-receipt.json`
-for 14 days. The receipt identifies the source revision and includes SHA-256
-hashes for every tracked source file and every wheel file. It also checks that
-the complete packaged client matches that source. A receipt is build evidence;
-it does not authorize release or package-registry publication. Use an approved
-release from a reviewed main-branch revision. A pull-request artifact is a test
-candidate.
+Use a reviewed tag or full commit SHA instead of `main` to pin an installation.
+Release wheels supplied by Nova can also be installed by file path. Each
+successful Check job retains its tested wheel and `release-receipt.json` for
+14 days. The receipt records the source revision and source/package hashes.
+Use an approved release from a reviewed main-branch revision. A pull-request
+artifact is a test candidate.
 
-Use the file name supplied with your release if its version differs. These steps
-do not assume that a package-registry release is available. Do not install the
-unrelated `nova-cli` package from a registry. Use only the wheel supplied by Nova.
-The distribution name does not change the browser client ID, keyring service,
-profile storage, or command names. Registry ownership must be verified separately
-before Nova publishes registry installation instructions. Your Nova deployment
+Do not install the unrelated `nova-cli` package from PyPI. The distribution name
+`nova-fora-cli` does not change the OAuth client ID, keyring service, profiles or
+command names. Registry ownership must be verified before publishing registry
+installation instructions. Your Nova deployment
 must allow browser connections and the operations you request.
 
 ## Use
@@ -58,6 +54,14 @@ a write in a long-running MCP session. It sends each write once and does not
 repeat writes after a 401, timeout, or unknown result. No file
 credential fallback is available. Unlock your OS credential store if access fails.
 
+For SSH sessions, containers, or blocked local callbacks, use `nova auth login
+--manual`. Use an interactive terminal with a private input prompt. Open the printed URL in your browser. Approve the request in Nova.
+The browser may show a connection error at the final loopback URL. Copy that
+complete URL from its address bar and paste it at the hidden CLI prompt. The CLI
+checks the issuer, state and exact callback before it exchanges the code. Do not
+share or save the callback URL. Manual login still requires an unlocked OS
+credential store; it does not save credentials in files.
+
 `auth status` reports local credential presence, not server verification.
 `auth logout` removes the local credential and requests server disconnect at
 `/oauth/revoke`. Check `server_revoked`: if false, the server disconnect is not
@@ -74,7 +78,7 @@ each Nova host. `NOVA_PUBLIC_PROFILE` can select a saved public profile.
 ## Local MCP
 
 ```sh
-python3 -m pip install './nova_fora_cli-0.1.0-py3-none-any.whl[mcp]'
+python3 -m pip install "nova-fora-cli[mcp] @ git+https://github.com/NOVABODY/nova-cli-customer.git@main"
 nova-mcp --profile personal --file-root "$PWD/agent-files"
 ```
 
@@ -589,3 +593,79 @@ These reads never buy a bundle, record authorization, charge a payment or book
 transport. The server owns account access and current operation consent.
 
 Commands: `bundle-workflow list`, `bundle-workflow report REF`, and `bundle-workflow vans REF`.
+
+
+### Body repair intake and capture links
+
+Use `body-repair create --data JSON` to submit a repair request. The `data`
+object uses the native intake fields: `vehicle_id` (numeric), `mode`,
+`text_description`, `issues`, `defect_items`, PAVE reports and capture links.
+Use `ownership: rental` when you add a rental van. Rental ownership does not
+mean the `rental` submission mode: that mode is for return damage comparisons.
+
+The matching tools are `create_body_repair_request`,
+`add_body_repair_inspection_link`, `replace_body_repair_inspection_link`, and
+`request_body_repair_inspection_link`. The link commands are
+`body-repair add-inspection-link`, `body-repair replace-inspection-link`, and
+`body-repair request-inspection-link`; use `--help` for their fields.
+New explicit write consent is required. The API checks roles, fleet scope,
+PAVE evidence and order state. Only assigned shop roles can generate or cancel
+redo links. A person must complete the scan. Provider fees can apply.
+After an unknown outcome, read the van or Body request before trying again.
+A submitted request does not prove shop acceptance or a completed scan.
+
+Envía una solicitud con `body-repair create --data JSON`. Los comandos y las
+herramientas conservan los permisos, el alcance de flota y los requisitos de
+PAVE. Una persona debe completar el escaneo. Después de un resultado desconocido,
+consulta el van o la solicitud antes de intentar de nuevo.
+
+
+### Scan-team requests and scheduling
+
+Use `pave-scan request VAN-7` to ask the scan team to scan a van. Read
+`vehicle pave-reports VAN-7` to check its request and report. The scan request
+has no date until authorized staff or the responsible workshop sets one.
+Use `pave-scan upcoming DSP-7 --window-hours 1440` to read booked dates.
+Use `pave-scan request-change DSP-7 7 --preferred-at 2026-11-09T02:00:00Z`
+to ask for another day; the booked day stays until the team changes it.
+
+Authorized scheduling agents use `pave-scan platform-list`, `platform-schedule`,
+`platform-cancel`, or the corresponding `workshop-` actions. Use `--help` for
+IDs and date fields. Dates require an explicit UTC offset. Site-admin service
+accounts can schedule Nova work; platform human delegation remains unavailable.
+Shop agents can schedule only their own workshop. The API checks the active
+scan switch, saved PAVE link, roles and booking state. A person performs the scan.
+After `outcome_unknown`, read the current schedule before another write.
+
+Solicita un escaneo con `pave-scan request VAN-7`. El personal autorizado o el
+taller configura la fecha. Usa `request-change` para solicitar otro día.
+La fecha programada no cambia hasta que el equipo la cambie. Una persona
+debe hacer el escaneo. Consulta el programa después de un resultado desconocido.
+`nova inspection-recap report DSP_ID` reads the released first-platform recap
+within the current recipient's station scope. It cannot generate, release, or
+send a recap. `nova vendor-referral list` and `nova vendor-referral submit` use
+the existing referral workflow. Submission requires `--contact-consent` and
+repeated `--repair-types` options. These actions do not scope a vendor or dispatch
+repairs. Each command and matching stdio MCP tool has its own delegated operation
+consent. Existing browser/S256 login and public profile storage are unchanged.
+
+
+`nova defect list --first-recap-dsp-id 7 --no-open-only` reads the released recap critical cohort under current recipient scope. The same optional MCP filter uses `defects.list.v1`. Membership is historical; repair status and critical labels are current. Resolved records remain unless another filter excludes them. This does not grant access to another DSP.
+
+## Station tire vendor setup
+
+List tire vendors for each selected Station. Add an eligible vendor, or share a
+local vendor contact when no vendor is available. Contact sharing submits a
+setup request and queues email to site admins; it does not add a vendor or
+create a referral. Reload choices after an availability conflict. Use the saved
+request or choices to check an unknown write outcome before another attempt.
+Site admins can list requests, create or associate the vendor through vendor
+administration, and mark a request handled. The server checks role, DSP and
+Station access on every call.
+
+Use `nova tire-vendor list`, `add`, `share-contact`, `requests`, or `handle`.
+Read each subcommand's `--help` for explicit arguments. An email address or phone
+number is required for contact sharing. Local MCP exposes
+`list_station_tire_vendors`, `add_station_tire_vendor`,
+`share_tire_vendor_contact`, `list_vendor_setup_requests`, and
+`handle_vendor_setup_request` with the same fields and result checks.
