@@ -9,6 +9,9 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/defect-bundle-offers/staff/evidence": "capacity.evidence.list.v1",
+    r"/defect-bundle-offers/staff/evidence/[0-9]+": "capacity.evidence.get.v1",
+    r"/defect-bundle-offers/staff/evidence/[0-9]+/content": "capacity.evidence.content.v1",
     r"/dashboards/dsp/(?:DSP-)?[0-9]{1,14}/upcoming-pave-scans": "pave_scans.dsp.list.v1",
     r"/dashboards/platform-pave-scans": "pave_scans.platform.list.v1",
     r"/dashboards/vendor-workshops/(?:VW-)?[0-9]{1,14}/pave-scans": "pave_scans.workshop.list.v1",

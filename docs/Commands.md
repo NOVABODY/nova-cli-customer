@@ -36,6 +36,20 @@ client support; the server checks current account access.
 | `nova auth refresh` | CLI setup | remote_authorization, local_credentials_write | `nova:read` |
 | `nova auth logout` | CLI setup | local_credentials_delete, remote_authorization | None |
 | `nova auth whoami` | `whoami` | remote_read | `nova:read` |
+| `nova capacity-evidence list` | `list_capacity_evidence` | remote_read | `nova:read` |
+| `nova capacity-evidence get` | `get_capacity_evidence` | remote_read | `nova:read` |
+| `nova capacity-evidence file` | `read_capacity_evidence_file` | remote_read | `nova:read` |
+| `nova capacity-evidence review` | `review_capacity_evidence` | remote_write | `nova:read nova:write` |
+| `nova capacity-evidence upload` | `upload_capacity_evidence` | remote_write | `nova:read nova:write` |
+| `nova bundle-schedules list` | `list_bundle_schedules` | remote_read | `nova:read` |
+| `nova bundle-schedules decide` | `decide_bundle_schedule` | remote_write | `nova:read nova:write` |
+| `nova bundle-sharing get` | `get_bundle_sharing` | remote_read | `nova:read` |
+| `nova bundle-sharing set` | `set_bundle_sharing` | remote_write | `nova:read nova:write` |
+| `nova vendor-agreement status` | `get_vendor_agreement_status` | remote_read | `nova:read` |
+| `nova inspection-confirmation settings` | `get_inspection_confirmation_settings` | remote_read | `nova:read` |
+| `nova inspection-confirmation set-settings` | `update_inspection_confirmation_settings` | remote_write | `nova:read nova:write` |
+| `nova inspection-confirmation get` | `get_inspection_confirmation` | remote_read | `nova:read` |
+| `nova inspection-confirmation respond` | `respond_inspection_confirmation` | remote_write | `nova:read nova:write` |
 | `nova daily-work scheduled` | `list_dsp_scheduled_work` | remote_read | `nova:read` |
 | `nova daily-work summary` | `get_dsp_daily_work_summary` | remote_read | `nova:read` |
 | `nova daily-work acknowledge` | `acknowledge_dsp_daily_work_summary` | remote_write | `nova:read nova:write` |
@@ -193,6 +207,7 @@ version. Pickup can use a shop-selected time window; the return window remains
 midnight to 5 a.m. The API validates pickup dates and DSP approval versions. Use `nova bundle-schedules decide REF UNIT --version VERSION
 --decision approved` (or `declined`) for that exact proposal. A changed schedule
 needs a new decision. The same named MCP tools require the listed operation
+permissions. Read the schedule again after a conflict or an unknown outcome.
 permissions. Read the schedule again after a conflict or an unknown outcome.
 
 ### Bundle drop-off address
