@@ -53,6 +53,7 @@ def test_defect_list_passes_customer_filters_and_pagination():
             "inspection_id": "INS-0001",
             "date_from": "2026-10-23",
             "open_only": True,
+            "first_recap_dsp_id": 7,
             "page": 2,
             "per_page": 20,
             "tz_offset_minutes": 240,
@@ -60,6 +61,7 @@ def test_defect_list_passes_customer_filters_and_pagination():
     )
     assert result["items"][0]["notes"] == "Visible note"
     query = reader.calls[0][2]
+    assert query["first_recap_dsp_id"] == 7
     assert query["date_from"] == "2026-10-23"
     assert (query["page"], query["per_page"], query["open_only"]) == (2, 20, True)
 

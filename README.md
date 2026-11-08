@@ -638,3 +638,5 @@ repeated `--repair-types` options. These actions do not scope a vendor or dispat
 repairs. Each command and matching stdio MCP tool has its own delegated operation
 consent. Existing browser/S256 login and public profile storage are unchanged.
 
+
+`nova defect list --first-recap-dsp-id 7 --no-open-only` reads the released recap critical cohort under current recipient scope. The same optional MCP filter uses `defects.list.v1`. Membership is historical; repair status and critical labels are current. Resolved records remain unless another filter excludes them. This does not grant access to another DSP.
