@@ -67,7 +67,7 @@ from nova_cli_public.errors import ApiError
 
 
 class Api:
-    profile = SimpleNamespace(auth='service')
+    profile = SimpleNamespace(auth='delegated')
 
     def __init__(self, value):
         self.value, self.calls = value, []

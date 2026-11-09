@@ -735,3 +735,7 @@ Commands: `nova vendor-scorecard rate-work-order WO-7`,
 `nova vendor-scorecard request-correction WO-7 --reason "Repair the finish"`,
 and `nova vendor-scorecard rate-body-repair BRR-7 --stars 5 --tags good_repair_quality`.
 Repeat `--tags` for multiple tags. Read each command's `--help` for optional fields.
+
+This package uses browser/S256 delegated authentication. It does not expose
+service-account keys, password login, a hosted HTTP service or a separate
+ChatGPT plugin UI. Use the matching machine client for service-account access.
