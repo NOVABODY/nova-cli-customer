@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from nova_cli_public import body_quotes
 from nova_cli_public.body_documents import EmbeddedDocument
 from nova_cli_public.client import ApiClient
 from nova_cli_public.config import ConfigStore
@@ -119,6 +120,11 @@ def create_server(service, *, file_root=None):
         except AuthError:
             return error("authentication_required")
         except ApiError as exc:
+            if name in body_quotes.MODELS:
+                return types.CallToolResult(isError=True,
+                    structuredContent={'error': {'code': exc.code or f'quote_http_{exc.status}',
+                        'status': exc.status, 'detail': exc.detail}},
+                    content=[types.TextContent(type='text', text=body_quotes.GUIDANCE.get(exc.status, body_quotes.UNKNOWN))])
             if exc.code == 'image_too_large':
                 command = shlex.join(['nova', '--profile', service.client.profile.name, 'body-repair', 'pave-image',
                     '--storage-key=' + arguments['storage_key'], '--category', arguments['category'],

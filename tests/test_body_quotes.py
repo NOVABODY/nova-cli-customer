@@ -220,3 +220,39 @@ def test_confirmation_cannot_succeed_for_another_scope_revision():
             {"request_ref": "BRR-7", "based_on_scope_revision": 2, "confirm": True},
         )
     assert caught.value.code == "outcome_unknown" and api.request.call_count == 1
+
+
+@pytest.mark.parametrize("status", [400, 401, 403, 404, 409, 422, 429, 503])
+def test_mcp_retains_error_details_and_actionable_guidance(status):
+    import asyncio
+
+    from mcp.shared.memory import create_connected_server_and_client_session
+
+    api = SimpleNamespace(
+        request=Mock(
+            side_effect=ApiError(
+                "Refused", status=status, code="scope_stale", detail={"current_revision": 3}
+            )
+        ),
+        profile=SimpleNamespace(auth="service"),
+    )
+    from nova_cli_public.mcp import create_server
+    from nova_cli_public.reads import CustomerReadService
+
+    server = create_server(CustomerReadService(api))
+
+    async def check():
+        async with create_connected_server_and_client_session(server) as sdk:
+            response = await sdk.call_tool(quotes.NAMES[3], ARGS)
+            assert response.isError
+            assert response.structuredContent["error"]["code"] == (
+                "outcome_unknown" if status == 503 else "scope_stale"
+            )
+            assert (
+                quotes.UNKNOWN if status == 503 else quotes.GUIDANCE[status]
+            ) in response.content[0].text
+            if status < 500:
+                assert response.structuredContent["error"]["detail"] == {"current_revision": 3}
+
+    asyncio.run(check())
+    assert api.request.call_count == 1
