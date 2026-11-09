@@ -17,6 +17,9 @@ CASES = [
     ('body-repair add-inspection-link BRR-7 --text https://capture.paveapi.com/s/AMWT-ONE --phase pickup', 'add_body_repair_inspection_link', {'request_ref': 'BRR-7', 'text': 'https://capture.paveapi.com/s/AMWT-ONE', 'phase': 'pickup'}, '/body-repair/requests/BRR-7/inspection-links', {'text': 'https://capture.paveapi.com/s/AMWT-ONE', 'phase': 'pickup'}),
     ('body-repair replace-inspection-link BRR-7 --key AMWT-ONE --url https://capture.paveapi.com/s/AMWT-TWO', 'replace_body_repair_inspection_link', {'request_ref': 'BRR-7', 'key': 'AMWT-ONE', 'url': 'https://capture.paveapi.com/s/AMWT-TWO'}, '/body-repair/requests/BRR-7/inspection-links', {'key': 'AMWT-ONE', 'url': 'https://capture.paveapi.com/s/AMWT-TWO'}),
     ('body-repair request-inspection-link BRR-7 --phase pickup --create-from-launcher', 'request_body_repair_inspection_link', {'request_ref': 'BRR-7', 'phase': 'pickup', 'create_from_launcher': True}, '/body-repair/requests/BRR-7/request-inspection-link', {'phase': 'pickup', 'create_from_launcher': True}),
+    ('body-repair select-quote BRR-7 --quote-id BRQ-9 --grade 4', 'select_body_repair_quote', {'request_ref': 'BRR-7', 'quote_id': 'BRQ-9', 'grade': 4}, '/body-repair/requests/BRR-7/select-quote', {'quote_id': 'BRQ-9', 'grade': 4}),
+    ('body-repair confirm-pickup BRR-7 --expected-version 7 --van-location Bay --key-location Office', 'confirm_body_repair_pickup', {'request_ref': 'BRR-7', 'expected_version': 7, 'van_location': 'Bay', 'key_location': 'Office'}, '/body-repair/requests/BRR-7/confirm-pickup', {'expected_version': 7, 'van_location': 'Bay', 'key_location': 'Office'}),
+    ('body-repair accept-pickup BRR-7 --expected-version 7', 'accept_body_repair_pickup', {'request_ref': 'BRR-7', 'expected_version': 7}, '/body-repair/requests/BRR-7/accept-pickup', {'expected_version': 7}),
 ]
 RESULT = {'id': 'BRR-7', 'order_number': 'TEST-7', 'status': 'pending_quotes', 'pickup_blob': {}}
 

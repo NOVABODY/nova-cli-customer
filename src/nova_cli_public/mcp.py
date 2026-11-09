@@ -119,6 +119,11 @@ def create_server(service, *, file_root=None):
         except AuthError:
             return error("authentication_required")
         except ApiError as exc:
+            from .body_intake import STEPS
+            if name in STEPS:
+                return types.CallToolResult(isError=True,
+                    content=[types.TextContent(type='text', text=str(exc))],
+                    structuredContent={'error': {'code': exc.code or 'body_repair_rejected'}})
             if exc.code == 'image_too_large':
                 command = shlex.join(['nova', '--profile', service.client.profile.name, 'body-repair', 'pave-image',
                     '--storage-key=' + arguments['storage_key'], '--category', arguments['category'],
