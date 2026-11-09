@@ -32,7 +32,14 @@ nova upload photo ./damage.png --kind defect --parent-id FD-0001 --commit
 
 The API accepts JPEG, PNG, WebP, HEIC and HEIF, up to 50 MiB (52,428,800 bytes)
 per image, subject to its configured storage limit. Send raw bytes to the signed
-URL without a Nova bearer credential. Do not change returned URLs or keys.
+URL without a Nova bearer credential or cookies. Upload URLs must use HTTPS
+and the API origin or an exact origin in `NOVA_UPLOAD_ORIGINS` (a comma-separated
+list such as `https://storage.example,https://uploads.example`). Entries are
+trimmed, scheme and host are converted to lowercase, and one trailing slash is
+removed. Entries with paths, credentials, queries or fragments are refused.
+HTTP is allowed only for the exact API origin when the API uses a permitted
+loopback host (`localhost`, `127.0.0.1` or `[::1]`). Redirects are refused.
+Do not change returned URLs or keys.
 
 Delegated workflows need `uploads.presign.v1` plus `vehicles.check_out.v1`,
 `vehicles.check_in.v1`, `work_orders.complete.v1`, or both `defects.create.v1`

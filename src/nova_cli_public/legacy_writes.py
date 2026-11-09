@@ -127,7 +127,7 @@ def custody_photos(args, body):
     mode = body.get('evidence_mode')
     if mode not in (None, 'mileage_and_photos', 'full_inspection'):
         raise UsageError('Select a valid evidence mode. / Selecciona un modo de evidencia válido.')
-    if files and (body.get('mileage') is None or type(body['mileage']) is not int or body['mileage'] < 0):
+    if files and (type(body.get('mileage')) is not int or not 0 <= body['mileage'] <= 2_000_000):
         raise UsageError('Enter valid mileage before upload. / Introduce un millaje válido antes de cargar.')
     if files and mode == 'full_inspection':
         raise UsageError('Use the submitted inspection. / Usa la inspección enviada.')

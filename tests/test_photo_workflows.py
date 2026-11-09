@@ -142,3 +142,21 @@ def test_local_photo_detects_supported_image_bytes(tmp_path, suffix, data):
     path, actual, mime = read_image(source)
     assert path == source and actual == data
     assert mime == 'image/' + ('jpeg' if suffix == 'jpg' else suffix)
+
+
+@pytest.mark.parametrize('action', ['check-out', 'check-in'])
+@pytest.mark.parametrize('mileage', [2000000, 2000001])
+def test_custody_mileage_upper_bound_before_upload(tmp_path, action, mileage):
+    source = tmp_path / 'photo.png'
+    source.write_bytes(b'\x89PNG\r\n\x1a\nphoto')
+    client = Client()
+    words = ['vehicle', action, 'VAN-2', '--mileage', str(mileage), '--photo-file', str(source)]
+    if action == 'check-out':
+        words += ['--vendor-workshop-id', '3']
+    if mileage == 2000000:
+        run(words, client)
+        assert len(client.puts) == 1
+    else:
+        with pytest.raises(UsageError):
+            run(words, client)
+        assert not client.calls and not client.puts
