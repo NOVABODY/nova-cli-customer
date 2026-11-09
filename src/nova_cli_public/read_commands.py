@@ -563,6 +563,7 @@ for entry in READ_COMMANDS:
             (["--grounded"], {"action": "store_true", "default": None}),
         ]
     elif entry["command"] == "defect list":
+        entry["arguments"] += [(["--include-available"], {"action": "BooleanOptionalAction", "default": True})]
         entry["arguments"] += [(["--first-recap-dsp-id"], {"type": "positive_id"})]
         entry["arguments"] += [
             (["--" + name.replace("_", "-")], {}) for name in ("dsp_id", "inspection_id", "source")
@@ -576,3 +577,8 @@ for entry in READ_COMMANDS:
             (["--" + name.replace("_", "-")], {"action": "BooleanOptionalAction", "default": None})
             for name in ("open_only", "include_no_shop")
         ]
+
+
+_opportunity_list = next(entry for entry in READ_COMMANDS if entry['command'] == 'defect list')
+READ_COMMANDS.append({**_opportunity_list, 'command': 'defect opportunities',
+    'tool': 'list_defect_opportunities', 'defaults': {'opportunities_only': True}})

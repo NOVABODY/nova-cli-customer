@@ -669,3 +669,22 @@ number is required for contact sharing. Local MCP exposes
 `list_station_tire_vendors`, `add_station_tire_vendor`,
 `share_tire_vendor_contact`, `list_vendor_setup_requests`, and
 `handle_vendor_setup_request` with the same fields and result checks.
+
+### Review shop opportunities
+
+Use `nova defect opportunities` to review open CMR/CNMR opportunities in your
+current customer and station scope. No work-order reference is required.
+The list includes ad-hoc reports and excludes defects accepted by a shop or
+held by an active bundle claim. Review is read-only; it does not approve,
+claim, or accept a repair. Use page and per-page options to read more results.
+
+For defects already sent to your shop, use `nova defect accept <defect>` with
+an optional `--ro-number`, or `nova defect reject <defect>` with a
+`--reject-reason-code` and optional `--reason`. Accept returns the work order
+for repair work. Reject changes only the selected defect. Declining an entire
+offer remains a separate operation. Omit reroute options to keep the platform
+policy; `--reroute` and `--no-reroute` explicitly select another behavior.
+
+MCP exposes `list_defect_opportunities`, `accept_defect`, and `reject_defect`.
+Decisions require write access and the corresponding consent or machine
+permissions. After an unknown outcome, read the defect before another attempt.

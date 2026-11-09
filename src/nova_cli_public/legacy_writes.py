@@ -220,7 +220,7 @@ def cmd_work_order_decline(args: argparse.Namespace) -> Any:
     body = {
         "decline_reason_code": args.decline_reason_code,
         "reason": args.reason,
-        "reroute": not args.no_reroute,
+        "reroute": None if args.no_reroute is None else not args.no_reroute,
     }
     return client_from_args(args).request(
         "POST", f"/work-orders/{args.wo_id}/decline", json_body=clean_query(body)

@@ -52,7 +52,7 @@ def test_defect_list_uses_page_params_and_filters_status_client_side(monkeypatch
                 ],
                 "total": 2,
                 "page": 2,
-                "per_page": 25,
+                "per_page": 25, "include_available": True,
             }
         ]
     )
@@ -77,7 +77,7 @@ def test_defect_list_uses_page_params_and_filters_status_client_side(monkeypatch
     assert client.requests[0]["query"] == {
         "vehicle_id": "VAN-0001",
         "page": 2,
-        "per_page": 25,
+        "per_page": 25, "include_available": True,
     }
     assert result["items"] == [{"id": "FD-2", "review_status": "approved"}]
     assert result["total"] == 1

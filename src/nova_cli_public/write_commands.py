@@ -1,6 +1,8 @@
 """Pinned customer write declarations; no platform-admin or generic API commands."""
 
 from nova_cli_public import legacy_writes as handlers
+from nova_cli_public.shop_defects import DESCRIPTIONS, MODELS
+from nova_cli_public.shop_defects import command as shop_command
 
 WRITE_COMMANDS = [
     {
@@ -289,7 +291,8 @@ WRITE_COMMANDS = [
             (["wo_id"], {}),
             (["--decline-reason-code"], {"required": True}),
             (["--reason"], {}),
-            (["--no-reroute"], {"default": False, "action": "store_true"}),
+            (["--no-reroute"], {"default": None, "action": "store_true"}),
+            (["--reroute"], {"dest": "no_reroute", "action": "store_false"}),
         ],
         "groups": [],
         "defaults": {},
@@ -581,3 +584,18 @@ WRITE_COMMANDS = [
         "handler": handlers.cmd_upload_photo,
     },
 ]
+
+
+for name, model in MODELS.items():
+    WRITE_COMMANDS.append({
+        'command': 'defect ' + name.split('_')[0], 'tool': name,
+        'grant': 'defects.' + name.split('_')[0] + '.v1',
+        'scope': 'nova:read nova:write', 'effect': 'remote_write',
+        'arguments': [(['defect_id'], {})] + (
+            [(['--ro-number'], {})] if name == 'accept_defect' else [
+                (['--reject-reason-code'], {'required': True,
+                    'choices': list(model.model_fields['reject_reason_code'].annotation.__args__)}),
+                (['--reason'], {})]),
+        'groups': [], 'defaults': {'shop_tool': name}, 'handler': shop_command,
+        'description': DESCRIPTIONS[name],
+    })
