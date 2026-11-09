@@ -37,6 +37,7 @@ class Pricing(Record):
     low: int | float | None
 
 class Offer(Record):
+    browser_url: str | None = None
     ref: str
     status: str
     total_price_cents: int = Field(ge=0)
@@ -50,11 +51,13 @@ class MaskedReport(Record):
     units: list[dict[str, Any]]
 
 class Report(Record):
+    browser_url: str | None = None
     ref: str
     status: str
     report: MaskedReport | None
 
 class Van(Record):
+    browser_url: str | None = None
     unit: int = Field(ge=1)
     state: str
     workflow: Workflow
@@ -67,7 +70,7 @@ class Vans(Record):
 MODELS = {'list_bundle_offers': Query, 'get_bundle_offer_report': Reference, 'list_bought_bundle_vans': Reference}
 OUTPUTS = {'list_bundle_offers': Listing, 'get_bundle_offer_report': Report, 'list_bought_bundle_vans': Vans}
 PATHS = {'list_bundle_offers': '', 'get_bundle_offer_report': '/{ref}/report', 'list_bought_bundle_vans': '/{ref}/vans'}
-DESCRIPTIONS = {'list_bundle_offers': 'Read bundle offers, responsibility counts and deadlines. / Consulta ofertas de paquetes, responsables y plazos.', 'get_bundle_offer_report': 'Read a masked report and frozen pricing terms. / Consulta un informe sin datos privados y los precios fijados.', 'list_bought_bundle_vans': 'Read bought van steps, prices and permitted details. / Consulta pasos, precios y datos permitidos de las vans compradas.'}
+DESCRIPTIONS = {'list_bundle_offers': 'Read bundle offers, responsibility counts and deadlines. Open browser_url to buy in the browser. / Consulta ofertas de paquetes, responsables y plazos. Abre browser_url para comprar en el navegador.', 'get_bundle_offer_report': 'Read a masked report and frozen pricing terms. / Consulta un informe sin datos privados y los precios fijados.', 'list_bought_bundle_vans': 'Read bought van steps, prices and permitted details. Open browser_url for initial pickup or payment changes. / Consulta pasos, precios y datos permitidos de las vans compradas. Abre browser_url para la recogida inicial o cambios de pago.'}
 
 def execute(client, name, arguments):
     query = MODELS[name].model_validate(arguments)

@@ -49,7 +49,8 @@ def test_upload_sends_one_bounded_file_without_automatic_retry():
     api = Api()
     evidence.execute(api, 'upload_capacity_evidence', {'ref': 'B-1', 'unit': 1, 'kind': 'decline',
         'lines': [2], 'content_type': 'image/png', 'content_base64': 'cHJvb2Y='})
-    assert len(api.calls) == 1
+    assert len(api.calls) == 2
+    assert api.calls[1][:2] == ('GET', '/bundle-offers/B-1/vans')
     method, path, options = api.calls[0]
     assert (method, path) == ('POST', '/bundle-offers/B-1/vans/1/evidence-content')
     assert options['json_body']['lines'] == [2] and options['json_body']['content_base64'] == 'cHJvb2Y='

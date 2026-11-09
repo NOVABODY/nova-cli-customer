@@ -6,6 +6,10 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova bundle-shop fmc-pdf` | `get_bundle_fmc_packet_pdf` | remote_read, local_file_write | `nova:read` |
+| `nova bundle-shop pickup` | `update_bundle_pickup` | remote_write | `nova:read nova:write` |
+| `nova bundle-shop confirm-no-charge` | `confirm_bundle_no_charge` | remote_write | `nova:read nova:write` |
+| `nova bundle-shop contact` | `request_bundle_contact` | remote_write | `nova:read nova:write` |
 | `nova bundle-address get` | `get_bundle_dropoff_address` | remote_read | `nova:read` |
 | `nova bundle-address set` | `update_bundle_dropoff_address` | remote_write | `nova:read nova:write` |
 | `nova bundle-schedules list` | `list_bundle_schedules` | remote_read | `nova:read` |
@@ -249,3 +253,6 @@ Los permisos existentes no incluyen estas operaciones nuevas. Autoriza la conexi
 | `nova defect opportunities` | `list_defect_opportunities` | remote_read | `nova:read` |
 | `nova defect accept` | `accept_defect` | remote_write | `nova:read nova:write` |
 | `nova defect reject` | `reject_defect` | remote_write | `nova:read nova:write` |
+
+See [bought bundle shop steps](BundleShopSteps.md) for safe actions and browser handoffs.
+Consulta los [pasos del paquete](BundleShopSteps.md) para las acciones y el enlace al navegador.

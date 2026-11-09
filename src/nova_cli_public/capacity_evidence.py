@@ -88,10 +88,16 @@ def execute(client, name, arguments):
         if not valid:
             raise ApiError('Invalid evidence response. / Respuesta de evidencia no válida.')
         json.dumps(value, allow_nan=False)
+        if isinstance(query, Upload):
+            from .bundle_shop_steps import refresh
+            return refresh(client, query.ref, value)
         return value
     except (ApiError, ValueError, TypeError) as exc:
         if name in WRITES and (not isinstance(exc, ApiError) or exc.status is None or exc.status >= 500 or 300 <= exc.status < 400):
             raise ApiError(UNKNOWN, code='outcome_unknown') from exc
+        if isinstance(exc, ApiError) and isinstance(query, Upload):
+            from .bundle_shop_steps import mapped_error
+            raise mapped_error(exc) from exc
         raise
 
 
@@ -119,6 +125,6 @@ for action, name, operation in [('list', 'list_capacity_evidence', 'list'), ('ge
         arguments.append((['--' + key.replace('_', '-')], options))
     COMMANDS.append({'command': 'capacity-evidence ' + action, 'tool': name,
         'grant': 'capacity.evidence.' + operation + '.v1',
-        'description': 'Read or review FMC evidence. / Consulta o revisa la evidencia de la FMC.',
+        'description': ('Upload a file with kind=authorization and authorization_number to record FMC authorization; kind=pending records submission. Nova does not send it to the FMC. / Carga un archivo con kind=authorization y authorization_number para registrar autorización FMC; kind=pending registra el envío. Nova no lo envía a la FMC.' if name == 'upload_capacity_evidence' else 'Read or review FMC evidence. / Consulta o revisa la evidencia de la FMC.'),
         'arguments': arguments, 'groups': [], 'handler': command, 'defaults': {'evidence_tool': name},
         **({'scope': 'nova:read nova:write', 'effect': 'remote_write'} if name in WRITES else {})})

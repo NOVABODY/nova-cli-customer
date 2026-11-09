@@ -3,6 +3,10 @@
 import re
 
 WRITE_ROUTES = {
+    ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[1-9][0-9]*/pickup"): "capacity.pickup.update.v1",
+    ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[1-9][0-9]*/confirm-no-charge"): "capacity.no_charge.confirm.v1",
+    ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[1-9][0-9]*/contact"): "capacity.contact.create.v1",
+
     ("POST", r"/defects/(?:FD-)?[0-9]{1,14}/accept"): "defects.accept.v1",
     ("POST", r"/defects/(?:FD-)?[0-9]{1,14}/reject"): "defects.reject.v1",
     ("POST", r"/defect-bundle-offers/staff/evidence/[0-9]+/review"): "capacity.evidence.review.v1",

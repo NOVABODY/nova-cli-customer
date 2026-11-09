@@ -688,3 +688,11 @@ policy; `--reroute` and `--no-reroute` explicitly select another behavior.
 MCP exposes `list_defect_opportunities`, `accept_defect`, and `reject_defect`.
 Decisions require write access and the corresponding consent or machine
 permissions. After an unknown outcome, read the defect before another attempt.
+
+## Shop steps without payment writes
+
+See [bought bundle shop steps](docs/BundleShopSteps.md) for FMC packets,
+authorization evidence, pickup dates, zero-price exits and Nova contact. Purchase,
+initial pickup readiness and payment changes use the API response’s `browser_url`.
+Consulta los [pasos del paquete](docs/BundleShopSteps.md). La compra, la recogida
+inicial y los cambios de pago se hacen en el `browser_url` de la API.
