@@ -86,9 +86,9 @@ client support; the server checks current account access.
 | `nova vehicle list-notes` | `list_vehicle_notes` | remote_read | `nova:read` |
 | `nova vehicle list-checkouts` | `list_vehicle_checkouts` | remote_read | `nova:read` |
 | `nova vehicle add-note` | `add_vehicle_note` | remote_write | `nova:read nova:write` |
-| `nova vehicle check-out` | `check_out_vehicle` | remote_write | `nova:read nova:write` |
+| `nova vehicle check-out` | `check_out_vehicle` | remote_write, local_file_read | `nova:read nova:write` |
 | `nova bundle-return record` | `record_bundle_return` | remote_write | `nova:read nova:write` |
-| `nova vehicle check-in` | `check_in_vehicle` | remote_write | `nova:read nova:write` |
+| `nova vehicle check-in` | `check_in_vehicle` | remote_write, local_file_read | `nova:read nova:write` |
 | `nova vehicle create` | `create_vehicle` | remote_write | `nova:read nova:write` |
 | `nova vehicle decode-vin` | `decode_vehicle_vin` | remote_read | `nova:read` |
 | `nova vehicle update` | `update_vehicle` | remote_write | `nova:read nova:write` |
@@ -111,7 +111,7 @@ client support; the server checks current account access.
 | `nova work-order create` | `create_work_order` | remote_write | `nova:read nova:write` |
 | `nova work-order schedule` | `schedule_work_order` | remote_write | `nova:read nova:write` |
 | `nova work-order accept` | `accept_work_order` | remote_write | `nova:read nova:write` |
-| `nova work-order complete` | `complete_work_order` | remote_write | `nova:read nova:write` |
+| `nova work-order complete` | `complete_work_order` | remote_write, local_file_read | `nova:read nova:write` |
 | `nova work-order cancel` | `cancel_work_order` | remote_write | `nova:read nova:write` |
 | `nova work-order unschedule` | `unschedule_work_order` | remote_write | `nova:read nova:write` |
 | `nova work-order release` | `release_work_order` | remote_write | `nova:read nova:write` |

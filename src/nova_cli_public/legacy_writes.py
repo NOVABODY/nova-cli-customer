@@ -115,6 +115,33 @@ def cmd_upload_photo(args: argparse.Namespace) -> Any:
     return result
 
 
+def upload_evidence(args, path, kind, parent_id):
+    receipt = cmd_upload_photo(argparse.Namespace(
+        **{**vars(args), 'file': path, 'kind': kind, 'parent_id': parent_id,
+           'content_type': None, 'commit': False, 'category': None}))
+    return {key: receipt[key] for key in ('storage_key', 'content_type', 'size_bytes')}
+
+
+def completion_photos(args, body):
+    for name in ('odometer_photo_path', 'work_photo_path'):
+        value = body.get(name)
+        if (isinstance(value, str) and not value.startswith('photos/')
+                and value == getattr(args, name, None)):
+            body[name] = upload_evidence(args, value, 'work_order', args.wo_id)['storage_key']
+
+
+def custody_photos(args, body):
+    files = getattr(args, 'photo_file', None) or []
+    photos = body.get('photos', [])
+    if not isinstance(photos, list) or len(photos) + len(files) > 12:
+        raise UsageError('Use at most 12 photos. / Usa un máximo de 12 fotos.')
+    if files and body.get('evidence_mode') == 'full_inspection':
+        raise UsageError('Use the submitted inspection. / Usa la inspección enviada.')
+    if files:
+        body['photos'] = photos + [upload_evidence(args, path, 'vehicle_checkout', args.vehicle_id)
+                                  for path in files]
+
+
 def post_work_order_action(args: argparse.Namespace) -> Any:
     body = parse_pairs(args.field)
     named_fields = {
@@ -131,6 +158,8 @@ def post_work_order_action(args: argparse.Namespace) -> Any:
     body.update(vars_to_query(args, named_fields))
     if args.action_name == "complete" and "last_mileage" not in body:
         raise UsageError("Work-order completion requires --last-mileage.")
+    if args.action_name == "complete":
+        completion_photos(args, body)
     return client_from_args(args).request(
         "POST", f"/work-orders/{args.wo_id}/{args.action_name}", json_body=body
     )
@@ -365,6 +394,7 @@ def cmd_vehicle_custody(args: argparse.Namespace) -> Any:
             }
         )
     )
+    custody_photos(args, body)
     if args.action_name == "check-out":
         if body["evidence_mode"] == "mileage_and_photos":
             if "mileage" not in body:

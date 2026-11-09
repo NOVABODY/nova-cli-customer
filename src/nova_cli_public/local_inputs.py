@@ -46,7 +46,9 @@ def _read(root, value, limit=MAX_INPUT_BYTES):
 def local_inputs(arguments, root, *, tool=None):
     """Do not let a handler reopen an attacker-swapped source or follow a link."""
     selected = {key: value for key, value in arguments.items()
-                if (key == 'file' or key.endswith('_file')) and value is not None}
+                if (key == 'file' or key.endswith('_file') or
+                    (key in ('odometer_photo_path', 'work_photo_path') and isinstance(value, str)
+                     and not value.startswith('photos/'))) and value is not None and value != []}
     if not selected:
         yield arguments
         return
@@ -54,8 +56,12 @@ def local_inputs(arguments, root, *, tool=None):
         raise UsageError(DENIED)
     with TemporaryDirectory(prefix='nova-mcp-input-') as temporary:
         values = dict(arguments)
-        for index, (key, value) in enumerate(selected.items()):
+        expanded = [(key, item, position) for key, value in selected.items()
+                    for position, item in enumerate(value if isinstance(value, list) else [value])]
+        for index, (key, value, position) in enumerate(expanded):
             limit = 1024 * 1024 if key.endswith('_file') and key != 'review_file' else MAX_INPUT_BYTES
+            if key in ('photo_file', 'odometer_photo_path', 'work_photo_path'):
+                limit = 50 * 1024 * 1024
             if key == 'file' and tool in ('upload_photo', 'review_cortex_file'):
                 limit = (50 if tool == 'upload_photo' else 20) * 1024 * 1024
             name, data = _read(root, value, limit)
@@ -69,7 +75,12 @@ def local_inputs(arguments, root, *, tool=None):
             folder.mkdir()
             snapshot = folder / name
             snapshot.write_bytes(data)
-            values[key] = str(snapshot)
+            if isinstance(selected[key], list):
+                if position == 0:
+                    values[key] = []
+                values[key].append(str(snapshot))
+            else:
+                values[key] = str(snapshot)
         yield values
 
 
