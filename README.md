@@ -693,4 +693,4 @@ permissions. After an unknown outcome, read the defect before another attempt.
 
 See [Body quote workflow](docs/BodyQuotes.md) for eligible leads, shop quotes,
 explicit scope review, submission and withdrawal. Review scope changes with the
-user before confirmation. Release this client only after API support is available.
+user before confirmation.

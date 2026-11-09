@@ -115,7 +115,7 @@ def test_confirmation_requires_explicit_boolean_true(confirm):
 
 
 @pytest.mark.parametrize("status", [400, 401, 403, 404, 409, 422, 429])
-def test_api_refusals_preserve_code_detail_and_require_fresh_read_on_conflict(status):
+def test_api_refusals_keep_safe_code_and_guidance_without_raw_detail(status):
     failure = ApiError(
         "Refused",
         status=status,
@@ -127,7 +127,8 @@ def test_api_refusals_preserve_code_detail_and_require_fresh_read_on_conflict(st
     with pytest.raises(ApiError) as caught:
         quotes.execute(api, quotes.NAMES[3], ARGS)
     assert caught.value.status == status and caught.value.code == "scope_stale"
-    assert caught.value.detail == failure.detail and caught.value.request_id == "req-1"
+    assert caught.value.detail is None
+    assert "Refused" not in str(caught.value)
     assert quotes.GUIDANCE[status] in str(caught.value)
     assert api.request.call_count == 1
 
@@ -223,7 +224,7 @@ def test_confirmation_cannot_succeed_for_another_scope_revision():
 
 
 @pytest.mark.parametrize("status", [400, 401, 403, 404, 409, 422, 429, 503])
-def test_mcp_retains_error_details_and_actionable_guidance(status):
+def test_mcp_returns_safe_code_and_actionable_guidance(status):
     import asyncio
 
     from mcp.shared.memory import create_connected_server_and_client_session
@@ -252,7 +253,87 @@ def test_mcp_retains_error_details_and_actionable_guidance(status):
                 quotes.UNKNOWN if status == 503 else quotes.GUIDANCE[status]
             ) in response.content[0].text
             if status < 500:
-                assert response.structuredContent["error"]["detail"] == {"current_revision": 3}
+                assert "detail" not in response.structuredContent["error"]
 
     asyncio.run(check())
     assert api.request.call_count == 1
+
+
+@pytest.mark.parametrize("field,value", [
+    ("grade_days", {}),
+    ("line_key", "client-key"),
+    ("origin", "client"),
+    ("added_at", "2026-11-09T12:00:00Z"),
+])
+def test_submit_refuses_unsupported_and_server_stamped_fields(field, value):
+    data = {"based_on_scope_revision": 2}
+    if field == "grade_days":
+        data[field] = value
+    else:
+        data["line_items"] = [{field: value}]
+    with pytest.raises(ValidationError):
+        quotes.Submit.model_validate({"request_ref": "BRR-7", "data": data})
+
+
+@pytest.mark.parametrize("item", [True, 1.5, "1", {}, [], None])
+def test_pave_item_numbers_require_integers(item):
+    with pytest.raises(ValidationError):
+        quotes.Line.model_validate({"pave_item_nos": [item]})
+
+
+def test_pave_item_numbers_accept_integer_references():
+    assert quotes.Line.model_validate({"pave_item_nos": [1, 2]}).pave_item_nos == [1, 2]
+
+
+@pytest.mark.parametrize("write,status,malformed", [
+    (False, None, False), (False, 503, False), (False, 418, False),
+    (False, None, True), (True, 418, False), (True, 503, False),
+    (True, None, False), (True, None, True),
+])
+def test_mcp_unknown_outcome_only_for_uncertain_writes(write, status, malformed):
+    name = quotes.NAMES[3] if write else quotes.NAMES[1]
+    arguments = ARGS if write else {"request_ref": "BRR-7"}
+    api = SimpleNamespace(request=Mock(return_value={}) if malformed else Mock(
+        side_effect=ApiError("PRIVATE", status=status, code="bad\x1bcode", detail={"secret": "PRIVATE"})
+    ))
+    import asyncio
+
+    from mcp.shared.memory import create_connected_server_and_client_session
+
+    from nova_cli_public.mcp import create_server
+    from nova_cli_public.reads import CustomerReadService
+
+    async def call():
+        async with create_connected_server_and_client_session(create_server(CustomerReadService(api))) as sdk:
+            return await sdk.call_tool(name, arguments)
+
+    response = asyncio.run(call())
+    assert response.isError
+    assert (quotes.UNKNOWN in response.content[0].text) is (write and (status in (None, 503)))
+    assert "PRIVATE" not in str(response) and "bad" not in str(response)
+    assert "detail" not in response.structuredContent["error"]
+
+
+@pytest.mark.parametrize("code", ["x" * 81, "non_ascii_é", "bad.code", "bad\ncode"])
+def test_quote_errors_refuse_unbounded_or_non_ascii_codes(code):
+    api = SimpleNamespace(request=Mock(side_effect=ApiError("PRIVATE", status=409, code=code)))
+    with pytest.raises(ApiError) as caught:
+        quotes.execute(api, quotes.NAMES[3], ARGS)
+    assert caught.value.code == "quote_http_409"
+
+
+def test_quote_tool_descriptions_preserve_complete_bilingual_text():
+    import asyncio
+
+    from mcp.shared.memory import create_connected_server_and_client_session
+
+    from nova_cli_public.mcp import create_server
+    from nova_cli_public.reads import CustomerReadService
+
+    async def check():
+        async with create_connected_server_and_client_session(create_server(CustomerReadService(Mock()))) as sdk:
+            tools = {tool.name: tool for tool in (await sdk.list_tools()).tools}
+            for entry in quotes.COMMANDS:
+                assert tools[entry["tool"]].description == entry["description"]
+
+    asyncio.run(check())

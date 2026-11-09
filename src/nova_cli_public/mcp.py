@@ -77,6 +77,7 @@ def create_server(service, *, file_root=None):
                 name=name,
                 description=BY_TOOL[name].get("description", BY_TOOL[name]["command"])
                 + (
+                    "" if name in body_quotes.MODELS else
                     ". Change customer data. / Cambie los datos del cliente."
                     if name in WRITE_TOOLS and not BY_TOOL[name].get("read_only", False)
                     else ". Update the local event inbox. / Actualice la bandeja de eventos local."
@@ -121,10 +122,10 @@ def create_server(service, *, file_root=None):
             return error("authentication_required")
         except ApiError as exc:
             if name in body_quotes.MODELS:
+                quote_error, message = body_quotes.error_info(name, exc)
                 return types.CallToolResult(isError=True,
-                    structuredContent={'error': {'code': exc.code or f'quote_http_{exc.status}',
-                        'status': exc.status, 'detail': exc.detail}},
-                    content=[types.TextContent(type='text', text=body_quotes.GUIDANCE.get(exc.status, body_quotes.UNKNOWN))])
+                    structuredContent={"error": quote_error},
+                    content=[types.TextContent(type="text", text=message)])
             if exc.code == 'image_too_large':
                 command = shlex.join(['nova', '--profile', service.client.profile.name, 'body-repair', 'pave-image',
                     '--storage-key=' + arguments['storage_key'], '--category', arguments['category'],

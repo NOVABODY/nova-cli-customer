@@ -1,8 +1,8 @@
 """Shop quote inputs mirror API #6374. The API owns scope, pricing and state."""
 
 import json
-from datetime import date, datetime
-from typing import Annotated, Any, Literal
+from datetime import date
+from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 
@@ -16,13 +16,7 @@ def iso_date(value):
     return value
 
 
-def iso_datetime(value):
-    datetime.fromisoformat(value)
-    return value
-
-
 Day = Annotated[str, Field(pattern=r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$"), AfterValidator(iso_date)]
-Moment = Annotated[str, AfterValidator(iso_datetime)]
 Cents = Annotated[int, Field(ge=0)]
 Hours = Annotated[float, Field(ge=0, le=9999, allow_inf_nan=False)]
 Ref = Annotated[str, Field(pattern=r"^[A-Za-z0-9_-]{1,64}$")]
@@ -33,14 +27,11 @@ class Line(Closed):
     parts_cents: Cents = 0
     labor_cents: Cents = 0
     line_kind: Literal["repair", "part", "sublet", "material", "misc"] = "repair"
-    line_key: str | None = Field(default=None, max_length=32)
-    origin: str | None = Field(default=None, max_length=16)
-    added_at: Moment | None = None
     operation: str | None = Field(default=None, max_length=12)
     part_number: str | None = Field(default=None, max_length=60)
     part_description: str | None = Field(default=None, max_length=120)
     pave_component: str | None = Field(default=None, max_length=120)
-    pave_item_nos: list[Any] | None = Field(default=None, max_length=50)
+    pave_item_nos: list[int] | None = Field(default=None, max_length=50)
     scope_role: Literal["priority", "scoped"] | None = None
     part_type: Literal["oem", "aftermarket", "recycled", "reconditioned"] | None = None
     part_qty: int | None = Field(default=None, ge=0, le=999)
@@ -86,7 +77,6 @@ class Quote(Closed):
     repair_start_date: Day | None = None
     repair_end_date: Day | None = None
     repair_pickup_window: str | None = Field(default=None, max_length=60)
-    grade_days: dict[str, Any] | None = None
     notes: str | None = Field(default=None, max_length=2000)
     issue_resolutions: list[Answer] = Field(default_factory=list, max_length=200)
 
@@ -150,7 +140,7 @@ DESCRIPTIONS = dict(
             "List eligible Body repair leads. / Consulta oportunidades de reparación de carrocería.",
             "Read your shop quotes. / Consulta las cotizaciones de tu taller.",
             "Show the user the current scope changes and get their go-ahead before confirming review. Confirmation records agent provenance. / Muestra al usuario los cambios actuales del alcance y obtén su aprobación antes de confirmar la revisión. La confirmación registra el uso del asistente.",
-            "Submit a shop quote. Read current scope first. USD cents, rates in cents/hour, time in hours. Never confirms scope. Leads omit duration, dates, pickup window and grade_days; fleet-picks leads require guided scope. Use returned totals. / Envía una cotización del taller. Consulta primero el alcance actual. Usa centavos de USD, tarifas en centavos/hora y tiempo en horas. No confirma el alcance. Omite duración, fechas, ventana de recogida y grade_days en oportunidades. Usa el alcance guided para selecciones de flota y los totales devueltos.",
+            "Submit a shop quote. Read current scope first. USD cents, rates in cents/hour, time in hours. Never confirms scope. Leads omit duration, dates, pickup window; fleet-picks leads require guided scope. Use returned totals. / Envía una cotización del taller. Consulta primero el alcance actual. Usa centavos de USD, tarifas en centavos/hora y tiempo en horas. No confirma el alcance. Omite duración, fechas, ventana de recogida en oportunidades. Usa el alcance guided para selecciones de flota y los totales devueltos.",
             "Withdraw your active quote before selection. / Retira tu cotización activa antes de la selección.",
         ),
         strict=True,
@@ -166,6 +156,26 @@ GUIDANCE = {
     422: "Check schema and scope coverage. / Comprueba el esquema y la cobertura del alcance.",
     429: "Rate limit reached. Do not retry a write automatically. / Límite de solicitudes alcanzado. No repitas una escritura automáticamente.",
 }
+
+
+FAILURE = "The request failed. / La solicitud falló."
+
+
+def error_info(name, exc):
+    uncertain = name in WRITES and exc.code == "outcome_unknown" and (
+        exc.status is None or exc.status >= 500 or 300 <= exc.status < 400
+    )
+    code = exc.code
+    if not (
+        isinstance(code, str)
+        and code.isascii()
+        and code.replace("_", "").isalnum()
+        and len(code) <= 80
+    ):
+        code = f"quote_http_{exc.status}" if exc.status is not None else "quote_unavailable"
+    return {"code": code, "status": exc.status}, (
+        UNKNOWN if uncertain else GUIDANCE.get(exc.status, FAILURE)
+    )
 
 
 def prepare(name, value):
@@ -217,15 +227,9 @@ def execute(client, name, arguments):
     except ApiError as exc:
         if name in WRITES and (exc.status is None or exc.status >= 500 or 300 <= exc.status < 400):
             raise ApiError(UNKNOWN, code="outcome_unknown") from exc
-        if exc.status in GUIDANCE:
-            raise ApiError(
-                str(exc) + " " + GUIDANCE[exc.status],
-                status=exc.status,
-                code=exc.code,
-                detail=exc.detail,
-                request_id=exc.request_id,
-            ) from exc
-        raise
+        error, message = error_info(name, exc)
+        raise ApiError(message, status=exc.status, code=error["code"]) from None
+
     try:
         if (
             not valid(name, result)

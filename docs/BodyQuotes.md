@@ -12,7 +12,9 @@ Read eligible work with `list_body_repair_leads` and your shop's quotes with
 `withdraw_body_repair_quote` and a new submission before selection.
 
 Use USD cents, rates in cents per hour, and labor time in hours. Inputs are closed
-and strict, including line items and issue answers. Use the current
+and strict, including line items and issue answers. Use integers for
+`pave_item_nos`. Omit `line_key`, `origin` and `added_at`; the server sets them.
+Use the current
 `based_on_scope_revision` and returned totals: the server reprices structured
 lines. Guided lines must cover the scope. Leads omit duration, repair dates,
 pickup window and `grade_days`; fleet-picks leads require guided scope.
@@ -23,11 +25,9 @@ Request fresh consent for `body_repair.repair_leads.list.v1`,
 `body_repair.quotes.list.v1`, `body_repair.scope.confirm.v1`,
 `body_repair.quotes.submit.v1`, and `body_repair.quotes.withdraw.v1`.
 The three writes require full write consent. Existing grants do not expand.
-Machine writes also require a bound acting user; an unbound account receives 403.
-Reads keep their existing binding rules.
 
 400 means invalid business input; 401 means invalid, revoked or expired identity;
-403 means missing consent, scope, policy, shop authority or machine user binding;
+403 means missing consent, scope, policy or shop authority;
 404 means absent or hidden records; 409 means changed scope or state; 422 means
 invalid schema or scope coverage; 429 means the request limit was reached.
 After 409, read the current request and quotes and review changes before another
@@ -37,9 +37,7 @@ Selection, selected-quote revisions, payment and payouts remain separate actions
 Muestra los cambios actuales del alcance al usuario y obtén su aprobación antes
 de confirmar la revisión. Envía la cotización en una acción separada. Usa centavos
 de USD, tarifas en centavos por hora y tiempo en horas. Consulta el estado actual
-después de un conflicto o resultado desconocido antes de otro intento. Las
-escrituras de máquina requieren un usuario vinculado; la API conserva los
-permisos y el alcance del taller.
+después de un conflicto o resultado desconocido antes de otro intento. La API conserva los permisos y el alcance del taller.
 
 Commands: `nova body-repair repair-leads`, `quotes REQUEST`,
 `confirm-scope REQUEST --based-on-scope-revision N --confirm`,
