@@ -91,3 +91,54 @@ def test_customer_mcp_uploads_custody_file_inside_selected_folder(tmp_path):
     asyncio.run(check())
     assert client.calls[0][2]['kind'] == 'vehicle_checkout'
     assert client.calls[-1][2]['photos'][0]['storage_key'] == 'photos/vehicle_checkouts/2/date/photo.png'
+
+
+@pytest.mark.parametrize('mode', ['secret', 'mismatch', 'symlink', 'directory', 'oversize'])
+@pytest.mark.parametrize('option', ['--photo-file', '--odometer-photo-path', '--work-photo-path'])
+def test_unsafe_photo_is_rejected_before_presign(tmp_path, mode, option):
+    source = tmp_path / 'photo.png'
+    source.write_bytes(b'PRIVATE' if mode == 'secret' else b'\xff\xd8\xffjpeg')
+    if mode == 'symlink':
+        source.unlink()
+        secret = tmp_path / 'secret'
+        secret.write_bytes(b'PRIVATE')
+        source.symlink_to(secret)
+    elif mode == 'directory':
+        source.unlink()
+        source.mkdir()
+    elif mode == 'oversize':
+        with source.open('wb') as stream:
+            stream.truncate(50 * 1024 * 1024 + 1)
+    client = Client()
+    words = (['vehicle', 'check-in', 'VAN-2', '--mileage', '100'] if option == '--photo-file'
+             else ['work-order', 'complete', 'WO-2', '--last-mileage', '100'])
+    with pytest.raises(UsageError, match=' / '):
+        run(words + [option, str(source)], client)
+    assert not client.calls and not client.puts
+
+
+@pytest.mark.parametrize('extra', [[], ['--evidence-mode', 'full_inspection'],
+    ['--field', 'evidence_mode=invalid'], ['--field', 'mileage=-1']])
+def test_custody_preconditions_reject_before_upload(tmp_path, extra):
+    source = tmp_path / 'photo.png'
+    source.write_bytes(b'\x89PNG\r\n\x1a\nphoto')
+    client = Client()
+    with pytest.raises(UsageError):
+        run(['vehicle', 'check-out', 'VAN-2', '--vendor-workshop-id', '3',
+             '--photo-file', str(source)] + extra, client)
+    assert not client.calls and not client.puts
+
+
+@pytest.mark.parametrize('suffix,data', [
+    ('jpg', b'\xff\xd8\xffimage'), ('png', b'\x89PNG\r\n\x1a\nimage'),
+    ('webp', b'RIFF\x10\x00\x00\x00WEBPVP8 image'),
+    ('heic', b'\x00\x00\x00\x18ftypheic\x00\x00\x00\x00heicmif1'),
+    ('heif', b'\x00\x00\x00\x18ftypmif1\x00\x00\x00\x00mif1msf1'),
+])
+def test_local_photo_detects_supported_image_bytes(tmp_path, suffix, data):
+    from nova_cli_public.local_inputs import read_image
+    source = tmp_path / ('photo.' + suffix)
+    source.write_bytes(data)
+    path, actual, mime = read_image(source)
+    assert path == source and actual == data
+    assert mime == 'image/' + ('jpeg' if suffix == 'jpg' else suffix)

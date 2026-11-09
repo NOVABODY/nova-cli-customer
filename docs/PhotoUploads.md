@@ -19,6 +19,9 @@ nova work-order complete WO-00001 --last-mileage 100 --odometer-photo-path ./odo
 ```
 
 The named completion photo arguments accept local files or existing Nova keys.
+Local photos must be regular files of at most 50 MiB. The image bytes must match
+the file extension and any explicit content type. Final symbolic links are refused.
+Enter mileage and select an applicable evidence mode before custody uploads.
 `--field` values remain API payloads; they do not select local files. Upload with
 `work_order` and the Work Order ID when supplying existing keys. For a new defect,
 create the defect first, then use its returned ID:

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import mimetypes
 import os
 import re
 import stat
@@ -23,6 +22,7 @@ from nova_cli_public.legacy_reads import (
     client_from_args,
     vars_to_query,
 )
+from nova_cli_public.local_inputs import read_image
 
 PHOTO_COMMIT_PATHS = {
     "vehicle_report": "/vehicle-reports/{parent_id}/photos",
@@ -51,25 +51,14 @@ VEHICLE_REPORT_REPORTER_FIELDS = {"slack_team_id", "slack_user_id", "email", "di
 
 
 def cmd_upload_photo(args: argparse.Namespace) -> Any:
-    path = Path(args.file).expanduser()
-    if not path.is_file():
-        raise UsageError(f"File not found: {path}")
     if args.commit and args.kind not in PHOTO_COMMIT_PATHS:
         supported = ", ".join(sorted(PHOTO_COMMIT_PATHS))
         raise UsageError(
             f"--commit supports kinds: {supported}. For other kinds, pass the returned storage_key to the relevant endpoint, for example `work-order complete --field odometer_photo_path=KEY`."
         )
-    content_type = args.content_type or mimetypes.guess_type(path.name)[0]
-    if not content_type:
-        raise UsageError(f"Could not guess a MIME type for {path.name}; pass --content-type.")
-    if path.stat().st_size > 50 * 1024 * 1024:
-        raise UsageError("Photo exceeds 50 MiB.")
-    with path.open("rb") as stream:
-        data = stream.read(50 * 1024 * 1024 + 1)
-    if len(data) > 50 * 1024 * 1024:
-        raise UsageError("Photo exceeds 50 MiB.")
-    if not data:
-        raise UsageError(f"File is empty: {path}")
+    path, data, content_type = read_image(
+        args.file, args.content_type, allow_pdf=args.kind == 'body_repair_pave_preview')
+
     client = client_from_args(args)
     presign = client.request(
         "POST",
@@ -135,7 +124,12 @@ def custody_photos(args, body):
     photos = body.get('photos', [])
     if not isinstance(photos, list) or len(photos) + len(files) > 12:
         raise UsageError('Use at most 12 photos. / Usa un máximo de 12 fotos.')
-    if files and body.get('evidence_mode') == 'full_inspection':
+    mode = body.get('evidence_mode')
+    if mode not in (None, 'mileage_and_photos', 'full_inspection'):
+        raise UsageError('Select a valid evidence mode. / Selecciona un modo de evidencia válido.')
+    if files and (body.get('mileage') is None or type(body['mileage']) is not int or body['mileage'] < 0):
+        raise UsageError('Enter valid mileage before upload. / Introduce un millaje válido antes de cargar.')
+    if files and mode == 'full_inspection':
         raise UsageError('Use the submitted inspection. / Usa la inspección enviada.')
     if files:
         body['photos'] = photos + [upload_evidence(args, path, 'vehicle_checkout', args.vehicle_id)

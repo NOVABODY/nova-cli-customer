@@ -30,7 +30,8 @@ def _read(root, value, limit=MAX_INPUT_BYTES):
                 descriptor = child
             source = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=descriptor)
             with os.fdopen(source, 'rb') as stream:
-                if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                info = os.fstat(stream.fileno())
+                if not stat.S_ISREG(info.st_mode) or info.st_size > limit:
                     raise UsageError(DENIED)
                 data = stream.read(limit + 1)
                 if len(data) > limit:
@@ -72,8 +73,13 @@ def local_inputs(arguments, root, *, tool=None):
                 suffix = Path(name).suffix.lower().lstrip('.')
                 if suffix not in ('csv', 'xlsx') or arguments.get('format', suffix) not in (None, suffix):
                     raise UsageError(DENIED)
-            if tool == 'upload_photo' and key == 'file':
-                values['content_type'] = image_type(data)
+            if key in ('photo_file', 'odometer_photo_path', 'work_photo_path') or (tool == 'upload_photo' and key == 'file'):
+                actual = image_type(data)
+                expected = {'.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.heic': 'image/heic', '.heif': 'image/heif'}.get(Path(name).suffix.lower())
+                if (expected and expected != actual) or (arguments.get('content_type') and arguments['content_type'] != actual):
+                    raise UsageError(IMAGE_ERROR)
+                if key == 'file':
+                    values['content_type'] = actual
             folder = Path(temporary) / str(index)
             folder.mkdir()
             snapshot = folder / name
@@ -97,7 +103,37 @@ def image_type(data):
         return 'image/webp'
     size = int.from_bytes(data[:4], 'big')
     if 16 <= size <= len(data) and data[4:8] == b'ftyp':
-        brands = (b'heic', b'heix', b'hevc', b'hevx')
+        brands = (b'heic', b'heix', b'hevc', b'hevx', b'heim', b'heis')
         if data[8:12] in brands or any(data[i:i+4] in brands for i in range(16, size, 4)):
             return 'image/heic'
-    raise UsageError("Use a JPEG, PNG, HEIC, or WebP image. / Use una imagen JPEG, PNG, HEIC o WebP.")
+        if data[8:12] in (b'mif1', b'msf1'):
+            return 'image/heif'
+    raise UsageError("Use a JPEG, PNG, WebP, HEIC, or HEIF image. / Usa una imagen JPEG, PNG, WebP, HEIC o HEIF.")
+
+
+IMAGE_ERROR = 'Use a regular image file with a matching file type, at most 50 MiB. / Usa un archivo de imagen normal con un tipo coincidente, de un máximo de 50 MiB.'
+IMAGE_LIMIT = 50 * 1024 * 1024
+
+
+def read_image(value, content_type=None, *, allow_pdf=False):
+    """Resolve the parent, then open the final component without following links."""
+    try:
+        path = Path(value).expanduser()
+        path = path.parent.resolve(strict=True) / path.name
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        with os.fdopen(descriptor, 'rb') as stream:
+            info = os.fstat(stream.fileno())
+            if not stat.S_ISREG(info.st_mode) or info.st_size > IMAGE_LIMIT:
+                raise UsageError(IMAGE_ERROR)
+            data = stream.read(IMAGE_LIMIT + 1)
+        if len(data) > IMAGE_LIMIT:
+            raise UsageError(IMAGE_ERROR)
+        actual = 'application/pdf' if allow_pdf and data.startswith(b'%PDF-') else image_type(data)
+        expected = {'.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
+                    '.webp': 'image/webp', '.heic': 'image/heic', '.heif': 'image/heif',
+                    '.pdf': 'application/pdf'}.get(path.suffix.lower())
+        if (expected is not None and actual != expected) or (content_type and content_type != actual):
+            raise UsageError(IMAGE_ERROR)
+        return path, data, actual
+    except (OSError, ValueError):
+        raise UsageError(IMAGE_ERROR) from None
