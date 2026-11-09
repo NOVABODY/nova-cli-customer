@@ -12,6 +12,8 @@ from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 # Only effect/usage information lives here. Arguments come from the real parser;
 # fleet input/output contracts come from the same models used during execution.
 DETAILS = {
+    "announcements": ("Read new features and repair offers. / Consulta novedades y ofertas de reparación.",
+                      ["remote_read"], "nova announcements --json"),
     "bundle-address get": ("Read the bundle drop-off address.", ["remote_read"], "nova bundle-address get DFS-B-2026-0001"),
     "bundle-address set": ("Change all bundle destinations before scheduling; optionally save the shop profile with profile access.", ["remote_write"], "nova bundle-address set DFS-B-2026-0001 --delivery-address '2 New Road'"),
     "vendor-agreement status": ("Read agreement status and the personal-signature link.",
@@ -269,7 +271,7 @@ def manifest(parser, selected=None):
             "transport": "stdio",
             "install_extra": "nova-fora-cli[mcp]",
             "requires": "Saved profile and browser login",
-            "tools": list(BY_TOOL),
+            "tools": [*BY_TOOL, "get_announcements"],
             "authorization": "not_checked",
         },
         "commands": commands,

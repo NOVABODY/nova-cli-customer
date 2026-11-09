@@ -91,7 +91,7 @@ READ_ROUTES = {
     r"/assistant/defects": "defects.list.v1",
     r"/assistant/defects/(?:FD-)?[0-9]+": "defects.get.v1",
 }
-PUBLIC_READS = {"/health", "/health/ready"}
+PUBLIC_READS = {"/health", "/health/ready", "/assistant-announcements"}
 
 
 def admitted_read(path):
