@@ -717,9 +717,10 @@ consent/role/Station/offer-side refusal; 404 means unavailable order/quote;
 
 Body order reads surface `browser_action` with an absolute Nova web URL and
 bilingual guidance, including when `payment_url` is null. `sign_off` opens the
-report page; `pay` opens the payment page. An optional Stripe `payment_url` is
-retained separately. Sign-off and payment must finish in the browser; no write
-tool performs them. At `awaiting_return`, the DSP has no physical-return step.
+report page; `pay` opens the payment page. An HTTPS `payment_url` is labeled
+"Invoice or receipt / Factura o recibo" without a payment instruction. Invalid
+links are omitted with a bilingual note. Sign-off and payment must finish in the
+browser; no write tool performs them. At `awaiting_return`, the DSP has no physical-return step.
 The shop records check-in after the payment guard. No deposit step is added.
 
 Selecciona una cotización y confirma la recogida con los permisos indicados.
