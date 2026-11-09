@@ -6,6 +6,11 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova body-repair repair-leads` | `list_body_repair_leads` | remote_read | `nova:read` |
+| `nova body-repair quotes` | `list_body_repair_quotes` | remote_read | `nova:read` |
+| `nova body-repair confirm-scope` | `confirm_body_repair_scope` | remote_write | `nova:read nova:write` |
+| `nova body-repair submit-quote` | `submit_body_repair_quote` | remote_write | `nova:read nova:write` |
+| `nova body-repair withdraw-quote` | `withdraw_body_repair_quote` | remote_write | `nova:read nova:write` |
 | `nova bundle-address get` | `get_bundle_dropoff_address` | remote_read | `nova:read` |
 | `nova bundle-address set` | `update_bundle_dropoff_address` | remote_write | `nova:read nova:write` |
 | `nova bundle-schedules list` | `list_bundle_schedules` | remote_read | `nova:read` |
@@ -249,3 +254,5 @@ Los permisos existentes no incluyen estas operaciones nuevas. Autoriza la conexi
 | `nova defect opportunities` | `list_defect_opportunities` | remote_read | `nova:read` |
 | `nova defect accept` | `accept_defect` | remote_write | `nova:read nova:write` |
 | `nova defect reject` | `reject_defect` | remote_write | `nova:read nova:write` |
+
+See [Body quote workflow](BodyQuotes.md) for shop quote commands and permissions.

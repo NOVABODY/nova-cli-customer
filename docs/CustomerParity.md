@@ -15,7 +15,7 @@ Availability in discovery does not grant account access.
 | Shop work | Read and create work orders; assign, schedule, accept, decline, release, cancel or complete eligible work; read activity and notes; manage supported repair-line fields. |
 | Repair requests | Read requests and repair-provider choices; preview provider choices; cancel eligible requests; dismiss a rental-routing reminder. |
 | Cortex | Review a source file with corrections, preview reviewed fleet rows, and apply permitted imports. |
-| Body repair | Read permitted orders, PAVE reports/comparisons and images; download quote, scope, invoice/receipt and documentation files. |
+| Body repair | List eligible leads and shop quotes; confirm reviewed scope, submit and withdraw a quote; read permitted orders, PAVE reports/comparisons and images; download quote, scope, invoice/receipt and documentation files. |
 | Inspections | Read permitted inspection lists and details. Use the browser for inspection capture and submission. |
 | Notifications and events | Read and manage supported notifications/preferences; consume workshop events with durable local acknowledgment. |
 | Tire vendor setup | Read Station choices, add an eligible vendor, submit contacts, and handle requests as site admin. |
