@@ -122,7 +122,8 @@ def test_customer_transport_does_not_retry_setup_get_or_lose_code(monkeypatch, s
     monkeypatch.setattr(api, "_send", send)
     with pytest.raises(ApiError) as error:
         execute(api, "start_slack_setup", {})
-    assert error.value.code == code and error.value.status == status
+    assert error.value.code == ("outcome_unknown" if status == 503 else code)
+    assert error.value.status == status
     assert len(calls) == 1
 
 

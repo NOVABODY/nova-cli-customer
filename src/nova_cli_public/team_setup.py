@@ -3,7 +3,7 @@ import argparse
 import re
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class Empty(BaseModel):
@@ -11,13 +11,15 @@ class Empty(BaseModel):
 
 
 class Invite(Empty):
-    email: str = Field(min_length=3, max_length=320)
-    role: str = Field(min_length=1, max_length=80)
+    email: EmailStr
+    # Union of non-platform targets in the API invitation role matrix.
+    role: Literal["dsp_owner", "dsp_manager", "dsp_dispatcher", "dsp_viewer",
+                  "vendor_admin", "service_writer", "foreman", "technician", "vendor_viewer"]
     org_id: int = Field(gt=0, le=2147483647)
     full_name: str | None = Field(default=None, max_length=200)
     phone: str | None = Field(default=None, max_length=40)
     language: Literal["en", "es"] | None = None
-    station: str | None = Field(default=None, max_length=80)
+    station: str | None = Field(default=None, max_length=20)
 
 
 class InvitationRef(Empty):
@@ -65,6 +67,8 @@ UNKNOWN = "Check invitations or Slack status before another attempt. / Consulta 
 
 
 def error_message(status, code):
+    if code == "outcome_unknown":
+        return UNKNOWN
     if code == "slack_setup_reconnect_required":
         return "Refresh or reconnect to Nova Fora. Then start Slack setup again. / Actualiza o vuelve a conectar con Nova Fora. Después, inicia Slack de nuevo."
     if code == "invitation_platform_connection_denied":
@@ -93,12 +97,24 @@ def target(name, arguments):
     return method, path, body if method == "POST" else None
 
 
-def strip_links(value):
-    if isinstance(value, dict):
-        return {key: strip_links(item) for key, item in value.items() if key != "accept_url"}
-    if isinstance(value, list):
-        return [strip_links(item) for item in value]
-    return value
+# InvitationResponse, excluding its bearer accept_url. Keep page fields separate.
+INVITATION_FIELDS = frozenset({
+    "id", "email", "full_name", "station", "phone", "language", "role", "org_id",
+    "org_name", "org_type", "vendor_repair_types", "vendor_status_tracking_mode",
+    "status", "expires_at", "invited_by_id", "source", "invited_by_name",
+    "accepted_at", "last_email_sent_at", "smtp_delivered", "created_at",
+})
+
+
+class SetupLinkUnavailable(ValueError):
+    def __init__(self):
+        super().__init__("Setup link not available. Retry. / Enlace de configuración no disponible. Reintenta.")
+
+
+def invitation_result(value):
+    if not isinstance(value, dict):
+        raise TypeError("Expected invitation")
+    return {key: item for key, item in value.items() if key in INVITATION_FIELDS}
 
 
 def result(name, value):
@@ -109,8 +125,11 @@ def result(name, value):
     if not isinstance(value, dict):
         raise TypeError("Expected object")
     if name == "start_slack_setup":
-        if not isinstance(value.get("authorize_url"), str) or not value["authorize_url"]:
-            raise ValueError("Missing authorization URL")
+        url = value.get("authorize_url")
+        if (not isinstance(url, str) or len(url) > 4096 or not re.fullmatch(
+                r"https://(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*slack\.com(?::443)?/[^\s\\]*",
+                url, re.IGNORECASE)):
+            raise SetupLinkUnavailable()
         return {"authorize_url": value["authorize_url"]}
     if name == "get_slack_status":
         if not isinstance(value.get("installed"), bool):
@@ -125,7 +144,9 @@ def result(name, value):
             raise ValueError("Missing invitation page")
     elif not isinstance(value.get("id"), str) or not re.fullmatch(r"INV-[0-9]{1,14}", value["id"]):
         raise ValueError("Missing invitation receipt")
-    return strip_links(value)
+    if name == "list_team_invitations":
+        return {"items": [invitation_result(item) for item in value["items"]], "total": value["total"]}
+    return invitation_result(value)
 
 
 def execute(client, name, arguments):
@@ -136,7 +157,7 @@ def execute(client, name, arguments):
     if body is not None:
         kwargs["json_body"] = body
     if name == "list_team_invitations":
-        kwargs["params"] = {"status": "pending"}
+        kwargs["query"] = {"status": "pending"}
     try:
         value = client.request(method, path, **kwargs)
     except ApiError as exc:
@@ -144,6 +165,8 @@ def execute(client, name, arguments):
         raise ApiError(error_message(exc.status, code), status=exc.status, code=code) from None
     try:
         return result(name, value)
+    except SetupLinkUnavailable as exc:
+        raise ApiError(str(exc), code="invalid_response") from None
     except (ValueError, TypeError):
         raise ApiError(UNKNOWN, code="outcome_unknown" if name in WRITES else "invalid_response") from None
 
