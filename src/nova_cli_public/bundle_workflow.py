@@ -1,6 +1,8 @@
 """Typed workflow reads preserve the API's role-filtered response."""
 import json
+import re
 from typing import Any, Literal
+from urllib.parse import urlsplit
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
@@ -72,6 +74,39 @@ OUTPUTS = {'list_bundle_offers': Listing, 'get_bundle_offer_report': Report, 'li
 PATHS = {'list_bundle_offers': '', 'get_bundle_offer_report': '/{ref}/report', 'list_bought_bundle_vans': '/{ref}/vans'}
 DESCRIPTIONS = {'list_bundle_offers': 'Read bundle offers, responsibility counts and deadlines. Open browser_url to buy in the browser. / Consulta ofertas de paquetes, responsables y plazos. Abre browser_url para comprar en el navegador.', 'get_bundle_offer_report': 'Read a masked report and frozen pricing terms. / Consulta un informe sin datos privados y los precios fijados.', 'list_bought_bundle_vans': 'Read bought van steps, prices and permitted details. Open browser_url for initial pickup or payment changes. / Consulta pasos, precios y datos permitidos de las vans compradas. Abre browser_url para la recogida inicial o cambios de pago.'}
 
+def web_origin(client):
+    return urlsplit(getattr(getattr(client, 'profile', None), 'api', ''))._replace(path='', query='', fragment='').geturl()
+
+
+def safe_browser_urls(value, origin, ref=None):
+    """Keep only bundle links on the configured Nova HTTPS origin."""
+    if isinstance(value, list):
+        return [safe_browser_urls(row, origin, ref) for row in value]
+    if not isinstance(value, dict):
+        return value
+    ref = value.get('ref', ref)
+    result = {key: safe_browser_urls(item, origin, ref) for key, item in value.items()}
+    link = result.get('browser_url')
+    if link is None:
+        return result
+    try:
+        target, configured = urlsplit(link), urlsplit(origin)
+        allowed = (isinstance(ref, str) and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9-]{0,79}', ref)
+            and target.scheme == configured.scheme == 'https' and configured.hostname
+            and (target.hostname, target.port if target.port is not None else 443)
+            == (configured.hostname, configured.port if configured.port is not None else 443)
+            and target.username is None and target.password is None
+            and configured.username is None and configured.password is None
+            and target.path == '/bundle-offers/' + ref
+            and not any(char.isspace() or ord(char) < 32 or char == chr(92) for char in link))
+    except (ValueError, TypeError):
+        allowed = False
+    if not allowed:
+        result.pop('browser_url')
+        result['browser_url_note'] = 'Browser link removed. Read the vans. / Se quitó el enlace del navegador. Consulta las vans.'
+    return result
+
+
 def execute(client, name, arguments):
     query = MODELS[name].model_validate(arguments)
     value = client.request('GET', '/bundle-offers' + PATHS[name].format(**query.model_dump()))
@@ -82,7 +117,7 @@ def execute(client, name, arguments):
         json.dumps(value, allow_nan=False)
     except (ValueError, TypeError, RecursionError):
         raise ApiError('Unsupported bundle response. / Respuesta de paquete no compatible.') from None
-    return value
+    return safe_browser_urls(value, web_origin(client), getattr(query, 'ref', None))
 
 def command(args):
     from nova_cli_public.legacy_reads import client_from_args

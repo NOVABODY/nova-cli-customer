@@ -57,3 +57,11 @@ permisos, los plazos y la aprobación del DSP. No se hace ningún pago con estas
 herramientas. `requested` indica una solicitud nueva; `already_requested`, una
 solicitud existente. Consulta las vans después de cada cambio. Si el resultado
 no se conoce, consulta el registro antes de otro intento.
+
+Browser links must use HTTPS, the configured Nova web origin, and the matching
+`/bundle-offers/{ref}` path. Unsafe links are removed with a bilingual note.
+Pickup times must be ISO 8601 strings with a UTC offset. The return date must
+use `YYYY-MM-DD`; timestamps and epoch numbers are not accepted.
+Los enlaces deben usar HTTPS, el origen web configurado de Nova y la ruta del
+paquete. Los enlaces no seguros se quitan con una nota bilingüe. Las horas deben
+ser cadenas ISO 8601 con zona horaria. La fecha de regreso usa `YYYY-MM-DD`.

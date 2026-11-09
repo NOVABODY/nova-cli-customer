@@ -88,7 +88,7 @@ def test_browser_only_actions_keep_exact_api_links():
     link = 'https://app.example/bundle-offers/B-1?van=2'
     van = {'unit': 2, 'state': 'approved', 'browser_url': link, 'workflow': {
         'step': 3, 'action': 'book_pickup', 'owner': 'shop', 'group': 'action_required', 'deadline': None}}
-    client = SimpleNamespace(request=Mock(return_value={'vans': [van]}))
+    client = SimpleNamespace(profile=SimpleNamespace(api='https://app.example/api'), request=Mock(return_value={'vans': [van]}))
     assert execute(client, 'list_bought_bundle_vans', {'ref': 'B-1'})['vans'][0]['browser_url'] == link
     assert 'browser_url' in steps.BROWSER and 'Abre' in steps.BROWSER
 
@@ -167,7 +167,7 @@ def test_customer_route_admission_and_discovery():
 ])
 def test_offer_and_report_keep_purchase_browser_url(name, value):
     from nova_cli_public.bundle_workflow import execute
-    client = SimpleNamespace(request=Mock(return_value=value))
+    client = SimpleNamespace(profile=SimpleNamespace(api='https://app.example/api'), request=Mock(return_value=value))
     assert execute(client, name, {} if name == 'list_bundle_offers' else {'ref': 'B-1'}) == value
 
 

@@ -1,14 +1,23 @@
 """Bought-bundle shop steps with no purchase, readiness or payment routes."""
 import json
 import os
+import re
 from datetime import date
 from pathlib import Path
 from typing import Literal
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import (
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from nova_cli_public import bundle_workflow
-from nova_cli_public.errors import ApiError, UsageError
+from nova_cli_public.errors import ApiError, NovaCliError, UsageError
 
 PDF = 'get_bundle_fmc_packet_pdf'
 PICKUP = 'update_bundle_pickup'
@@ -36,6 +45,20 @@ class Pickup(Van):
     start: AwareDatetime = Field(strict=False)
     end: AwareDatetime = Field(strict=False)
     estimated_return_date: date | None = Field(default=None, strict=False)
+
+    @field_validator('start', 'end', mode='before')
+    @classmethod
+    def iso_timestamp(cls, value):
+        if not isinstance(value, str) or not re.match(r'^\d{4}-\d{2}-\d{2}T', value):
+            raise ValueError('Use an ISO 8601 time with a UTC offset. / Usa una hora ISO 8601 con zona horaria.')
+        return value
+
+    @field_validator('estimated_return_date', mode='before')
+    @classmethod
+    def calendar_date(cls, value):
+        if value is not None and type(value) is not date and (not isinstance(value, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', value)):
+            raise ValueError('Use a date: YYYY-MM-DD. / Usa una fecha: YYYY-MM-DD.')
+        return value
 
     @model_validator(mode='after')
     def ordered(self):
@@ -105,11 +128,12 @@ def execute(client, name, arguments, *, pdf_max_bytes=1024 * 1024):
 
 
 def refresh(client, ref, value):
+    value = bundle_workflow.safe_browser_urls(value, bundle_workflow.web_origin(client), ref)
     try:
         refreshed = bundle_workflow.execute(client, 'list_bought_bundle_vans', {'ref': ref})
         return {**value, **refreshed}
-    except (ApiError, UsageError):
-        return {**value, 'refresh_required': True, 'message': 'The step succeeded. Read the vans before another step. / El paso se completó. Consulta las vans antes de otro paso.'}
+    except NovaCliError:
+        return {**value, 'refresh_required': True, 'message': 'The step succeeded. Could not refresh. Read the vans before another step. / El paso se completó. No se pudo actualizar. Consulta las vans antes de otro paso.'}
 
 
 def command(args):

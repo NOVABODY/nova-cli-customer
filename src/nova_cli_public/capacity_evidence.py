@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
-from nova_cli_public.errors import ApiError, UsageError
+from nova_cli_public.errors import ApiError, NovaCliError, UsageError
 
 BASE = '/defect-bundle-offers/staff/evidence'
 UNKNOWN = 'The outcome is unknown. Read the evidence before another attempt. / El resultado no se conoce. Consulta la evidencia antes de otro intento.'
@@ -92,7 +92,7 @@ def execute(client, name, arguments):
             from .bundle_shop_steps import refresh
             return refresh(client, query.ref, value)
         return value
-    except (ApiError, ValueError, TypeError) as exc:
+    except (NovaCliError, ValueError, TypeError) as exc:
         if name in WRITES and (not isinstance(exc, ApiError) or exc.status is None or exc.status >= 500 or 300 <= exc.status < 400):
             raise ApiError(UNKNOWN, code='outcome_unknown') from exc
         if isinstance(exc, ApiError) and isinstance(query, Upload):
