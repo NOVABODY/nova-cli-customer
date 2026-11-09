@@ -224,12 +224,15 @@ def main(argv=None):
         message = (
             f"Nova request failed (HTTP {exc.status})." if isinstance(exc, ApiError) else str(exc)
         )
-        if isinstance(exc, ApiError) and exc.status == 403 and getattr(args, "read_command", None):
+        if isinstance(exc, ApiError) and exc.status == 403 and (getattr(args, "read_command", None) or getattr(args, "rating_tool", None)):
             from nova_cli_public.reads import BY_COMMAND
-
-            grant = BY_COMMAND[args.read_command]["grant"]
-            scope = BY_COMMAND[args.read_command].get("scope", "nova:read")
-            message += f' Check account access and approved operations. Request a new connection with nova auth login --scope "{scope}" --operations "{grant}".'
+            from nova_cli_public.shop_ratings import GRANTS
+            if getattr(args, 'rating_tool', None):
+                grant, scope = GRANTS[args.rating_tool], 'nova:read nova:write'
+            else:
+                grant = BY_COMMAND[args.read_command]["grant"]
+                scope = BY_COMMAND[args.read_command].get("scope", "nova:read")
+            message += f' Check account access and approved operations. Request a new connection with nova auth login --scope "{scope}" --operations "{grant}". / Comprueba el acceso de la cuenta y las operaciones aprobadas. Solicita una conexión nueva con nova auth login --scope "{scope}" --operations "{grant}".'
         code = exc.exit_code
     except KeyboardInterrupt:
         message = "Interrupted."

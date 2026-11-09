@@ -87,6 +87,7 @@ def test_cli_and_sdk_send_exact_subject_and_keep_native_receipt(monkeypatch, nam
     args = cli.build_parser().parse_args(['vendor-scorecard', action, 'BRR-7' if name == 'rate_body_repair' else 'WO-7', *flags])
     assert args.handler(args) == receipt(name)
 
+    monkeypatch.setattr('nova_cli_public.delegated.correction_consented', lambda client: True)
     async def check():
         from nova_cli_public.mcp import create_server
         from nova_cli_public.reads import CustomerReadService
@@ -141,3 +142,15 @@ def test_customer_inventory_reports_exact_write_grant_and_fixed_route(name, acti
     assert capability['api_routes'] == [{'method': 'POST', 'path_pattern': '/vendor-scorecard/feedback'}]
     assert admitted_write('POST', '/vendor-scorecard/feedback')
     assert not admitted_write('POST', '/vendor-scorecard/feedback/other')
+
+
+@pytest.mark.parametrize('name,action,values,flags', CASES)
+def test_rating_denial_names_required_consent(monkeypatch, capsys, name, action, values, flags):
+    from nova_cli_public import legacy_reads
+    api = Api(ApiError('PRIVATE', status=403))
+    monkeypatch.setattr(legacy_reads, 'client_from_args', lambda args: api)
+    assert cli.main(['vendor-scorecard', action, 'BRR-7' if name == 'rate_body_repair' else 'WO-7', *flags]) == 1
+    message = capsys.readouterr().err
+    assert shop_ratings.GRANTS[name] in message
+    assert 'Request a new connection' in message and 'Solicita una conexión nueva' in message
+    assert 'PRIVATE' not in message

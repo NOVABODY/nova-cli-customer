@@ -697,6 +697,10 @@ rating with the user before sending. Use `rate_work_order` to approve work,
 `rate_body_repair` for a body repair. Confirm a correction request separately:
 it reopens the work order or creates correction work. A correction needs a reason.
 
+The local correction tool is listed only after this client completes consent
+for correction. Existing connections must sign in again to record this consent.
+This local record is a discovery hint; the API checks live grants on every write.
+
 Ordinary ratings require `vendor_scorecard.feedback.submit.v1`; correction
 requests require `vendor_scorecard.feedback.correction.v1` instead. Delegated
 connections need write scope and fresh explicit consent. Existing grants do not
@@ -715,6 +719,20 @@ Use `good_` tags for 5 stars, either prefix for 4, and `problem_` tags for 1–3
 Ratings of 1 or 2 stars escalate automatically. Subject fields cannot be mixed.
 Reasons accept at most 1000 characters. Body ratings need completed hand-back,
 custody, eligibility, the enabled rating setting and the 14-day change window.
+
+`escalate` defaults to false. If true, this rating counts toward the second-vendor
+trigger. It can open a `SCORECARD_SECOND_VENDOR` case for Nova platform staff.
+Get the user's explicit approval before setting it to true.
+`reason` explains the rating. `impressive_attribute` selects a strong point;
+`negative_attribute` selects a weak point. Attribute choices are turnaround time,
+communication, professionalism, work quality and price.
+
+`escalate` tiene el valor predeterminado false. Con true, la calificación cuenta
+para el criterio de un segundo proveedor. Puede abrir un caso
+`SCORECARD_SECOND_VENDOR` para el personal de la plataforma Nova. Obtén la
+aprobación explícita del usuario antes de usar true. `reason` explica la
+calificación; `impressive_attribute` indica un punto positivo y
+`negative_attribute` un punto negativo.
 
 Errors preserve the distinction between invalid choices (400), sign-in (401),
 permission refusal (403), missing repair (404), repair state/custody/deadline

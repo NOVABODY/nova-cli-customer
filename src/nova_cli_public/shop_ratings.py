@@ -38,23 +38,23 @@ class Input(BaseModel):
 
 
 class WorkRating(Input):
-    work_order_id: WorkId
-    vote: Literal['up'] = 'up'
-    completion_decision: Literal['approved'] = 'approved'
-    reason: Reason | None = None
-    escalate: bool = False
-    impressive_attribute: Attribute | None = None
-    negative_attribute: Attribute | None = None
+    work_order_id: WorkId = Field(description='Work order ID from the pending ratings list. / ID de la orden de trabajo de la lista de calificaciones pendientes.')
+    vote: Literal['up'] = Field(default='up', description='Approve work with up; request correction with down. / Aprueba el trabajo con up; solicita una corrección con down.')
+    completion_decision: Literal['approved'] = Field(default='approved', description='Approve the repair or request correction. / Aprueba la reparación o solicita una corrección.')
+    reason: Reason | None = Field(default=None, description='Reason for the rating, at most 1000 characters. Required for correction. / Motivo de la calificación, máximo 1000 caracteres. Obligatorio para una corrección.')
+    escalate: bool = Field(default=False, description='Count this rating toward the second-vendor trigger. This can open a SCORECARD_SECOND_VENDOR case for Nova platform staff. Get explicit user approval before setting true. Default: false. / Cuenta esta calificación para el criterio de un segundo proveedor. Puede abrir un caso SCORECARD_SECOND_VENDOR para el personal de la plataforma Nova. Obtén la aprobación explícita del usuario antes de usar true. Valor predeterminado: false.')
+    impressive_attribute: Attribute | None = Field(default=None, description='Optional strong point: turnaround time, communication, professionalism, work quality or price. / Punto positivo opcional: plazo, comunicación, profesionalidad, calidad del trabajo o precio.')
+    negative_attribute: Attribute | None = Field(default=None, description='Optional weak point: turnaround time, communication, professionalism, work quality or price. / Punto negativo opcional: plazo, comunicación, profesionalidad, calidad del trabajo o precio.')
 
 
 class Correction(Input):
-    work_order_id: WorkId
-    vote: Literal['down'] = 'down'
-    completion_decision: Literal['correction_requested'] = 'correction_requested'
-    reason: Reason
-    escalate: bool = False
-    impressive_attribute: Attribute | None = None
-    negative_attribute: Attribute | None = None
+    work_order_id: WorkId = Field(description='Work order ID from the pending ratings list. / ID de la orden de trabajo de la lista de calificaciones pendientes.')
+    vote: Literal['down'] = Field(default='down', description='Approve work with up; request correction with down. / Aprueba el trabajo con up; solicita una corrección con down.')
+    completion_decision: Literal['correction_requested'] = Field(default='correction_requested', description='Approve the repair or request correction. / Aprueba la reparación o solicita una corrección.')
+    reason: Reason = Field(description='Reason for the rating, at most 1000 characters. Required for correction. / Motivo de la calificación, máximo 1000 caracteres. Obligatorio para una corrección.')
+    escalate: bool = Field(default=False, description='Count this rating toward the second-vendor trigger. This can open a SCORECARD_SECOND_VENDOR case for Nova platform staff. Get explicit user approval before setting true. Default: false. / Cuenta esta calificación para el criterio de un segundo proveedor. Puede abrir un caso SCORECARD_SECOND_VENDOR para el personal de la plataforma Nova. Obtén la aprobación explícita del usuario antes de usar true. Valor predeterminado: false.')
+    impressive_attribute: Attribute | None = Field(default=None, description='Optional strong point: turnaround time, communication, professionalism, work quality or price. / Punto positivo opcional: plazo, comunicación, profesionalidad, calidad del trabajo o precio.')
+    negative_attribute: Attribute | None = Field(default=None, description='Optional weak point: turnaround time, communication, professionalism, work quality or price. / Punto negativo opcional: plazo, comunicación, profesionalidad, calidad del trabajo o precio.')
 
     @model_validator(mode='after')
     def reason_required(self):
@@ -64,10 +64,10 @@ class Correction(Input):
 
 
 class BodyRating(Input):
-    body_repair_request_id: BodyId
-    stars: int = Field(ge=1, le=5)
-    tags: list[Tag] = Field(default_factory=list)
-    reason: Reason | None = None
+    body_repair_request_id: BodyId = Field(description='Body repair ID from the pending ratings list. / ID de la reparación de carrocería de la lista de calificaciones pendientes.')
+    stars: int = Field(ge=1, le=5, description='Rating from 1 to 5. Ratings of 1 or 2 open a case for Nova platform staff automatically. / Calificación de 1 a 5. Las calificaciones de 1 o 2 abren un caso para el personal de la plataforma Nova automáticamente.')
+    tags: list[Tag] = Field(default_factory=list, description='Repair quality, van condition, communication or pickup/return tags. Use positive tags for 5 stars, either kind for 4, problem tags for 1 to 3. / Etiquetas de calidad de reparación, estado del van, comunicación o recogida/devolución. Usa etiquetas positivas con 5 estrellas, de ambos tipos con 4 y de problemas con 1 a 3.')
+    reason: Reason | None = Field(default=None, description='Reason for the rating, at most 1000 characters. Required for correction. / Motivo de la calificación, máximo 1000 caracteres. Obligatorio para una corrección.')
 
     @model_validator(mode='after')
     def matching_tags(self):
@@ -90,6 +90,9 @@ DESCRIPTIONS = {
     'request_work_order_correction': 'Ask the shop to fix the work again. This reopens the work order or creates a correction work order. A reason and vendor_scorecard.feedback.correction.v1 permission are required. Confirm the rating and correction request with the user before sending. / Pide al taller que repare el trabajo de nuevo. Esto vuelve a abrir la orden de trabajo o crea una orden de corrección. Se requieren un motivo y el permiso vendor_scorecard.feedback.correction.v1. Confirma la calificación y la solicitud de corrección con el usuario antes de enviarlas.',
     'rate_body_repair': 'Rate a body repair from list_pending_vendor_feedback with 1 to 5 stars. Requires vendor_scorecard.feedback.submit.v1. Ratings of 1 or 2 stars escalate automatically. / Califica una reparación de carrocería de list_pending_vendor_feedback con 1 a 5 estrellas. Requiere vendor_scorecard.feedback.submit.v1. Las calificaciones de 1 o 2 estrellas se escalan automáticamente.' + CONFIRM,
 }
+for name in ('rate_work_order', 'request_work_order_correction'):
+    DESCRIPTIONS[name] += ' ' + 'Count this rating toward the second-vendor trigger. This can open a SCORECARD_SECOND_VENDOR case for Nova platform staff. Get explicit user approval before setting true. Default: false. / Cuenta esta calificación para el criterio de un segundo proveedor. Puede abrir un caso SCORECARD_SECOND_VENDOR para el personal de la plataforma Nova. Obtén la aprobación explícita del usuario antes de usar true. Valor predeterminado: false.'
+DESCRIPTIONS['rate_work_order'] += ' Optional fields: reason (up to 1000 characters), impressive_attribute (strong point), negative_attribute (weak point). / Campos opcionales: reason (máximo 1000 caracteres), impressive_attribute (punto positivo), negative_attribute (punto negativo).'
 ERRORS = {
     400: 'Invalid rating choices. / Opciones de calificación no válidas.',
     401: 'Sign in again. / Inicia sesión de nuevo.',
@@ -106,12 +109,12 @@ class Receipt(BaseModel):
     model_config = ConfigDict(strict=True)
     id: int = Field(gt=0)
     subject_kind: Literal['work_order', 'body_repair']
-    work_order_id: int | None
-    body_repair_request_id: int | None
-    vote: str | None
-    stars: int | None
-    tags: list[str]
-    completion_decision: str
+    work_order_id: int | None = Field(description='Work order ID from the pending ratings list. / ID de la orden de trabajo de la lista de calificaciones pendientes.')
+    body_repair_request_id: int | None = Field(description='Body repair ID from the pending ratings list. / ID de la reparación de carrocería de la lista de calificaciones pendientes.')
+    vote: str | None = Field(description='Approve work with up; request correction with down. / Aprueba el trabajo con up; solicita una corrección con down.')
+    stars: int | None = Field(description='Rating from 1 to 5. Ratings of 1 or 2 open a case for Nova platform staff automatically. / Calificación de 1 a 5. Las calificaciones de 1 o 2 abren un caso para el personal de la plataforma Nova automáticamente.')
+    tags: list[str] = Field(description='Repair quality, van condition, communication or pickup/return tags. Use positive tags for 5 stars, either kind for 4, problem tags for 1 to 3. / Etiquetas de calidad de reparación, estado del van, comunicación o recogida/devolución. Usa etiquetas positivas con 5 estrellas, de ambos tipos con 4 y de problemas con 1 a 3.')
+    completion_decision: str = Field(description='Approve the repair or request correction. / Aprueba la reparación o solicita una corrección.')
     correction_reopened: bool
 
 
@@ -163,7 +166,9 @@ for action, name in [('rate-work-order', 'rate_work_order'),
     for key, field in MODELS[name].model_fields.items():
         if key in ('vote', 'completion_decision'):
             continue
-        options = {} if field.is_required() else {'default': None}
+        options = {'help': field.description}
+        if not field.is_required():
+            options['default'] = None
         if key == 'stars':
             options['type'] = 'int'
         if key == 'tags':

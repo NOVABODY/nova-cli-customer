@@ -344,7 +344,10 @@ class CustomerReadService:
         self.client = client
 
     def tool_schemas(self):
-        return {name: model.model_json_schema() for name, model in MODELS.items()}
+        from nova_cli_public.delegated import correction_consented
+        correction = correction_consented(self.client) if self.client is not None else False
+        return {name: model.model_json_schema() for name, model in MODELS.items()
+                if name != 'request_work_order_correction' or correction}
 
     def output_schema(self, name):
         if name in body_intake.OUTPUTS:
