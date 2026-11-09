@@ -115,3 +115,11 @@ def test_completion_storage_key_needs_no_file_root():
     values = {'work_photo_path': 'photos/work_orders/2/date/photo.png'}
     with local_inputs(values, None) as prepared:
         assert prepared == values
+
+
+def test_custody_file_limit_is_checked_before_any_file_read(tmp_path, monkeypatch):
+    from nova_cli_public import local_inputs
+    from nova_cli_public.errors import UsageError
+    monkeypatch.setattr(local_inputs, '_read', lambda *a: pytest.fail('Do not read an oversized list'))
+    with pytest.raises(UsageError), local_inputs.local_inputs({'photo_file': ['photo.png'] * 13}, tmp_path):
+        pytest.fail('Oversized list was admitted')

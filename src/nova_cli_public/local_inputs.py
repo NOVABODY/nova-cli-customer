@@ -49,6 +49,9 @@ def local_inputs(arguments, root, *, tool=None):
                 if (key == 'file' or key.endswith('_file') or
                     (key in ('odometer_photo_path', 'work_photo_path') and isinstance(value, str)
                      and not value.startswith('photos/'))) and value is not None and value != []}
+    files = selected.get('photo_file')
+    if files is not None and (not isinstance(files, list) or len(files) > 12):
+        raise UsageError('Use at most 12 photos. / Usa un máximo de 12 fotos.')
     if not selected:
         yield arguments
         return
