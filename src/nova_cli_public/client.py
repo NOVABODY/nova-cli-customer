@@ -333,6 +333,9 @@ class ApiClient:
                 headers={"Authorization": f"Bearer {self.access_token}"}, pdf=pdf, pdf_max_bytes=pdf_max_bytes, archive=archive, archive_max_bytes=archive_max_bytes, image=image, image_max_bytes=image_max_bytes,
             ).body
         except ApiError as exc:
+            if (path in {"/slack/oauth/initiate", "/slack/channels", "/auth/invitations"}
+                    or path.startswith("/auth/invitations/")) and exc.status == 503:
+                raise
             if mutation and (exc.status is None or exc.status >= 500 or 300 <= exc.status < 400):
                 raise ApiError(
                     "The change outcome is unknown. Check the record before trying again.",

@@ -3,6 +3,11 @@
 import re
 
 WRITE_ROUTES = {
+    ("POST", r"/auth/invitations"): "invitations.create.v1",
+    ("POST", r"/auth/invitations/INV-[0-9]{1,14}/resend"): "invitations.resend.v1",
+    ("DELETE", r"/auth/invitations/INV-[0-9]{1,14}"): "invitations.revoke.v1",
+    ("GET", r"/slack/oauth/initiate"): "slack.setup.start.v1",
+    ("POST", r"/slack/channels"): "slack.channels.update.v1",
     ("POST", r"/defects/(?:FD-)?[0-9]{1,14}/accept"): "defects.accept.v1",
     ("POST", r"/defects/(?:FD-)?[0-9]{1,14}/reject"): "defects.reject.v1",
     ("POST", r"/defect-bundle-offers/staff/evidence/[0-9]+/review"): "capacity.evidence.review.v1",
