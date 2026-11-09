@@ -257,3 +257,8 @@ offers. Run `nova announcements --json` or MCP `get_announcements` to refresh it
 The feed needs no credentials and never grants permissions or authorizes a repair.
 Local MCP initialization includes the same bilingual feed. Check promotion expiry
 and all terms before acting. An unavailable feed does not stop login or connection.
+
+The feed also advertises Nova's Markdown skill library through `skill_library_url`.
+The link is permanent and can be shown with an empty news feed. No skill content
+is fetched, installed or generated. The initial index contains no skills; creating
+a skill requires explicit user authorization for that skill or workflow.

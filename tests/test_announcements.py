@@ -18,6 +18,7 @@ def feed():
         "schema_version": 1,
         "available": True,
         "generated_at": now.isoformat(),
+        "skill_library_url": "https://app.example.test/skills/README.md",
         "items": [
             {
                 "id": "synthetic-offer",
@@ -122,3 +123,44 @@ def test_public_transport_bounds_news_without_sending_stored_credentials(oversiz
     assert result["available"] is not oversize
     assert calls[0][1] == 2 and not calls[0][0].has_header("Authorization")
     assert calls[0][0].full_url == "https://nova.example/api/assistant-announcements"
+
+
+@pytest.mark.parametrize("available", [True, False])
+def test_empty_library_is_advertised_without_generating_or_loading_skills(available):
+    from nova_cli_public import announcements
+
+    value = {
+        "schema_version": 1,
+        "available": available,
+        "generated_at": "2026-11-09T00:00:00Z",
+        "items": [],
+        "skill_library_url": "https://app.example.test/skills/README.md",
+    }
+    result = announcements.validate(value)
+    text = announcements.instructions(result)
+    assert "https://app.example.test/skills/README.md" in text
+    assert result["items"] == []
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://app.example.test/skills/README.md",
+        "https://secret@app.example.test/skills/README.md",
+        "https://app.example.test/private",
+    ],
+)
+def test_skill_library_rejects_invalid_index_urls(url):
+    from pydantic import ValidationError
+
+    from nova_cli_public import announcements
+
+    value = {
+        "schema_version": 1,
+        "available": True,
+        "generated_at": "2026-11-09T00:00:00Z",
+        "items": [],
+        "skill_library_url": url,
+    }
+    with pytest.raises(ValidationError):
+        announcements.validate(value)
