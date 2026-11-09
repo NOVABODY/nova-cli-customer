@@ -115,10 +115,19 @@ def create_server(service, *, file_root=None):
                 content=[types.TextContent(type="text", text=json.dumps(data, ensure_ascii=False))],
             )
         except (ValidationError, KeyError, ValueError, TypeError, argparse.ArgumentTypeError):
+            from nova_cli_public.shop_ratings import INVALID, MODELS
+            if name in MODELS:
+                return types.CallToolResult(isError=True, structuredContent={"error": {"code": "invalid_arguments"}},
+                    content=[types.TextContent(type="text", text=INVALID)])
             return error("invalid_arguments")
         except AuthError:
             return error("authentication_required")
         except ApiError as exc:
+            from nova_cli_public.shop_ratings import MODELS
+            if name in MODELS and exc.code in {"rating_rejected", "outcome_unknown"}:
+                return types.CallToolResult(isError=True,
+                    structuredContent={"error": {"code": exc.code, "status": exc.status}},
+                    content=[types.TextContent(type="text", text=str(exc))])
             if exc.code == 'image_too_large':
                 command = shlex.join(['nova', '--profile', service.client.profile.name, 'body-repair', 'pave-image',
                     '--storage-key=' + arguments['storage_key'], '--category', arguments['category'],

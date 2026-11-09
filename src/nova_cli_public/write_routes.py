@@ -3,6 +3,7 @@
 import re
 
 WRITE_ROUTES = {
+    ("POST", r"/vendor-scorecard/feedback"): "vendor_scorecard.feedback.submit.v1",
     ("POST", r"/defects/(?:FD-)?[0-9]{1,14}/accept"): "defects.accept.v1",
     ("POST", r"/defects/(?:FD-)?[0-9]{1,14}/reject"): "defects.reject.v1",
     ("POST", r"/defect-bundle-offers/staff/evidence/[0-9]+/review"): "capacity.evidence.review.v1",

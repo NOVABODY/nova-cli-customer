@@ -224,6 +224,8 @@ def manifest(parser, selected=None):
                     if grant == operation["grant"]
                 ],
             )
+            if tool == "request_work_order_correction":
+                entry["api_routes"] = [{"method": "POST", "path_pattern": "/vendor-scorecard/feedback"}]
             if not operation.get("mcp", True):
                 entry.update(mcp_tool=None, tool_input_schema=None, output_schema=None)
             if operation.get("document_kind") or operation.get("image_read"):
