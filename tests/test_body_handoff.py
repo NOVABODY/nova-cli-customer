@@ -19,7 +19,9 @@ def test_browser_action_uses_web_origin_and_preserves_payment_url(action, page, 
 
 def test_payment_url_is_retained_without_inventing_handoff():
     row = {'browser_action': None, 'payment_url': 'https://invoice.stripe.com/test'}
-    assert surface(row, 'https://nova.example') == row
+    result = surface(row, 'https://nova.example')
+    assert result['browser_action'] is None and result['payment_url'] == row['payment_url']
+    assert 'navegador' in result['browser_guidance']
 
 
 @pytest.mark.parametrize('url', ['//evil.example/pay', 'https://evil.example/pay', '/body-repairs/BRR-7/pay?token=secret'])

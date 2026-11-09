@@ -12,7 +12,7 @@ def surface(value, web_url):
         return {**value, 'items': [surface(row, origin) for row in value['items']]}
     action = value.get('browser_action')
     if action is None:
-        return value
+        return {**value, 'browser_guidance': GUIDANCE} if value.get('payment_url') else value
     if not isinstance(action, dict) or action.get('action') not in ('sign_off', 'pay'):
         raise ValueError('Invalid browser action. / Acción de navegador no válida.')
     if parsed.scheme not in ('http', 'https') or not parsed.hostname or parsed.username or parsed.password:
