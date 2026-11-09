@@ -135,6 +135,10 @@ def _inspection_date_order(value, info):
 
 
 def input_model(entry, *, mcp=False):
+    from nova_cli_public.shop_defects import MODELS as SHOP_MODELS
+    if entry["tool"] in SHOP_MODELS:
+        return SHOP_MODELS[entry["tool"]]
+
     if entry["tool"] in capacity_evidence.MODELS:
         return capacity_evidence.MODELS[entry["tool"]]
 
@@ -503,6 +507,7 @@ def validate_response(name, value):
         "get_vehicle": ("id",),
         "list_work_orders": ("id", "status", "vehicle_id"),
         "get_work_order": ("id", "status", "vehicle_id"),
+        "list_defect_opportunities": ("id", "vehicle_id", "source", "part", "defect_type"),
         "list_defects": ("id", "vehicle_id", "source", "part", "defect_type"),
         "get_defect": ("id", "vehicle_id", "source", "part", "defect_type"),
     }.get(name)

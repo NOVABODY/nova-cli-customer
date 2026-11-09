@@ -245,3 +245,7 @@ Los permisos existentes no incluyen estas operaciones nuevas. Autoriza la conexi
 | `nova inspection-recap report` | `get_first_inspection_recap_report` | remote_read | `nova:read` |
 | `nova vendor-referral list` | `list_vendor_referrals` | remote_read | `nova:read` |
 | `nova vendor-referral submit` | `submit_vendor_referral` | remote_write | `nova:read nova:write` |
+
+| `nova defect opportunities` | `list_defect_opportunities` | remote_read | `nova:read` |
+| `nova defect accept` | `accept_defect` | remote_write | `nova:read nova:write` |
+| `nova defect reject` | `reject_defect` | remote_write | `nova:read nova:write` |

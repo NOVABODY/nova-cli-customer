@@ -158,6 +158,8 @@ def cmd_defect_list(args: argparse.Namespace) -> Any:
                 "tz_offset_minutes",
                 "open_only",
                 "include_no_shop",
+                "include_available",
+                "opportunities_only",
                 "first_recap_dsp_id",
             ],
         ),
