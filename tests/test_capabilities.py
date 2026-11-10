@@ -21,7 +21,7 @@ def test_discovery_needs_no_profile_credentials_or_network(capsys, monkeypatch):
     assert result["authorization"] == "not_checked"
     assert result["full_customer_parity"] is False
     assert result["legacy_customer_parity"] is True
-    assert set(result["mcp"]["tools"]) == set(BY_TOOL)
+    assert set(result["mcp"]["tools"]) == set(BY_TOOL) | {"get_announcements"}
     names = [entry["command"] for entry in result["commands"]]
     assert len(names) == len(set(names))
     assert set(BY_COMMAND) <= set(names)

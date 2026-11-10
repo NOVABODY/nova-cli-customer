@@ -79,7 +79,8 @@ def test_write_can_refresh_once_before_first_send(monkeypatch):
     assert len(opener.calls) == 1
 
 
-def test_signed_upload_has_no_bearer_credentials():
+def test_signed_upload_has_no_bearer_credentials(monkeypatch):
+    monkeypatch.setenv('NOVA_UPLOAD_ORIGINS', 'https://storage.example')
     opener = Opener()
     client = ApiClient(Profile("test", "https://nova.example/api"), object(), opener=opener)
     client.access_token = "synthetic-access"
@@ -105,7 +106,8 @@ def test_signed_upload_rejects_unsafe_url_without_sending(url):
     assert opener.calls == []
 
 
-def test_signed_upload_redirect_is_not_followed():
+def test_signed_upload_redirect_is_not_followed(monkeypatch):
+    monkeypatch.setenv('NOVA_UPLOAD_ORIGINS', 'https://storage.example')
     headers = Message()
     headers["Location"] = "https://other.example/photo"
     error = urllib.error.HTTPError(

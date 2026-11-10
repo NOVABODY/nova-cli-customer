@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 import re
 import time
 import urllib.error
@@ -13,7 +14,7 @@ from http.client import HTTPException
 from typing import Any
 
 from nova_cli_public import __version__, claim_archive, delegated, pave_images
-from nova_cli_public.config import Profile
+from nova_cli_public.config import Profile, normalize_api_url
 from nova_cli_public.errors import ApiError, UsageError
 from nova_cli_public.read_routes import PDF_ROUTES, PUBLIC_READS, READ_POST_ROUTES, admitted_read
 from nova_cli_public.tokens import KeyringTokenStore
@@ -130,6 +131,8 @@ class ApiClient:
         archive_max_bytes: int = claim_archive.MAX_BYTES,
         image: bool = False,
         image_max_bytes: int = claim_archive.MAX_BYTES,
+        timeout: float | None = None,
+        max_bytes: int | None = None,
     ) -> Response:
         if image:
             if pdf or archive:
@@ -169,14 +172,16 @@ class ApiClient:
             request_headers.update(headers)
         req = urllib.request.Request(url, data=data, headers=request_headers, method=method.upper())
         try:
-            with self.opener.open(req, timeout=self.timeout) as resp:
+            with self.opener.open(req, timeout=self.timeout if timeout is None else timeout) as resp:
                 if image:
                     return Response(resp.status, dict(resp.headers.items()), _pdf_bytes(resp, image_max_bytes, image=True))
                 if archive:
                     return Response(resp.status, dict(resp.headers.items()), claim_archive.read(resp, archive_max_bytes))
                 if pdf:
                     return Response(resp.status, dict(resp.headers.items()), _pdf_bytes(resp, pdf_max_bytes))
-                raw = resp.read()
+                raw = resp.read() if max_bytes is None else resp.read(max_bytes + 1)
+                if max_bytes is not None and len(raw) > max_bytes:
+                    raise ApiError("Announcement feed is too large. / El contenido de anuncios es demasiado grande.")
                 return Response(
                     status=resp.status,
                     headers=dict(resp.headers.items()),
@@ -189,7 +194,7 @@ class ApiClient:
                 finally:
                     exc.close()
             else:
-                raw = exc.read()
+                raw = exc.read() if max_bytes is None else exc.read(max_bytes + 1)
             if pdf or archive or image:
                 body = {}
                 if len(raw) <= PDF_ERROR_MAX_BYTES and 'application/json' in exc.headers.get('Content-Type', '').lower():
@@ -274,7 +279,8 @@ class ApiClient:
     def public_request(self, method, path):
         if method != "GET" or path not in PUBLIC_READS:
             raise UsageError("This public route is not available.")
-        return self._send(method, path).body
+        return self._send(method, path, **({"timeout": min(self.timeout, 2), "max_bytes": 32768}
+                                         if path == "/assistant-announcements" else {})).body
 
     def whoami(self):
         return self.request("GET", "/auth/me")
@@ -286,9 +292,34 @@ class ApiClient:
         return delegated.logout(self)
 
     def put_bytes(self, url, data, *, content_type):
-        from nova_cli_public.legacy_reads import resolve_photo_url
-
-        url = resolve_photo_url(url, self)
+        denied = ('Invalid photo upload URL. Check NOVA_UPLOAD_ORIGINS. / '
+                  'URL de carga de foto no válida. Revisa NOVA_UPLOAD_ORIGINS.')
+        try:
+            target = urllib.parse.urlsplit(url)
+            api = urllib.parse.urlsplit(normalize_api_url(self.profile.api))
+            api_origin = f'{api.scheme}://{api.netloc.lower()}'
+            allowed = {api_origin}
+            for entry in os.environ.get('NOVA_UPLOAD_ORIGINS', '').split(','):
+                if not entry.strip():
+                    continue
+                parsed = urllib.parse.urlsplit(entry.strip())
+                if (parsed.scheme != 'https' or not parsed.hostname or parsed.username is not None
+                        or parsed.password is not None or parsed.path not in ('', '/')
+                        or parsed.query or parsed.fragment or '?' in entry or '#' in entry
+                        or any(char.isspace() for char in entry.strip())):
+                    raise ValueError()
+                _ = parsed.port
+                allowed.add(f'{parsed.scheme}://{parsed.netloc.lower()}')
+            target_origin = f'{target.scheme}://{target.netloc.lower()}'
+            loopback_http = api.scheme == 'http' and target_origin == api_origin
+            if ((target.scheme != 'https' and not loopback_http) or not target.hostname
+                    or target.username is not None or target.password is not None
+                    or '#' in url or any(char.isspace() for char in url)
+                    or target_origin not in allowed):
+                raise ValueError()
+            _ = target.port
+        except (ValueError, TypeError, UsageError):
+            raise UsageError(denied) from None
         request = urllib.request.Request(
             url,
             data=data,
