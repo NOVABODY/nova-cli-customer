@@ -6,6 +6,10 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova bundle-shop fmc-pdf` | `get_bundle_fmc_packet_pdf` | remote_read, local_file_write | `nova:read` |
+| `nova bundle-shop pickup` | `update_bundle_pickup` | remote_write | `nova:read nova:write` |
+| `nova bundle-shop confirm-no-charge` | `confirm_bundle_no_charge` | remote_write | `nova:read nova:write` |
+| `nova bundle-shop contact` | `request_bundle_contact` | remote_write | `nova:read nova:write` |
 | `nova bundle-address get` | `get_bundle_dropoff_address` | remote_read | `nova:read` |
 | `nova bundle-address set` | `update_bundle_dropoff_address` | remote_write | `nova:read nova:write` |
 | `nova bundle-schedules list` | `list_bundle_schedules` | remote_read | `nova:read` |
@@ -25,6 +29,7 @@ client support; the server checks current account access.
 | `nova inspection-confirmation set-settings` | `update_inspection_confirmation_settings` | remote_write | `nova:read nova:write` |
 | `nova inspection-confirmation get` | `get_inspection_confirmation` | remote_read | `nova:read` |
 | `nova inspection-confirmation respond` | `respond_inspection_confirmation` | remote_write | `nova:read nova:write` |
+| `nova announcements` | CLI setup | remote_read | None |
 | `nova capabilities` | CLI setup | local_read | None |
 | `nova profile set` | CLI setup | local_config_write | None |
 | `nova profile use` | CLI setup | local_config_write | None |
@@ -249,3 +254,103 @@ Los permisos existentes no incluyen estas operaciones nuevas. Autoriza la conexi
 | `nova defect opportunities` | `list_defect_opportunities` | remote_read | `nova:read` |
 | `nova defect accept` | `accept_defect` | remote_write | `nova:read nova:write` |
 | `nova defect reject` | `reject_defect` | remote_write | `nova:read nova:write` |
+
+See [bought bundle shop steps](BundleShopSteps.md) for safe actions and browser handoffs.
+Consulta los [pasos del paquete](BundleShopSteps.md) para las acciones y el enlace al navegador.
+| `nova vendor-scorecard rate-work-order` | `rate_work_order` | remote_write | `nova:read nova:write` |
+| `nova vendor-scorecard request-correction` | `request_work_order_correction` | remote_write | `nova:read nova:write` |
+| `nova vendor-scorecard rate-body-repair` | `rate_body_repair` | remote_write | `nova:read nova:write` |
+
+## Shop ratings
+
+Read `list_pending_vendor_feedback` and select exactly one repair. Confirm the
+rating with the user before sending. Use `rate_work_order` to approve work,
+`request_work_order_correction` to ask the shop to fix it again, or
+`rate_body_repair` for a body repair. Confirm a correction request separately:
+it reopens the work order or creates correction work. A correction needs a reason.
+
+The local correction tool is listed only after this client completes consent
+for correction. Existing connections must sign in again to record this consent.
+This local record is a discovery hint; the API checks live grants on every write.
+
+Ordinary ratings require `vendor_scorecard.feedback.submit.v1`; correction
+requests require `vendor_scorecard.feedback.correction.v1` instead. Delegated
+connections need write scope and fresh explicit consent. Existing grants do not
+gain permissions. The API checks role, tenant, bound acting user and Station.
+DSP owners, managers and dispatchers rate their own fleet. Site admins can rate
+work orders but cannot rate body repairs. Machine access retains native key,
+role, tenant, acting-user and Station checks.
+
+Work orders accept optional `reason`, `escalate`, `impressive_attribute` and
+`negative_attribute`. Attributes are `turnaround_time`, `communication`,
+`professionalism`, `work_quality` or `price`. The approval tool fixes vote/decision
+to `up`/`approved`; the correction tool fixes them to `down`/`correction_requested`.
+Body repairs accept integer `stars` (1–5), unique `tags` and optional `reason`.
+Tag topics are `repair_quality`, `van_condition`, `communication`, `pickup_return`.
+Use `good_` tags for 5 stars, either prefix for 4, and `problem_` tags for 1–3.
+Ratings of 1 or 2 stars escalate automatically. Subject fields cannot be mixed.
+Reasons accept at most 1000 characters. Body ratings need completed hand-back,
+custody, eligibility, the enabled rating setting and the 14-day change window.
+
+`escalate` defaults to false. If true, this rating counts toward the second-vendor
+trigger. It can open a `SCORECARD_SECOND_VENDOR` case for Nova platform staff.
+Get the user's explicit approval before setting it to true.
+`reason` explains the rating. `impressive_attribute` selects a strong point;
+`negative_attribute` selects a weak point. Attribute choices are turnaround time,
+communication, professionalism, work quality and price.
+
+`escalate` tiene el valor predeterminado false. Con true, la calificación cuenta
+para el criterio de un segundo proveedor. Puede abrir un caso
+`SCORECARD_SECOND_VENDOR` para el personal de la plataforma Nova. Obtén la
+aprobación explícita del usuario antes de usar true. `reason` explica la
+calificación; `impressive_attribute` indica un punto positivo y
+`negative_attribute` un punto negativo.
+
+Errors preserve the distinction between invalid choices (400), sign-in (401),
+permission refusal (403), missing repair (404), repair state/custody/deadline
+conflict (409), schema errors (422), and unavailable body ratings (503). Repeated
+submissions use native update/supersession; there is no duplicate-rating error.
+An uncertain response requires reading the repair before another attempt. Writes
+are never retried automatically.
+
+Confirma la calificación con el usuario antes de enviarla. Para pedir al taller
+que repare el trabajo de nuevo, confirma también la solicitud de corrección.
+Esta solicitud vuelve a abrir la orden o crea trabajo de corrección y requiere
+un motivo y el permiso de corrección. Las calificaciones normales usan el permiso
+de envío. Usa un máximo de 1000 caracteres para el motivo. No mezcles los campos
+de carrocería con los de una orden de trabajo. Consulta la reparación después
+de un resultado desconocido antes de intentar de nuevo.
+
+Commands: `nova vendor-scorecard rate-work-order WO-7`,
+`nova vendor-scorecard request-correction WO-7 --reason "Repair the finish"`,
+and `nova vendor-scorecard rate-body-repair BRR-7 --stars 5 --tags good_repair_quality`.
+Repeat `--tags` for multiple tags. Read each command's `--help` for optional fields.
+
+## Team and Roger setup
+
+| Command | MCP tool | Effects | Scope |
+| --- | --- | --- | --- |
+| `nova team-invitation list` | `list_team_invitations` | remote_read | `nova:read` |
+| `nova team-invitation invite` | `invite_team_member` | remote_write | `nova:read nova:write` |
+| `nova team-invitation resend` | `resend_team_invitation` | remote_write | `nova:read nova:write` |
+| `nova team-invitation revoke` | `revoke_team_invitation` | remote_write | `nova:read nova:write` |
+| `nova roger status` | `get_slack_status` | remote_read | `nova:read` |
+| `nova roger start` | `start_slack_setup` | remote_write | `nova:read nova:write` |
+| `nova roger channel` | `set_roger_intake_channel` | remote_write | `nova:read nova:write` |
+
+| `nova body-repair select-quote` | `select_body_repair_quote` | remote_write | `nova:read nova:write` |
+| `nova body-repair confirm-pickup` | `confirm_body_repair_pickup` | remote_write | `nova:read nova:write` |
+| `nova body-repair accept-pickup` | `accept_body_repair_pickup` | remote_write | `nova:read nova:write` |
+
+See [DSP Body repair decisions](../README.md#dsp-body-repair-decisions) for quote selection, versioned pickup, and browser sign-off/payment.
+
+`nova auth login` includes `announcements` with current public features and repair
+offers. Run `nova announcements --json` or MCP `get_announcements` to refresh it.
+The feed needs no credentials and never grants permissions or authorizes a repair.
+Local MCP initialization includes the same bilingual feed. Check promotion expiry
+and all terms before acting. An unavailable feed does not stop login or connection.
+
+The feed also advertises Nova's Markdown skill library through `skill_library_url`.
+The link is permanent and can be shown with an empty news feed. No skill content
+is fetched, installed or generated. The initial index contains no skills; creating
+a skill requires explicit user authorization for that skill or workflow.

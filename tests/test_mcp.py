@@ -80,10 +80,10 @@ def test_invalid_arguments_make_no_api_request(tool, arguments):
     assert reader.calls == []
 
 
-def test_discovery_is_static_and_exposes_only_typed_fleet_tools():
+def test_discovery_keeps_typed_tools_and_hides_unconsented_correction():
     reader = Reader()
     schemas = DelegatedService(reader).tool_schemas()
-    assert set(schemas) == set(__import__("nova_cli_public.reads", fromlist=["BY_TOOL"]).BY_TOOL)
+    assert set(schemas) == set(__import__("nova_cli_public.reads", fromlist=["BY_TOOL"]).BY_TOOL) - {"request_work_order_correction"}
     assert schemas["get_vehicle"]["properties"]["vehicle_id"]["pattern"]
     assert all(s["additionalProperties"] is False for s in schemas.values())
     assert reader.calls == []
