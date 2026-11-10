@@ -21,6 +21,8 @@ WRITE_ROUTES = {
     ('POST', r'/body-repair/requests/[A-Za-z0-9_-]{1,64}/select-quote'): 'body_repair.quotes.select.v1',
     ('POST', r'/body-repair/requests/[A-Za-z0-9_-]{1,64}/confirm-pickup'): 'body_repair.pickup.confirm.v1',
     ('POST', r'/body-repair/requests/[A-Za-z0-9_-]{1,64}/accept-pickup'): 'body_repair.pickup.accept.v1',
+
+    ("POST", r"/defect-bundle-offers/staff/[A-Za-z0-9][A-Za-z0-9-]{0,39}/waive-fee"): "capacity.fee.waive.v1",
     ("POST", r"/defects/(?:FD-)?[0-9]{1,14}/accept"): "defects.accept.v1",
     ("POST", r"/defects/(?:FD-)?[0-9]{1,14}/reject"): "defects.reject.v1",
     ("POST", r"/defect-bundle-offers/staff/evidence/[0-9]+/review"): "capacity.evidence.review.v1",

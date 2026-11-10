@@ -17,6 +17,9 @@ client support; the server checks current account access.
 | `nova bundle-shop pickup` | `update_bundle_pickup` | remote_write | `nova:read nova:write` |
 | `nova bundle-shop confirm-no-charge` | `confirm_bundle_no_charge` | remote_write | `nova:read nova:write` |
 | `nova bundle-shop contact` | `request_bundle_contact` | remote_write | `nova:read nova:write` |
+
+| `nova bundle-fee get` | `get_admin_bundle` | remote_read | `nova:read` |
+| `nova bundle-fee waive` | `waive_bundle_fee` | remote_write | `nova:read nova:write` |
 | `nova bundle-address get` | `get_bundle_dropoff_address` | remote_read | `nova:read` |
 | `nova bundle-address set` | `update_bundle_dropoff_address` | remote_write | `nova:read nova:write` |
 | `nova bundle-schedules list` | `list_bundle_schedules` | remote_read | `nova:read` |
@@ -364,6 +367,14 @@ The link is permanent and can be shown with an empty news feed. No skill content
 is fetched, installed or generated. The initial index contains no skills; creating
 a skill requires explicit user authorization for that skill or workflow.
 
+Site admins can read a PM/AMR bundle with `bundle-fee get REF`, then waive its
+whole fee with `bundle-fee waive REF --reason "Approved waiver" --revision N`.
+The waiver works before sending or after award, cannot be undone, and does not
+refund a started charge. `get_admin_bundle` and `waive_bundle_fee` are the same
+operations in local MCP. Delegated clients need fresh
+`capacity.offers.staff.get.v1` and `capacity.fee.waive.v1` consent. The API keeps
+role/tenant checks and records the actual principal. After an unknown outcome,
+read the bundle before trying again. The API owns role and tenant authorization.
 ### Repair category corrections
 
 `nova defect set-category FD-42 --repair-group CMR --expected-updated-at 2026-11-10T12:00:00Z` requires site-admin access.

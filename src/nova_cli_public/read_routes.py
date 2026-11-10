@@ -15,6 +15,8 @@ READ_ROUTES = {
     r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/quotes": "body_repair.quotes.list.v1",
     r"/auth/invitations": "invitations.list.v1",
     r"/slack/installation/status": "slack.status.get.v1",
+
+    r"/defect-bundle-offers/staff/[A-Za-z0-9][A-Za-z0-9-]{0,39}": "capacity.offers.staff.get.v1",
     r"/defect-bundle-offers/staff/evidence": "capacity.evidence.list.v1",
     r"/defect-bundle-offers/staff/evidence/[0-9]+": "capacity.evidence.get.v1",
     r"/defect-bundle-offers/staff/evidence/[0-9]+/content": "capacity.evidence.content.v1",
