@@ -34,9 +34,11 @@ def body_read(args, tool):
     reference = values.pop("request_ref", None)
     path = "/body-repair/requests" + ("/" + reference if reference is not None else "")
     options = {"query": values} if reference is None else {}
-    value = handlers.client_from_args(args).request("GET", path, **options)
+    client = handlers.client_from_args(args)
+    value = client.request("GET", path, **options)
     validate_response(tool, value)
-    return value
+    from .body_handoff import surface
+    return surface(value, getattr(getattr(client, 'profile', None), 'api', ''))
 
 
 def inspection_read(args, tool):

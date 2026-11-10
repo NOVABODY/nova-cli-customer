@@ -95,7 +95,7 @@ def test_mcp_photo_rejects_non_image_before_network(tmp_path):
 def test_mcp_photo_uses_content_type_from_bytes(tmp_path, data, mime):
     source = tmp_path / 'photo.bin'
     source.write_bytes(data)
-    with local_inputs({'file': str(source), 'content_type': 'text/plain'}, tmp_path, tool='upload_photo') as values:
+    with local_inputs({'file': str(source)}, tmp_path, tool='upload_photo') as values:
         assert values['content_type'] == mime
 
 
@@ -174,3 +174,12 @@ def test_profile_whitespace_cannot_bypass_existing_origin_binding(tmp_path, monk
     monkeypatch.setattr(cli, 'ConfigStore', lambda: store)
     assert cli.main(['profile', 'set', ' personal ', '--api', 'https://two.example/api']) == 2
     assert store.get_profile('personal').api == 'https://one.example/api'
+
+
+def test_mcp_photo_refuses_explicit_mime_mismatch(tmp_path):
+    source = tmp_path / 'photo.png'
+    source.write_bytes(b'\x89PNG\r\n\x1a\npayload')
+    with pytest.raises(UsageError), local_inputs(
+        {'file': str(source), 'content_type': 'image/jpeg'}, tmp_path, tool='upload_photo'
+    ):
+        pytest.fail('Mismatched content type reached dispatch')

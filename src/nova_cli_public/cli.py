@@ -45,6 +45,8 @@ def build_parser():
     parser.add_argument("--version", action="version", version=f"nova-cli {__version__}")
     globals_for(parser)
     commands = parser.add_subparsers(dest="command", required=True)
+    news = commands.add_parser("announcements", help="Read new features and repair offers. / Consulta novedades y ofertas de reparación.")
+    news.set_defaults(handler=cmd_announcements)
     discovery = commands.add_parser("capabilities", help="List available commands and schemas.")
     discovery.add_argument("--command", dest="selected_command", help="Inspect one command.")
     discovery.set_defaults(handler=cmd_capabilities)
@@ -84,6 +86,12 @@ def build_parser():
 
     walk(parser)
     return parser
+
+
+def cmd_announcements(args):
+    from nova_cli_public.announcements import load
+
+    return load(client_from_args(args))
 
 
 def cmd_capabilities(args):
@@ -149,7 +157,10 @@ def cmd_auth(args):
             if args.operations is not None or args.scope != "nova:read" or args.manual
             else delegated.login(client)
         )
-        return {"ok": True, "profile": client.profile.name, "connection": connection}
+        from nova_cli_public.announcements import load
+
+        return {"ok": True, "profile": client.profile.name, "connection": connection,
+                "announcements": load(client)}
     if args.action == "status":
         return delegated.status(client)
     if args.action == "refresh":
@@ -183,6 +194,10 @@ def main(argv=None):
         message = "Invalid read arguments or response."
         code = 2
     except NovaCliError as exc:
+        if isinstance(exc, ApiError) and getattr(args, "setup_tool", None):
+            payload = {"ok": False, "error": {"code": exc.code, "status": exc.status, "message": str(exc)}}
+            print(json.dumps(payload) if args.json else f"HTTP {exc.status} {exc.code}: {exc}", file=sys.stderr)
+            return exc.exit_code
         # Read/auth errors stay redacted; mutation business rejections retain actionable data.
         from nova_cli_public.reads import BY_COMMAND, WRITE_TOOLS
 
@@ -224,12 +239,15 @@ def main(argv=None):
         message = (
             f"Nova request failed (HTTP {exc.status})." if isinstance(exc, ApiError) else str(exc)
         )
-        if isinstance(exc, ApiError) and exc.status == 403 and getattr(args, "read_command", None):
+        if isinstance(exc, ApiError) and exc.status == 403 and (getattr(args, "read_command", None) or getattr(args, "rating_tool", None)):
             from nova_cli_public.reads import BY_COMMAND
-
-            grant = BY_COMMAND[args.read_command]["grant"]
-            scope = BY_COMMAND[args.read_command].get("scope", "nova:read")
-            message += f' Check account access and approved operations. Request a new connection with nova auth login --scope "{scope}" --operations "{grant}".'
+            from nova_cli_public.shop_ratings import GRANTS
+            if getattr(args, 'rating_tool', None):
+                grant, scope = GRANTS[args.rating_tool], 'nova:read nova:write'
+            else:
+                grant = BY_COMMAND[args.read_command]["grant"]
+                scope = BY_COMMAND[args.read_command].get("scope", "nova:read")
+            message += f' Check account access and approved operations. Request a new connection with nova auth login --scope "{scope}" --operations "{grant}". / Comprueba el acceso de la cuenta y las operaciones aprobadas. Solicita una conexión nueva con nova auth login --scope "{scope}" --operations "{grant}".'
         code = exc.exit_code
     except KeyboardInterrupt:
         message = "Interrupted."
