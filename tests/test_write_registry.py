@@ -25,6 +25,9 @@ class Client:
 @pytest.mark.parametrize(
     "argv,tool,arguments,expected",
     [
+        (["defect", "set-category", "FD-1", "--repair-group", "CMR", "--expected-updated-at", "2026-10-23T00:00:00Z"],
+         "set_defect_category", {"defect_id": "FD-1", "repair_group": "CMR", "expected_updated_at": "2026-10-23T00:00:00Z"},
+         {"repair_group": "CMR", "expected_updated_at": "2026-10-23T00:00:00Z"}),
         (
             ["work-order", "schedule", "WO-1", "--clear-team", "--ro-number", "0012"],
             "schedule_work_order",

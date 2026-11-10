@@ -89,6 +89,7 @@ WRITE_ROUTES = {
     ): "vehicle_reports.resolve_vehicle.v1",
     ("POST", r"/vehicle-reports/(?:VR-)?[0-9]+/promote"): "vehicle_reports.promote.v1",
     ("POST", r"/vehicle-reports/(?:VR-)?[0-9]+/dismiss"): "vehicle_reports.dismiss.v1",
+    ("PATCH", r"/defects/(?:FD-)?[0-9]+/repair-category"): "defects.category.update.v1",
     ("PATCH", r"/defects/(?:FD-)?[0-9]+"): "defects.title.update.v1",
     ("PATCH", r"/notifications/[0-9]+/read"): "notifications.mark_read.v1",
     ("POST", r"/notifications/read-all"): "notifications.mark_all_read.v1",

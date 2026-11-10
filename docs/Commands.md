@@ -6,6 +6,8 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova skills list` | `list_skills` | remote_read | `nova:read` |
+| `nova skills get` | `get_skill` | remote_read | `nova:read` |
 | `nova body-repair repair-leads` | `list_body_repair_leads` | remote_read | `nova:read` |
 | `nova body-repair quotes` | `list_body_repair_quotes` | remote_read | `nova:read` |
 | `nova body-repair confirm-scope` | `confirm_body_repair_scope` | remote_write | `nova:read nova:write` |
@@ -76,6 +78,7 @@ client support; the server checks current account access.
 | `nova defect photos` | `download_defect_photos` | remote_read, local_file_write | `nova:read` |
 | `nova defect pull` | `pull_defects` | remote_read, local_file_write | `nova:read` |
 | `nova defect create` | `create_defect` | remote_write | `nova:read nova:write` |
+| `nova defect set-category` | `set_defect_category` | remote_write | `nova:read nova:write` |
 | `nova defect update` | `update_defect_title` | remote_write | `nova:read nova:write` |
 | `nova defect set-cost` | `set_defect_cost` | remote_write | `nova:read nova:write` |
 | `nova inspection list` | `list_inspections` | remote_read | `nova:read` |
@@ -372,3 +375,12 @@ operations in local MCP. Delegated clients need fresh
 `capacity.offers.staff.get.v1` and `capacity.fee.waive.v1` consent. The API keeps
 role/tenant checks and records the actual principal. After an unknown outcome,
 read the bundle before trying again. The API owns role and tenant authorization.
+### Repair category corrections
+
+`nova defect set-category FD-42 --repair-group CMR --expected-updated-at 2026-11-10T12:00:00Z` requires site-admin access.
+Read the defect first and use its exact `updated_at` value. The MCP tool is `set_defect_category`, available through local stdio and hosted MCP.
+The dedicated consent is `defects.category.update.v1`; existing title-edit consent does not permit category changes.
+Supported values: AMR, CMR, CNMR, Body, PM, Tires, Detailing, Netradyne. A correction does not reroute work or rewrite quotes or billing.
+
+Solo los administradores del sitio pueden cambiar la categoría de reparación. Consulta primero el defecto y usa su valor exacto de `updated_at`.
+El permiso es `defects.category.update.v1`. El cambio queda registrado y no cambia el taller, los presupuestos ni la facturación existentes.

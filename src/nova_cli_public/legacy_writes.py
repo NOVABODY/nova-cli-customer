@@ -353,6 +353,11 @@ def cmd_defect_create(args: argparse.Namespace) -> Any:
     return value
 
 
+def cmd_defect_set_category(args: argparse.Namespace) -> Any:
+    return client_from_args(args).request("PATCH", f"/defects/{args.defect_id}/repair-category",
+        json_body={"repair_group": args.repair_group, "expected_updated_at": args.expected_updated_at})
+
+
 def cmd_defect_update(args: argparse.Namespace) -> Any:
     if not args.title.strip() or len(args.title) > 120:
         raise UsageError("--title must be nonblank and at most 120 characters.")
