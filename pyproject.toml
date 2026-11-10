@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Proprietary" }
 authors = [{ name = "Nova Fora" }]
-dependencies = ["keyring>=25.0", "filelock>=3.16,<4", "pydantic>=2.9,<3"]
+dependencies = ["keyring>=25.0", "filelock>=3.16,<4", "pydantic[email]>=2.9,<3"]
 
 [project.optional-dependencies]
 mcp = ["mcp>=1.30,<2"]

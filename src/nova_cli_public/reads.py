@@ -37,6 +37,8 @@ from nova_cli_public import (
     scheduled_work,
     scorecard_reads,
     shop_ratings,
+
+    team_setup,
     tire_vendor_setup,
     vehicle_metadata,
     vehicle_note_edit,
@@ -54,6 +56,9 @@ from nova_cli_public.write_commands import WRITE_COMMANDS
 
 ALL_COMMANDS = shop_ratings.COMMANDS + capacity_evidence.COMMANDS + tire_vendor_setup.COMMANDS + first_recap.COMMANDS + pave_scheduling.COMMANDS + body_intake.COMMANDS + defect_routing.COMMANDS + bundle_workflow.COMMANDS + bundle_address.COMMANDS + bundle_returns.COMMANDS + bundle_schedules.COMMANDS + bundle_sharing.COMMANDS + vendor_agreement.COMMANDS + inspection_confirmations.COMMANDS + scheduled_work.COMMANDS + fleet_decisions.COMMANDS + READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + vehicle_note_edit.COMMANDS + defect_cost.COMMANDS + repair_requests.COMMANDS + repair_cancel.COMMANDS + aggregate_reports.COMMANDS + scorecard_reads.COMMANDS + rental_dismissal.COMMANDS + quality_reports.COMMANDS + fmc_choice.COMMANDS + external_preview.COMMANDS
 WRITE_TOOLS = shop_ratings.WRITES | capacity_evidence.WRITES | tire_vendor_setup.WRITES | first_recap.WRITES | pave_scheduling.WRITES | body_intake.WRITES | {"route_repair_request"} | bundle_address.WRITES | {bundle_returns.NAME} | bundle_schedules.WRITES | bundle_sharing.WRITES | inspection_confirmations.WRITES | {"acknowledge_dsp_daily_work_summary"} | {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review", "update_vehicle", "create_vehicle", "update_vehicle_note", "delete_vehicle_note", "set_defect_cost", "resolve_fleet_issue", "cancel_repair_request", "dismiss_rental_routing", "set_vehicle_fmc_company"}
+
+ALL_COMMANDS = team_setup.COMMANDS + capacity_evidence.COMMANDS + tire_vendor_setup.COMMANDS + first_recap.COMMANDS + pave_scheduling.COMMANDS + body_intake.COMMANDS + defect_routing.COMMANDS + bundle_workflow.COMMANDS + bundle_address.COMMANDS + bundle_returns.COMMANDS + bundle_schedules.COMMANDS + bundle_sharing.COMMANDS + vendor_agreement.COMMANDS + inspection_confirmations.COMMANDS + scheduled_work.COMMANDS + fleet_decisions.COMMANDS + READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + vehicle_note_edit.COMMANDS + defect_cost.COMMANDS + repair_requests.COMMANDS + repair_cancel.COMMANDS + aggregate_reports.COMMANDS + scorecard_reads.COMMANDS + rental_dismissal.COMMANDS + quality_reports.COMMANDS + fmc_choice.COMMANDS + external_preview.COMMANDS
+WRITE_TOOLS = team_setup.WRITES | capacity_evidence.WRITES | tire_vendor_setup.WRITES | first_recap.WRITES | pave_scheduling.WRITES | body_intake.WRITES | {"route_repair_request"} | bundle_address.WRITES | {bundle_returns.NAME} | bundle_schedules.WRITES | bundle_sharing.WRITES | inspection_confirmations.WRITES | {"acknowledge_dsp_daily_work_summary"} | {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review", "update_vehicle", "create_vehicle", "update_vehicle_note", "delete_vehicle_note", "set_defect_cost", "resolve_fleet_issue", "cancel_repair_request", "dismiss_rental_routing", "set_vehicle_fmc_company"}
 
 BY_COMMAND = {entry["command"]: entry for entry in ALL_COMMANDS}
 BY_TOOL = {entry["tool"]: entry for entry in ALL_COMMANDS if entry.get("mcp", True)}
@@ -81,6 +86,8 @@ def add_arguments(parser, entry):
     }
     for flags, original in entry["arguments"]:
         options = dict(original)
+        if entry["tool"] in team_setup.MODELS and flags[0].startswith("--"):
+            options.setdefault("default", argparse.SUPPRESS)
         if options.get("nargs") == 0:
             options.pop("nargs")
         if options.get("action") == "BooleanOptionalAction":
@@ -136,6 +143,8 @@ def _inspection_date_order(value, info):
 
 
 def input_model(entry, *, mcp=False):
+    if entry["tool"] in team_setup.MODELS:
+        return team_setup.MODELS[entry["tool"]]
     from nova_cli_public.shop_defects import MODELS as SHOP_MODELS
     if entry["tool"] in shop_ratings.MODELS:
         return shop_ratings.MODELS[entry["tool"]]
@@ -390,6 +399,9 @@ class CustomerReadService:
     def run(self, name, arguments):
         if name in shop_ratings.MODELS:
             return shop_ratings.execute(self.client, name, arguments)
+
+        if name in team_setup.MODELS:
+            return team_setup.execute(self.client, name, arguments)
         if name in pave_scheduling.MODELS:
             return pave_scheduling.execute(self.client, name, arguments)
         if name in body_intake.MODELS:

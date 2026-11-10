@@ -757,3 +757,93 @@ Repeat `--tags` for multiple tags. Read each command's `--help` for optional fie
 This package uses browser/S256 delegated authentication. It does not expose
 service-account keys, password login, a hosted HTTP service or a separate
 ChatGPT plugin UI. Use the matching machine client for service-account access.
+
+## Team invitations and Roger setup
+
+List pending invitations with `team-invitation list`. Before `team-invitation invite`,
+confirm the invitee email and role with the user. Set `--email`, `--role` and
+integer `--org-id`; optional fields are `--full-name`, `--phone`, `--language en|es`
+and `--station`. Use `resend INV-7` or `revoke INV-7` under the same command.
+The invitee gets the join link by email. Clients strip `accept_url` and never
+fetch or build that link. SMTP acceptance does not prove recipient acceptance.
+Platform invitation writes require the web app.
+
+Use `roger status`, `roger start` and `roger channel`.
+Open the returned `authorize_url` unchanged and select Allow in Slack.
+The link expires within minutes (at most 600 seconds, bounded by credential
+expiry). For `slack_setup_reconnect_required`, refresh or reconnect and start
+again. Read status after browser consent. Starting setup needs write consent,
+although it uses GET. Omit `--intake-channel-id` to keep the current channel;
+pass an empty value to clear it. MCP also accepts explicit null to clear.
+No callback, OAuth code exchange, token provisioning, token read or disconnect
+tool is exposed. No change is retried automatically after an uncertain outcome.
+
+Confirma el correo y el rol con el usuario antes de invitar. La persona invitada
+recibe el enlace por correo. Usa la aplicación web para invitaciones de plataforma.
+Abre el enlace de Slack y selecciona Permitir. El enlace caduca en minutos.
+Actualiza o vuelve a conectar y solicita otro enlace si caduca. Consulta el estado
+después del permiso en Slack. Omite el canal para conservarlo; vacío o null lo borra.
+
+Requires the matching API release. Do not release these clients ahead of it.
+The API owns role, tenant, Station, duplicate, rate-limit and consent checks.
+Machine invitation access requires a live acting-user binding, an organization
+and unrestricted Station scope. The service account remains the audit actor.
+Errors retain structured API codes and distinguish 400 invalid requests, 401
+authentication, 403 authority, 404 missing/unavailable, 409 conflicts, 422 invalid
+fields, 429 rate limits and 503 temporary infrastructure failures.
+
+The customer package exposes CLI and local stdio MCP with browser/S256 OAuth.
+It has no hosted endpoint or separate ChatGPT plugin and no machine login.
+Request fresh exact operation consent and `nova:read nova:write` for writes.
+
+### DSP Body repair decisions
+
+Select a quote with `select_body_repair_quote` (`body_repair.quotes.select.v1`).
+Required: `request_ref`, `quote_id`. Optional: `pickup_details`, `suggested_time`,
+`grade` (3–5), `scope` (`new_damage`), `pickup_report_id`. Pickup details require
+`van_location` and `key_location`; optional fields are `address`, `contact_name`,
+`contact_phone`, `access_notes`, `expected_version`. A suggested time requires
+`proposed_date` (ISO date), `pickup_window`, `reason`, and pickup details.
+Selection records the shop-side lead fee and collects no DSP payment. Referral
+credit requires the browser; these tools do not accept or send that field.
+
+Use `confirm_body_repair_pickup` (`body_repair.pickup.confirm.v1`) for the first
+fleet answer, with `van_location`, `key_location`, and `expected_version` from
+the read's `pickup_schedule_version`. Use `accept_body_repair_pickup`
+(`body_repair.pickup.accept.v1`) for a later shop offer after locations are saved.
+Acceptance requires `expected_version` and does not accept `return_date`.
+Use version 0 explicitly for legacy orders. Read after 409 or an unknown outcome
+before another decision. Writes are sent once, without automatic retries.
+
+Each operation needs current role, fleet/Station access and explicit write
+consent. Existing grants do not expand; connect again to review new permissions.
+400 means invalid quote/logistics; 401 means invalid authentication; 403 means
+consent/role/Station/offer-side refusal; 404 means unavailable order/quote;
+409 means stale version, state, dates or custody; 422 means invalid fields;
+503 means unavailable Station policy. Reads retain native response fields.
+
+Body order reads surface `browser_action` with an absolute Nova web URL and
+bilingual guidance, including when `payment_url` is null. `sign_off` opens the
+report page; `pay` opens the payment page. An HTTPS `payment_url` is labeled
+"Invoice or receipt / Factura o recibo" without a payment instruction. Invalid
+links are omitted with a bilingual note. Sign-off and payment must finish in the
+browser; no write tool performs them. At `awaiting_return`, the DSP has no physical-return step.
+The shop records check-in after the payment guard. No deposit step is added.
+
+Selecciona una cotización y confirma la recogida con los permisos indicados.
+Envía `pickup_schedule_version` como `expected_version`. Consulta la orden después
+de un conflicto o resultado desconocido antes de otro intento. El crédito por
+recomendación, la aprobación final y el pago requieren el navegador. El taller
+registra la entrada del van después de comprobar el pago; el DSP no registra la devolución.
+
+Release these commands only after the matching Nova API is available.
+
+Commands use the same fields as the tools:
+
+```sh
+nova body-repair select-quote BRR-7 --quote-id BRQ-9 --grade 4
+nova body-repair confirm-pickup BRR-7 --expected-version 7 --van-location 'Bay 2' --key-location Office
+nova body-repair accept-pickup BRR-7 --expected-version 8
+```
+
+`--pickup-details` and `--suggested-time` accept JSON objects (at most 64 KiB each).
