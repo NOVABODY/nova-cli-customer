@@ -10,6 +10,7 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/agent-skills(?:/nova-[a-z0-9-]+)?": None,
     r"/body-repair/repair-leads": "body_repair.repair_leads.list.v1",
     r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/quotes": "body_repair.quotes.list.v1",
     r"/auth/invitations": "invitations.list.v1",

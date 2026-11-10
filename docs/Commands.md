@@ -6,6 +6,8 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova skills list` | `list_skills` | remote_read | `nova:read` |
+| `nova skills get` | `get_skill` | remote_read | `nova:read` |
 | `nova body-repair repair-leads` | `list_body_repair_leads` | remote_read | `nova:read` |
 | `nova body-repair quotes` | `list_body_repair_quotes` | remote_read | `nova:read` |
 | `nova body-repair confirm-scope` | `confirm_body_repair_scope` | remote_write | `nova:read nova:write` |

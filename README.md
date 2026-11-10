@@ -689,6 +689,28 @@ MCP exposes `list_defect_opportunities`, `accept_defect`, and `reject_defect`.
 Decisions require write access and the corresponding consent or machine
 permissions. After an unknown outcome, read the defect before another attempt.
 
+
+## Workflow skills
+
+After sign-in, the local MCP server advertises `list_skills` and `get_skill`.
+Read the catalog, then `nova-fora-basics` and the workflow needed for the task.
+The library uses your current authenticated connection. It does not grant
+permission to change records or install instructions automatically.
+
+```sh
+nova skills list --json
+nova skills get --name nova-fora-basics --json
+nova skills get --name nova-shop-service-writer --file references/pricing.md --json
+```
+
+Use only file paths returned in the catalog. All 27 skills and their references
+are available to logged-in customer accounts. Clients that cache MCP tools must
+refresh discovery after updating. No public website download is required.
+
+Después de iniciar sesión, el servidor MCP local anuncia `list_skills` y
+`get_skill`. Lee el catálogo, `nova-fora-basics` y el flujo necesario para la tarea.
+Usa solo las rutas de archivo del catálogo. Las habilidades no conceden permiso
+para cambiar registros y no se instalan de forma automática.
 ### Shop Body repair quotes
 
 See [Body quote workflow](docs/BodyQuotes.md) for eligible leads, shop quotes,

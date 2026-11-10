@@ -209,7 +209,7 @@ def manifest(parser, selected=None):
                 tool_input_schema=input_model(operation, mcp=True).model_json_schema(),
                 output_schema=CustomerReadService(None).output_schema(tool),
                 mcp_tool=tool,
-                required_scope=operation.get("scope", "nova:read") if operation["grant"] else None,
+                required_scope=operation.get("scope", "nova:read") if operation["grant"] or operation.get("authenticated_guidance") else None,
                 required_operation=operation["grant"],
                 api_routes=[
                     {"method": "POST", "path_pattern": path}
@@ -245,7 +245,7 @@ def manifest(parser, selected=None):
             entry["mcp_execution"] = (
                 "One page per call; managed local inbox; explicit acknowledgment."
             )
-        if any(arg["name"] in ("file", "odometer_photo_path", "work_photo_path") or (arg["name"].endswith("_file") and arg["name"] not in ("cursor_file", "state_file")) for arg in arguments):
+        if name != "skills get" and any(arg["name"] in ("file", "odometer_photo_path", "work_photo_path") or (arg["name"].endswith("_file") and arg["name"] not in ("cursor_file", "state_file")) for arg in arguments):
             entry["effects"].append("local_file_read")
         if name == "upload photo":
             entry["conditional_operations"] = PHOTO_COMMIT_GRANTS
