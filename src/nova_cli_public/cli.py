@@ -194,6 +194,10 @@ def main(argv=None):
         message = "Invalid read arguments or response."
         code = 2
     except NovaCliError as exc:
+        if isinstance(exc, ApiError) and getattr(args, "setup_tool", None):
+            payload = {"ok": False, "error": {"code": exc.code, "status": exc.status, "message": str(exc)}}
+            print(json.dumps(payload) if args.json else f"HTTP {exc.status} {exc.code}: {exc}", file=sys.stderr)
+            return exc.exit_code
         # Read/auth errors stay redacted; mutation business rejections retain actionable data.
         from nova_cli_public.reads import BY_COMMAND, WRITE_TOOLS
 

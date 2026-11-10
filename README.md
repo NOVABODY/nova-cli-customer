@@ -689,6 +689,44 @@ MCP exposes `list_defect_opportunities`, `accept_defect`, and `reject_defect`.
 Decisions require write access and the corresponding consent or machine
 permissions. After an unknown outcome, read the defect before another attempt.
 
+## Team invitations and Roger setup
+
+List pending invitations with `team-invitation list`. Before `team-invitation invite`,
+confirm the invitee email and role with the user. Set `--email`, `--role` and
+integer `--org-id`; optional fields are `--full-name`, `--phone`, `--language en|es`
+and `--station`. Use `resend INV-7` or `revoke INV-7` under the same command.
+The invitee gets the join link by email. Clients strip `accept_url` and never
+fetch or build that link. SMTP acceptance does not prove recipient acceptance.
+Platform invitation writes require the web app.
+
+Use `roger status`, `roger start` and `roger channel`.
+Open the returned `authorize_url` unchanged and select Allow in Slack.
+The link expires within minutes (at most 600 seconds, bounded by credential
+expiry). For `slack_setup_reconnect_required`, refresh or reconnect and start
+again. Read status after browser consent. Starting setup needs write consent,
+although it uses GET. Omit `--intake-channel-id` to keep the current channel;
+pass an empty value to clear it. MCP also accepts explicit null to clear.
+No callback, OAuth code exchange, token provisioning, token read or disconnect
+tool is exposed. No change is retried automatically after an uncertain outcome.
+
+Confirma el correo y el rol con el usuario antes de invitar. La persona invitada
+recibe el enlace por correo. Usa la aplicación web para invitaciones de plataforma.
+Abre el enlace de Slack y selecciona Permitir. El enlace caduca en minutos.
+Actualiza o vuelve a conectar y solicita otro enlace si caduca. Consulta el estado
+después del permiso en Slack. Omite el canal para conservarlo; vacío o null lo borra.
+
+Requires the matching API release. Do not release these clients ahead of it.
+The API owns role, tenant, Station, duplicate, rate-limit and consent checks.
+Machine invitation access requires a live acting-user binding, an organization
+and unrestricted Station scope. The service account remains the audit actor.
+Errors retain structured API codes and distinguish 400 invalid requests, 401
+authentication, 403 authority, 404 missing/unavailable, 409 conflicts, 422 invalid
+fields, 429 rate limits and 503 temporary infrastructure failures.
+
+The customer package exposes CLI and local stdio MCP with browser/S256 OAuth.
+It has no hosted endpoint or separate ChatGPT plugin and no machine login.
+Request fresh exact operation consent and `nova:read nova:write` for writes.
+
 ### DSP Body repair decisions
 
 Select a quote with `select_body_repair_quote` (`body_repair.quotes.select.v1`).

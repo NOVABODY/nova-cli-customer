@@ -251,6 +251,18 @@ Los permisos existentes no incluyen estas operaciones nuevas. Autoriza la conexi
 | `nova defect accept` | `accept_defect` | remote_write | `nova:read nova:write` |
 | `nova defect reject` | `reject_defect` | remote_write | `nova:read nova:write` |
 
+## Team and Roger setup
+
+| Command | MCP tool | Effects | Scope |
+| --- | --- | --- | --- |
+| `nova team-invitation list` | `list_team_invitations` | remote_read | `nova:read` |
+| `nova team-invitation invite` | `invite_team_member` | remote_write | `nova:read nova:write` |
+| `nova team-invitation resend` | `resend_team_invitation` | remote_write | `nova:read nova:write` |
+| `nova team-invitation revoke` | `revoke_team_invitation` | remote_write | `nova:read nova:write` |
+| `nova roger status` | `get_slack_status` | remote_read | `nova:read` |
+| `nova roger start` | `start_slack_setup` | remote_write | `nova:read nova:write` |
+| `nova roger channel` | `set_roger_intake_channel` | remote_write | `nova:read nova:write` |
+
 | `nova body-repair select-quote` | `select_body_repair_quote` | remote_write | `nova:read nova:write` |
 | `nova body-repair confirm-pickup` | `confirm_body_repair_pickup` | remote_write | `nova:read nova:write` |
 | `nova body-repair accept-pickup` | `accept_body_repair_pickup` | remote_write | `nova:read nova:write` |

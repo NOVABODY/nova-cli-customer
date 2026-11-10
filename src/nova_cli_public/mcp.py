@@ -129,6 +129,12 @@ def create_server(service, *, file_root=None, announcements=None):
         except AuthError:
             return error("authentication_required")
         except ApiError as exc:
+            from nova_cli_public.team_setup import MODELS as SETUP_MODELS
+            if name in SETUP_MODELS:
+                return types.CallToolResult(isError=True,
+                    structuredContent={"error": {"code": exc.code, "status": exc.status}},
+                    content=[types.TextContent(type="text", text=str(exc))])
+
             from .body_intake import STEPS
             if name in STEPS:
                 return types.CallToolResult(isError=True,
