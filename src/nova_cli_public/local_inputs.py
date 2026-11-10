@@ -45,6 +45,9 @@ def _read(root, value, limit=MAX_INPUT_BYTES):
 @contextmanager
 def local_inputs(arguments, root, *, tool=None):
     """Do not let a handler reopen an attacker-swapped source or follow a link."""
+    if tool == 'get_skill':
+        yield arguments  # A remote catalog path, never a local file input.
+        return
     selected = {key: value for key, value in arguments.items()
                 if (key == 'file' or key.endswith('_file')) and value is not None}
     if not selected:
