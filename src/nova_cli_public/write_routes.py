@@ -3,6 +3,9 @@
 import re
 
 WRITE_ROUTES = {
+    ("POST", r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/scope/read"): "body_repair.scope.confirm.v1",
+    ("POST", r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/quotes"): "body_repair.quotes.submit.v1",
+    ("POST", r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/quotes/(?:BRQ-)?[0-9]{1,100}/withdraw"): "body_repair.quotes.withdraw.v1",
     ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[1-9][0-9]*/pickup"): "capacity.pickup.update.v1",
     ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[1-9][0-9]*/confirm-no-charge"): "capacity.no_charge.confirm.v1",
     ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[1-9][0-9]*/contact"): "capacity.contact.create.v1",

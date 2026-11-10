@@ -6,6 +6,11 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova body-repair repair-leads` | `list_body_repair_leads` | remote_read | `nova:read` |
+| `nova body-repair quotes` | `list_body_repair_quotes` | remote_read | `nova:read` |
+| `nova body-repair confirm-scope` | `confirm_body_repair_scope` | remote_write | `nova:read nova:write` |
+| `nova body-repair submit-quote` | `submit_body_repair_quote` | remote_write | `nova:read nova:write` |
+| `nova body-repair withdraw-quote` | `withdraw_body_repair_quote` | remote_write | `nova:read nova:write` |
 | `nova bundle-shop fmc-pdf` | `get_bundle_fmc_packet_pdf` | remote_read, local_file_write | `nova:read` |
 | `nova bundle-shop pickup` | `update_bundle_pickup` | remote_write | `nova:read nova:write` |
 | `nova bundle-shop confirm-no-charge` | `confirm_bundle_no_charge` | remote_write | `nova:read nova:write` |
@@ -255,6 +260,7 @@ Los permisos existentes no incluyen estas operaciones nuevas. Autoriza la conexi
 | `nova defect accept` | `accept_defect` | remote_write | `nova:read nova:write` |
 | `nova defect reject` | `reject_defect` | remote_write | `nova:read nova:write` |
 
+See [Body quote workflow](BodyQuotes.md) for shop quote commands and permissions.
 See [bought bundle shop steps](BundleShopSteps.md) for safe actions and browser handoffs.
 Consulta los [pasos del paquete](BundleShopSteps.md) para las acciones y el enlace al navegador.
 | `nova vendor-scorecard rate-work-order` | `rate_work_order` | remote_write | `nova:read nova:write` |

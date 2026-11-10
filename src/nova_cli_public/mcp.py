@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from nova_cli_public import body_quotes
 from nova_cli_public.body_documents import EmbeddedDocument
 from nova_cli_public.client import ApiClient
 from nova_cli_public.config import ConfigStore
@@ -82,6 +83,7 @@ def create_server(service, *, file_root=None, announcements=None):
                 name=name,
                 description=BY_TOOL[name].get("description", BY_TOOL[name]["command"])
                 + (
+                    "" if name in body_quotes.MODELS else
                     ". Change customer data. / Cambie los datos del cliente."
                     if name in WRITE_TOOLS and not BY_TOOL[name].get("read_only", False)
                     else ". Update the local event inbox. / Actualice la bandeja de eventos local."
@@ -133,6 +135,11 @@ def create_server(service, *, file_root=None, announcements=None):
         except AuthError:
             return error("authentication_required")
         except ApiError as exc:
+            if name in body_quotes.MODELS:
+                quote_error, message = body_quotes.error_info(name, exc)
+                return types.CallToolResult(isError=True,
+                    structuredContent={"error": quote_error},
+                    content=[types.TextContent(type="text", text=message)])
             from nova_cli_public.bundle_shop_steps import MODELS as SHOP_STEPS
             from nova_cli_public.bundle_shop_steps import PDF
             if name in SHOP_STEPS or name == 'upload_capacity_evidence':
