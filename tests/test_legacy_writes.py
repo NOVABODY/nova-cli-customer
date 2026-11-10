@@ -518,7 +518,7 @@ def test_work_order_line_item_update_sends_only_provided_fields(monkeypatch):
 
 def test_upload_photo_presigns_and_puts_bytes(monkeypatch, tmp_path):
     photo_file = tmp_path / "odometer.jpg"
-    photo_file.write_bytes(b"jpeg-bytes")
+    photo_file.write_bytes(b"\xff\xd8\xffjpeg-bytes")
     client = FakeClient(
         [
             {
@@ -543,14 +543,14 @@ def test_upload_photo_presigns_and_puts_bytes(monkeypatch, tmp_path):
             "parent_id": "WO-00042",
             "filename": "odometer.jpg",
             "content_type": "image/jpeg",
-            "size_bytes": 10,
+            "size_bytes": 13,
         },
         "query": None,
     }
     assert client.uploads == [
         {
             "url": "http://storage.test/put/photos/work_orders/42/key.jpg",
-            "data": b"jpeg-bytes",
+            "data": b"\xff\xd8\xffjpeg-bytes",
             "content_type": "image/jpeg",
         }
     ]
@@ -560,7 +560,7 @@ def test_upload_photo_presigns_and_puts_bytes(monkeypatch, tmp_path):
 
 def test_upload_photo_commit_posts_defect_photo(monkeypatch, tmp_path):
     photo_file = tmp_path / "damage.png"
-    photo_file.write_bytes(b"png-bytes")
+    photo_file.write_bytes(b"\x89PNG\r\n\x1a\npng-bytes")
     client = FakeClient(
         [
             {
@@ -595,7 +595,7 @@ def test_upload_photo_commit_posts_defect_photo(monkeypatch, tmp_path):
         "json_body": {
             "storage_key": "photos/defects/7/key.png",
             "content_type": "image/png",
-            "size_bytes": 9,
+            "size_bytes": 17,
             "category": "damage",
         },
         "query": None,
@@ -606,7 +606,7 @@ def test_upload_photo_commit_posts_defect_photo(monkeypatch, tmp_path):
 
 def test_upload_photo_commit_rejects_unsupported_kind(tmp_path):
     photo_file = tmp_path / "photo.jpg"
-    photo_file.write_bytes(b"jpeg-bytes")
+    photo_file.write_bytes(b"\xff\xd8\xffjpeg-bytes")
     args = build_parser().parse_args(
         [
             "upload",
@@ -648,7 +648,8 @@ def test_upload_photo_requires_guessable_content_type(tmp_path):
 )
 def test_upload_supports_current_api_kinds(monkeypatch, tmp_path, kind):
     photo = tmp_path / ("evidence.pdf" if kind == "body_repair_pave_preview" else "photo.png")
-    photo.write_bytes(b"evidence")
+    data = b"%PDF-evidence" if kind == "body_repair_pave_preview" else b"\x89PNG\r\n\x1a\nevidence"
+    photo.write_bytes(data)
     client = FakeClient(
         [{"upload_url": "https://storage.test/upload", "storage_key": "key"}, {"id": "PH-1"}]
     )
@@ -659,7 +660,7 @@ def test_upload_supports_current_api_kinds(monkeypatch, tmp_path, kind):
     args = build_parser().parse_args(argv)
     result = args.handler(args)
     assert client.requests[0]["json_body"]["kind"] == kind
-    assert client.uploads[0]["data"] == b"evidence"
+    assert client.uploads[0]["data"] == data
     assert result["committed"] == (kind == "vehicle_report")
     if kind == "vehicle_report":
         assert client.requests[1]["path"] == "/vehicle-reports/1/photos"

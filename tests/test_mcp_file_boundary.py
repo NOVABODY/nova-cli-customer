@@ -93,3 +93,33 @@ def test_relative_input_is_resolved_within_selected_folder(tmp_path):
     (tmp_path / 'fleet.csv').write_text('allowed')
     result = call(create_server(FileReader(), file_root=tmp_path), 'fleet.csv')
     assert not result.isError and result.structuredContent == {'content': 'allowed'}
+
+
+@pytest.mark.parametrize('name,value', [('photo_file', ['photo.png']),
+    ('odometer_photo_path', 'photo.png'), ('work_photo_path', 'photo.png')])
+def test_workflow_photo_inputs_require_selected_folder_and_snapshot_bytes(tmp_path, name, value):
+    from nova_cli_public.errors import UsageError
+    from nova_cli_public.local_inputs import local_inputs
+    raw = b'\x89PNG\r\n\x1a\nsynthetic'
+    (tmp_path / 'photo.png').write_bytes(raw)
+    with pytest.raises(UsageError), local_inputs({name: value}, None):
+        pytest.fail('Unselected file was admitted')
+    with local_inputs({name: value}, tmp_path) as values:
+        path = values[name][0] if isinstance(value, list) else values[name]
+        (tmp_path / 'photo.png').write_bytes(b'changed')
+        assert Path(path).read_bytes() == raw
+
+
+def test_completion_storage_key_needs_no_file_root():
+    from nova_cli_public.local_inputs import local_inputs
+    values = {'work_photo_path': 'photos/work_orders/2/date/photo.png'}
+    with local_inputs(values, None) as prepared:
+        assert prepared == values
+
+
+def test_custody_file_limit_is_checked_before_any_file_read(tmp_path, monkeypatch):
+    from nova_cli_public import local_inputs
+    from nova_cli_public.errors import UsageError
+    monkeypatch.setattr(local_inputs, '_read', lambda *a: pytest.fail('Do not read an oversized list'))
+    with pytest.raises(UsageError), local_inputs.local_inputs({'photo_file': ['photo.png'] * 13}, tmp_path):
+        pytest.fail('Oversized list was admitted')
