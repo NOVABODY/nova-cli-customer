@@ -133,6 +133,19 @@ def create_server(service, *, file_root=None, announcements=None):
         except AuthError:
             return error("authentication_required")
         except ApiError as exc:
+            from nova_cli_public.bundle_shop_steps import MODELS as SHOP_STEPS
+            from nova_cli_public.bundle_shop_steps import PDF
+            if name in SHOP_STEPS or name == 'upload_capacity_evidence':
+                message = str(exc)
+                if name == PDF and exc.code == 'document_too_large':
+                    message = 'This PDF exceeds 1 MiB. Use bundle-shop fmc-pdf REF UNIT --out packet.pdf. / Este PDF supera 1 MiB. Usa bundle-shop fmc-pdf REF UNIT --out packet.pdf.'
+                return types.CallToolResult(isError=True,
+                    content=[types.TextContent(type='text', text=message)],
+                    structuredContent={'error': {'code': exc.code or {
+                        401: 'authentication_required', 403: 'forbidden', 404: 'not_found',
+                        409: 'conflict', 413: 'file_too_large', 422: 'invalid_arguments',
+                    }.get(exc.status, 'unavailable'), 'status': exc.status, 'detail': exc.detail}})
+
             from nova_cli_public.shop_ratings import MODELS
             if name in MODELS and exc.code in {"rating_rejected", "outcome_unknown"}:
                 return types.CallToolResult(isError=True,
