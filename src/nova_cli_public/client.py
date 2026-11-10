@@ -130,6 +130,8 @@ class ApiClient:
         archive_max_bytes: int = claim_archive.MAX_BYTES,
         image: bool = False,
         image_max_bytes: int = claim_archive.MAX_BYTES,
+        timeout: float | None = None,
+        max_bytes: int | None = None,
     ) -> Response:
         if image:
             if pdf or archive:
@@ -169,14 +171,16 @@ class ApiClient:
             request_headers.update(headers)
         req = urllib.request.Request(url, data=data, headers=request_headers, method=method.upper())
         try:
-            with self.opener.open(req, timeout=self.timeout) as resp:
+            with self.opener.open(req, timeout=self.timeout if timeout is None else timeout) as resp:
                 if image:
                     return Response(resp.status, dict(resp.headers.items()), _pdf_bytes(resp, image_max_bytes, image=True))
                 if archive:
                     return Response(resp.status, dict(resp.headers.items()), claim_archive.read(resp, archive_max_bytes))
                 if pdf:
                     return Response(resp.status, dict(resp.headers.items()), _pdf_bytes(resp, pdf_max_bytes))
-                raw = resp.read()
+                raw = resp.read() if max_bytes is None else resp.read(max_bytes + 1)
+                if max_bytes is not None and len(raw) > max_bytes:
+                    raise ApiError("Announcement feed is too large. / El contenido de anuncios es demasiado grande.")
                 return Response(
                     status=resp.status,
                     headers=dict(resp.headers.items()),
@@ -189,7 +193,7 @@ class ApiClient:
                 finally:
                     exc.close()
             else:
-                raw = exc.read()
+                raw = exc.read() if max_bytes is None else exc.read(max_bytes + 1)
             if pdf or archive or image:
                 body = {}
                 if len(raw) <= PDF_ERROR_MAX_BYTES and 'application/json' in exc.headers.get('Content-Type', '').lower():
@@ -274,7 +278,8 @@ class ApiClient:
     def public_request(self, method, path):
         if method != "GET" or path not in PUBLIC_READS:
             raise UsageError("This public route is not available.")
-        return self._send(method, path).body
+        return self._send(method, path, **({"timeout": min(self.timeout, 2), "max_bytes": 32768}
+                                         if path == "/assistant-announcements" else {})).body
 
     def whoami(self):
         return self.request("GET", "/auth/me")

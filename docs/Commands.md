@@ -25,6 +25,7 @@ client support; the server checks current account access.
 | `nova inspection-confirmation set-settings` | `update_inspection_confirmation_settings` | remote_write | `nova:read nova:write` |
 | `nova inspection-confirmation get` | `get_inspection_confirmation` | remote_read | `nova:read` |
 | `nova inspection-confirmation respond` | `respond_inspection_confirmation` | remote_write | `nova:read nova:write` |
+| `nova announcements` | CLI setup | remote_read | None |
 | `nova capabilities` | CLI setup | local_read | None |
 | `nova profile set` | CLI setup | local_config_write | None |
 | `nova profile use` | CLI setup | local_config_write | None |
@@ -255,3 +256,14 @@ Los permisos existentes no incluyen estas operaciones nuevas. Autoriza la conexi
 | `nova body-repair accept-pickup` | `accept_body_repair_pickup` | remote_write | `nova:read nova:write` |
 
 See [DSP Body repair decisions](../README.md#dsp-body-repair-decisions) for quote selection, versioned pickup, and browser sign-off/payment.
+
+`nova auth login` includes `announcements` with current public features and repair
+offers. Run `nova announcements --json` or MCP `get_announcements` to refresh it.
+The feed needs no credentials and never grants permissions or authorizes a repair.
+Local MCP initialization includes the same bilingual feed. Check promotion expiry
+and all terms before acting. An unavailable feed does not stop login or connection.
+
+The feed also advertises Nova's Markdown skill library through `skill_library_url`.
+The link is permanent and can be shown with an empty news feed. No skill content
+is fetched, installed or generated. The initial index contains no skills; creating
+a skill requires explicit user authorization for that skill or workflow.
