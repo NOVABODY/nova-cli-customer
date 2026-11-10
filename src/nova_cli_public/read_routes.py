@@ -10,6 +10,8 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/auth/invitations": "invitations.list.v1",
+    r"/slack/installation/status": "slack.status.get.v1",
     r"/defect-bundle-offers/staff/evidence": "capacity.evidence.list.v1",
     r"/defect-bundle-offers/staff/evidence/[0-9]+": "capacity.evidence.get.v1",
     r"/defect-bundle-offers/staff/evidence/[0-9]+/content": "capacity.evidence.content.v1",
@@ -92,7 +94,7 @@ READ_ROUTES = {
     r"/assistant/defects": "defects.list.v1",
     r"/assistant/defects/(?:FD-)?[0-9]+": "defects.get.v1",
 }
-PUBLIC_READS = {"/health", "/health/ready"}
+PUBLIC_READS = {"/health", "/health/ready", "/assistant-announcements"}
 
 
 def admitted_read(path):

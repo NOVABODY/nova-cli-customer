@@ -12,6 +12,8 @@ from nova_cli_public.write_routes import PHOTO_COMMIT_GRANTS, WRITE_ROUTES
 # Only effect/usage information lives here. Arguments come from the real parser;
 # fleet input/output contracts come from the same models used during execution.
 DETAILS = {
+    "announcements": ("Read new features and repair offers. / Consulta novedades y ofertas de reparación.",
+                      ["remote_read"], "nova announcements --json"),
     "bundle-address get": ("Read the bundle drop-off address.", ["remote_read"], "nova bundle-address get DFS-B-2026-0001"),
     "bundle-address set": ("Change all bundle destinations before scheduling; optionally save the shop profile with profile access.", ["remote_write"], "nova bundle-address set DFS-B-2026-0001 --delivery-address '2 New Road'"),
     "vendor-agreement status": ("Read agreement status and the personal-signature link.",
@@ -224,6 +226,8 @@ def manifest(parser, selected=None):
                     if grant == operation["grant"]
                 ],
             )
+            if tool == "request_work_order_correction":
+                entry["api_routes"] = [{"method": "POST", "path_pattern": "/vendor-scorecard/feedback"}]
             if not operation.get("mcp", True):
                 entry.update(mcp_tool=None, tool_input_schema=None, output_schema=None)
             if operation.get("document_kind") or operation.get("image_read") or tool == 'get_bundle_fmc_packet_pdf':
@@ -245,6 +249,9 @@ def manifest(parser, selected=None):
             entry["effects"].append("local_file_read")
         if name == "upload photo":
             entry["conditional_operations"] = PHOTO_COMMIT_GRANTS
+        if name == "auth login":
+            from nova_cli_public.delegated import OPERATIONS
+            entry["available_operations"] = sorted(OPERATIONS)
         if name in ("auth login", "auth refresh"):
             entry["required_scope"] = "nova:read"
         if selected is None or selected == name:
@@ -269,7 +276,7 @@ def manifest(parser, selected=None):
             "transport": "stdio",
             "install_extra": "nova-fora-cli[mcp]",
             "requires": "Saved profile and browser login",
-            "tools": list(BY_TOOL),
+            "tools": [*BY_TOOL, "get_announcements"],
             "authorization": "not_checked",
         },
         "commands": commands,
