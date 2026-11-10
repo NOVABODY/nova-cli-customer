@@ -689,6 +689,9 @@ MCP exposes `list_defect_opportunities`, `accept_defect`, and `reject_defect`.
 Decisions require write access and the corresponding consent or machine
 permissions. After an unknown outcome, read the defect before another attempt.
 
+
+See [photo uploads](docs/PhotoUploads.md) for custody files, completion evidence,
+consent and transport limits in the coordinated candidate release.
 ## Shop steps without payment writes
 
 See [bought bundle shop steps](docs/BundleShopSteps.md) for FMC packets,

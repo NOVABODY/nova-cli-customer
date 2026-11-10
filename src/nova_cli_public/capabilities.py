@@ -245,7 +245,7 @@ def manifest(parser, selected=None):
             entry["mcp_execution"] = (
                 "One page per call; managed local inbox; explicit acknowledgment."
             )
-        if any(arg["name"] == "file" or (arg["name"].endswith("_file") and arg["name"] not in ("cursor_file", "state_file")) for arg in arguments):
+        if any(arg["name"] in ("file", "odometer_photo_path", "work_photo_path") or (arg["name"].endswith("_file") and arg["name"] not in ("cursor_file", "state_file")) for arg in arguments):
             entry["effects"].append("local_file_read")
         if name == "upload photo":
             entry["conditional_operations"] = PHOTO_COMMIT_GRANTS

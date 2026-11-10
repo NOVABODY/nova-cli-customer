@@ -340,6 +340,8 @@ WRITE_COMMANDS = [
         "effect": "remote_write",
         "arguments": [
             (["vehicle_id"], {}),
+            (["--photo-file"], {"action": "append", "default": [],
+                "help": "Upload a photo file. / Carga un archivo de foto."}),
             (["--mileage"], {"type": "int"}),
             (["--vendor-workshop-id"], {"required": True}),
             (
@@ -365,6 +367,8 @@ WRITE_COMMANDS = [
         "effect": "remote_write",
         "arguments": [
             (["vehicle_id"], {}),
+            (["--photo-file"], {"action": "append", "default": [],
+                "help": "Upload a photo file. / Carga un archivo de foto."}),
             (["--mileage"], {"required": True, "type": "int"}),
             (
                 ["--field"],

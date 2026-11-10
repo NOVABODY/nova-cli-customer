@@ -241,6 +241,8 @@ def input_model(entry, *, mcp=False):
         )
         default = ... if required else options.get("default", False if value_type is bool else None)
         constraints = {}
+        if name == 'photo_file':
+            constraints['max_length'] = 12
         if name == 'storage_key' and entry.get('image_read'):
             constraints = {'min_length': 1, 'max_length': 500}
         if name == 'idx' and entry.get('image_read'):
