@@ -136,7 +136,7 @@ from nova_cli_public.write_routes import WRITE_ROUTES
 
 WRITE_OPERATIONS = set(WRITE_ROUTES.values()) | set(RATING_GRANTS.values())
 
-OPERATIONS = set(READ_ROUTES.values()) | set(READ_POST_ROUTES.values()) | WRITE_OPERATIONS
+OPERATIONS = (set(READ_ROUTES.values()) | set(READ_POST_ROUTES.values()) | WRITE_OPERATIONS) - {None}
 DEFAULT_OPERATIONS = "vehicles.list_full.v1 vehicles.get_full.v1"
 
 
