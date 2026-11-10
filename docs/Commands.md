@@ -6,6 +6,8 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova bundle-fee get` | `get_admin_bundle` | remote_read | `nova:read` |
+| `nova bundle-fee waive` | `waive_bundle_fee` | remote_write | `nova:read nova:write` |
 | `nova bundle-address get` | `get_bundle_dropoff_address` | remote_read | `nova:read` |
 | `nova bundle-address set` | `update_bundle_dropoff_address` | remote_write | `nova:read nova:write` |
 | `nova bundle-schedules list` | `list_bundle_schedules` | remote_read | `nova:read` |
@@ -249,3 +251,12 @@ Los permisos existentes no incluyen estas operaciones nuevas. Autoriza la conexi
 | `nova defect opportunities` | `list_defect_opportunities` | remote_read | `nova:read` |
 | `nova defect accept` | `accept_defect` | remote_write | `nova:read nova:write` |
 | `nova defect reject` | `reject_defect` | remote_write | `nova:read nova:write` |
+
+Site admins can read a PM/AMR bundle with `bundle-fee get REF`, then waive its
+whole fee with `bundle-fee waive REF --reason "Approved waiver" --revision N`.
+The waiver works before sending or after award, cannot be undone, and does not
+refund a started charge. `get_admin_bundle` and `waive_bundle_fee` are the same
+operations in local MCP. Delegated clients need fresh
+`capacity.offers.staff.get.v1` and `capacity.fee.waive.v1` consent. The API keeps
+role/tenant checks and records the actual principal. After an unknown outcome,
+read the bundle before trying again. The API owns role and tenant authorization.

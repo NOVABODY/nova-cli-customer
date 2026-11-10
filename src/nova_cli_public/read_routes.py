@@ -9,6 +9,7 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/defect-bundle-offers/staff/[A-Za-z0-9][A-Za-z0-9-]{0,39}": "capacity.offers.staff.get.v1",
     r"/defect-bundle-offers/staff/evidence": "capacity.evidence.list.v1",
     r"/defect-bundle-offers/staff/evidence/[0-9]+": "capacity.evidence.get.v1",
     r"/defect-bundle-offers/staff/evidence/[0-9]+/content": "capacity.evidence.content.v1",
