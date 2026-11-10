@@ -6,6 +6,15 @@ from nova_cli_public.shop_defects import command as shop_command
 
 WRITE_COMMANDS = [
     {
+        "command": "defect set-category", "tool": "set_defect_category",
+        "description": "Change a defect repair category. Site admin only. / Cambia la categoría de reparación de un defecto. Solo administrador del sitio.",
+        "grant": "defects.category.update.v1", "scope": "nova:read nova:write", "effect": "remote_write",
+        "arguments": [(["defect_id"], {}), (["--repair-group"], {"required": True,
+            "choices": ["AMR", "CMR", "CNMR", "Body", "PM", "Tires", "Detailing", "Netradyne"]}),
+            (["--expected-updated-at"], {"required": True, "type": "iso_datetime_arg"})],
+        "groups": [], "defaults": {}, "handler": handlers.cmd_defect_set_category,
+    },
+    {
         "command": "defect create",
         "tool": "create_defect",
         "grant": "defects.create.v1",
