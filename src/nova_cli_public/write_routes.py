@@ -3,6 +3,8 @@
 import re
 
 WRITE_ROUTES = {
+    ("POST", r"/vendor-scorecard/feedback"): "vendor_scorecard.feedback.submit.v1",
+
     ("POST", r"/auth/invitations"): "invitations.create.v1",
     ("POST", r"/auth/invitations/INV-[0-9]{1,14}/resend"): "invitations.resend.v1",
     ("DELETE", r"/auth/invitations/INV-[0-9]{1,14}"): "invitations.revoke.v1",

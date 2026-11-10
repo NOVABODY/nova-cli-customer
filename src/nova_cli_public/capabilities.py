@@ -226,6 +226,8 @@ def manifest(parser, selected=None):
                     if grant == operation["grant"]
                 ],
             )
+            if tool == "request_work_order_correction":
+                entry["api_routes"] = [{"method": "POST", "path_pattern": "/vendor-scorecard/feedback"}]
             if not operation.get("mcp", True):
                 entry.update(mcp_tool=None, tool_input_schema=None, output_schema=None)
             if operation.get("document_kind") or operation.get("image_read"):
@@ -247,6 +249,9 @@ def manifest(parser, selected=None):
             entry["effects"].append("local_file_read")
         if name == "upload photo":
             entry["conditional_operations"] = PHOTO_COMMIT_GRANTS
+        if name == "auth login":
+            from nova_cli_public.delegated import OPERATIONS
+            entry["available_operations"] = sorted(OPERATIONS)
         if name in ("auth login", "auth refresh"):
             entry["required_scope"] = "nova:read"
         if selected is None or selected == name:

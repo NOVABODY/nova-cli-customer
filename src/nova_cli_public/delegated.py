@@ -106,6 +106,7 @@ def refresh(client):
 
 def logout(client):
     with profile_lock(client.profile.name):
+        client.token_store.delete_refresh_token_strict(rating_consent_profile(client))
         token = _read(client)
         _delete(client)
         client.access_token = None
@@ -130,9 +131,12 @@ def status(client):
 
 
 from nova_cli_public.read_routes import READ_POST_ROUTES, READ_ROUTES
+from nova_cli_public.shop_ratings import GRANTS as RATING_GRANTS
 from nova_cli_public.write_routes import WRITE_ROUTES
 
-OPERATIONS = set(READ_ROUTES.values()) | set(READ_POST_ROUTES.values()) | set(WRITE_ROUTES.values())
+WRITE_OPERATIONS = set(WRITE_ROUTES.values()) | set(RATING_GRANTS.values())
+
+OPERATIONS = set(READ_ROUTES.values()) | set(READ_POST_ROUTES.values()) | WRITE_OPERATIONS
 DEFAULT_OPERATIONS = "vehicles.list_full.v1 vehicles.get_full.v1"
 
 
@@ -144,7 +148,7 @@ def browser_code(origin, timeout=180, operations=None, scope="nova:read", manual
         raise UsageError("Unknown operation. Run nova capabilities --json.")
     if scope not in ("nova:read", "nova:read nova:write"):
         raise UsageError("Use nova:read or nova:read nova:write.")
-    if set(operations.split()) & set(WRITE_ROUTES.values()) and scope != "nova:read nova:write":
+    if set(operations.split()) & WRITE_OPERATIONS and scope != "nova:read nova:write":
         raise UsageError("Write operations require --scope 'nova:read nova:write'.")
     verifier, state = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
     challenge = (
@@ -263,6 +267,24 @@ def browser_code(origin, timeout=180, operations=None, scope="nova:read", manual
     return outcome["code"], verifier, redirect_uri
 
 
+def rating_consent_profile(client):
+    return replace(credential_profile(client.profile), name=credential_profile(client.profile).name + "#rating-consent")
+
+
+def correction_consented(client):
+    # Local discovery hint from completed consent; the API checks live grants on every write.
+    read = getattr(getattr(client, 'token_store', None), 'get_refresh_token', None)
+    if read is None:
+        return False
+    try:
+        if not _read(client):
+            return False
+        value = read(rating_consent_profile(client)) or ''
+    except Exception:  # noqa: BLE001 - fail closed for discovery if the keyring is locked.
+        return False
+    return RATING_GRANTS['request_work_order_correction'] in value.split()
+
+
 def login(client, operations=None, scope="nova:read", manual=False):
     if scope not in ("nova:read", "nova:read nova:write"):
         raise AuthError("Use nova:read or nova:read nova:write.")
@@ -278,6 +300,7 @@ def login(client, operations=None, scope="nova:read", manual=False):
         else browser_code(issuer(client.profile))
     )
     with profile_lock(client.profile.name):
+        client.token_store.set_refresh_token(rating_consent_profile(client), '')
         token = _token(
             client,
             {
@@ -286,5 +309,9 @@ def login(client, operations=None, scope="nova:read", manual=False):
                 "code_verifier": verifier,
                 "redirect_uri": redirect_uri,
             },
+        )
+        client.token_store.set_refresh_token(
+            rating_consent_profile(client),
+            (operations or DEFAULT_OPERATIONS) if token['scope'] == 'nova:read nova:write' else '',
         )
     return {"scope": token["scope"], "resource": issuer(client.profile) + "/api"}

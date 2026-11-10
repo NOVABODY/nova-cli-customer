@@ -689,6 +689,75 @@ MCP exposes `list_defect_opportunities`, `accept_defect`, and `reject_defect`.
 Decisions require write access and the corresponding consent or machine
 permissions. After an unknown outcome, read the defect before another attempt.
 
+## Shop ratings
+
+Read `list_pending_vendor_feedback` and select exactly one repair. Confirm the
+rating with the user before sending. Use `rate_work_order` to approve work,
+`request_work_order_correction` to ask the shop to fix it again, or
+`rate_body_repair` for a body repair. Confirm a correction request separately:
+it reopens the work order or creates correction work. A correction needs a reason.
+
+The local correction tool is listed only after this client completes consent
+for correction. Existing connections must sign in again to record this consent.
+This local record is a discovery hint; the API checks live grants on every write.
+
+Ordinary ratings require `vendor_scorecard.feedback.submit.v1`; correction
+requests require `vendor_scorecard.feedback.correction.v1` instead. Delegated
+connections need write scope and fresh explicit consent. Existing grants do not
+gain permissions. The API checks role, tenant, bound acting user and Station.
+DSP owners, managers and dispatchers rate their own fleet. Site admins can rate
+work orders but cannot rate body repairs. Machine access retains native key,
+role, tenant, acting-user and Station checks.
+
+Work orders accept optional `reason`, `escalate`, `impressive_attribute` and
+`negative_attribute`. Attributes are `turnaround_time`, `communication`,
+`professionalism`, `work_quality` or `price`. The approval tool fixes vote/decision
+to `up`/`approved`; the correction tool fixes them to `down`/`correction_requested`.
+Body repairs accept integer `stars` (1–5), unique `tags` and optional `reason`.
+Tag topics are `repair_quality`, `van_condition`, `communication`, `pickup_return`.
+Use `good_` tags for 5 stars, either prefix for 4, and `problem_` tags for 1–3.
+Ratings of 1 or 2 stars escalate automatically. Subject fields cannot be mixed.
+Reasons accept at most 1000 characters. Body ratings need completed hand-back,
+custody, eligibility, the enabled rating setting and the 14-day change window.
+
+`escalate` defaults to false. If true, this rating counts toward the second-vendor
+trigger. It can open a `SCORECARD_SECOND_VENDOR` case for Nova platform staff.
+Get the user's explicit approval before setting it to true.
+`reason` explains the rating. `impressive_attribute` selects a strong point;
+`negative_attribute` selects a weak point. Attribute choices are turnaround time,
+communication, professionalism, work quality and price.
+
+`escalate` tiene el valor predeterminado false. Con true, la calificación cuenta
+para el criterio de un segundo proveedor. Puede abrir un caso
+`SCORECARD_SECOND_VENDOR` para el personal de la plataforma Nova. Obtén la
+aprobación explícita del usuario antes de usar true. `reason` explica la
+calificación; `impressive_attribute` indica un punto positivo y
+`negative_attribute` un punto negativo.
+
+Errors preserve the distinction between invalid choices (400), sign-in (401),
+permission refusal (403), missing repair (404), repair state/custody/deadline
+conflict (409), schema errors (422), and unavailable body ratings (503). Repeated
+submissions use native update/supersession; there is no duplicate-rating error.
+An uncertain response requires reading the repair before another attempt. Writes
+are never retried automatically.
+
+Confirma la calificación con el usuario antes de enviarla. Para pedir al taller
+que repare el trabajo de nuevo, confirma también la solicitud de corrección.
+Esta solicitud vuelve a abrir la orden o crea trabajo de corrección y requiere
+un motivo y el permiso de corrección. Las calificaciones normales usan el permiso
+de envío. Usa un máximo de 1000 caracteres para el motivo. No mezcles los campos
+de carrocería con los de una orden de trabajo. Consulta la reparación después
+de un resultado desconocido antes de intentar de nuevo.
+
+Commands: `nova vendor-scorecard rate-work-order WO-7`,
+`nova vendor-scorecard request-correction WO-7 --reason "Repair the finish"`,
+and `nova vendor-scorecard rate-body-repair BRR-7 --stars 5 --tags good_repair_quality`.
+Repeat `--tags` for multiple tags. Read each command's `--help` for optional fields.
+
+This package uses browser/S256 delegated authentication. It does not expose
+service-account keys, password login, a hosted HTTP service or a separate
+ChatGPT plugin UI. Use the matching machine client for service-account access.
+
 ## Team invitations and Roger setup
 
 List pending invitations with `team-invitation list`. Before `team-invitation invite`,

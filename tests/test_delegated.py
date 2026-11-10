@@ -611,3 +611,35 @@ def test_manual_login_refuses_echoing_callback_input(monkeypatch):
     monkeypatch.setattr(delegated.getpass, "getpass", insecure_prompt)
     with pytest.raises(AuthError):
         delegated.browser_code("https://nova.example", manual=True)
+
+
+def test_correction_consent_reaches_browser_and_requires_write_scope(monkeypatch):
+    operation = 'vendor_scorecard.feedback.correction.v1'
+    captured = []
+    monkeypatch.setattr(delegated.webbrowser, 'open', lambda url: captured.append(url) or False)
+    with pytest.raises(UsageError, match='Write operations require'):
+        delegated.browser_code('https://nova.example', operations=operation)
+    with pytest.raises(AuthError):
+        delegated.browser_code('https://nova.example', operations=operation, scope='nova:read nova:write')
+    query = urllib.parse.parse_qs(urllib.parse.urlsplit(captured[0]).query)
+    assert query['operations'] == [operation]
+    assert query['scope'] == ['nova:read nova:write']
+    from nova_cli_public.capabilities import manifest
+    from nova_cli_public.cli import build_parser
+    assert operation in manifest(build_parser(), 'auth login')['commands'][0]['available_operations']
+
+
+def test_correction_tool_follows_successful_login_consent(client, monkeypatch):
+    from nova_cli_public.reads import CustomerReadService
+    operation = 'vendor_scorecard.feedback.correction.v1'
+    service = CustomerReadService(client)
+    assert 'request_work_order_correction' not in service.tool_schemas()
+    monkeypatch.setattr(delegated, 'browser_code', lambda *a, **kw: ('code', 'verifier', 'http://127.0.0.1:1234/'))
+    for operations, offered in [(operation, True), ('vendor_scorecard.feedback.submit.v1', False)]:
+        client.opener.responses.append({**pair(), 'scope': 'nova:read nova:write'})
+        delegated.login(client, operations=operations, scope='nova:read nova:write')
+        assert ('request_work_order_correction' in service.tool_schemas()) is offered
+    client.opener.responses.append({'invalid': True})
+    with pytest.raises(AuthError):
+        delegated.login(client, operations=operation, scope='nova:read nova:write')
+    assert 'request_work_order_correction' not in service.tool_schemas()
