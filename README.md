@@ -688,3 +688,177 @@ policy; `--reroute` and `--no-reroute` explicitly select another behavior.
 MCP exposes `list_defect_opportunities`, `accept_defect`, and `reject_defect`.
 Decisions require write access and the corresponding consent or machine
 permissions. After an unknown outcome, read the defect before another attempt.
+
+### Shop Body repair quotes
+
+See [Body quote workflow](docs/BodyQuotes.md) for eligible leads, shop quotes,
+explicit scope review, submission and withdrawal. Review scope changes with the
+user before confirmation.
+
+See [photo uploads](docs/PhotoUploads.md) for custody files, completion evidence,
+consent and transport limits in the coordinated candidate release.
+## Shop steps without payment writes
+
+See [bought bundle shop steps](docs/BundleShopSteps.md) for FMC packets,
+authorization evidence, pickup dates, zero-price exits and Nova contact. Purchase,
+initial pickup readiness and payment changes use the API response’s `browser_url`.
+Consulta los [pasos del paquete](docs/BundleShopSteps.md). La compra, la recogida
+inicial y los cambios de pago se hacen en el `browser_url` de la API.
+## Shop ratings
+
+Read `list_pending_vendor_feedback` and select exactly one repair. Confirm the
+rating with the user before sending. Use `rate_work_order` to approve work,
+`request_work_order_correction` to ask the shop to fix it again, or
+`rate_body_repair` for a body repair. Confirm a correction request separately:
+it reopens the work order or creates correction work. A correction needs a reason.
+
+The local correction tool is listed only after this client completes consent
+for correction. Existing connections must sign in again to record this consent.
+This local record is a discovery hint; the API checks live grants on every write.
+
+Ordinary ratings require `vendor_scorecard.feedback.submit.v1`; correction
+requests require `vendor_scorecard.feedback.correction.v1` instead. Delegated
+connections need write scope and fresh explicit consent. Existing grants do not
+gain permissions. The API checks role, tenant, bound acting user and Station.
+DSP owners, managers and dispatchers rate their own fleet. Site admins can rate
+work orders but cannot rate body repairs. Machine access retains native key,
+role, tenant, acting-user and Station checks.
+
+Work orders accept optional `reason`, `escalate`, `impressive_attribute` and
+`negative_attribute`. Attributes are `turnaround_time`, `communication`,
+`professionalism`, `work_quality` or `price`. The approval tool fixes vote/decision
+to `up`/`approved`; the correction tool fixes them to `down`/`correction_requested`.
+Body repairs accept integer `stars` (1–5), unique `tags` and optional `reason`.
+Tag topics are `repair_quality`, `van_condition`, `communication`, `pickup_return`.
+Use `good_` tags for 5 stars, either prefix for 4, and `problem_` tags for 1–3.
+Ratings of 1 or 2 stars escalate automatically. Subject fields cannot be mixed.
+Reasons accept at most 1000 characters. Body ratings need completed hand-back,
+custody, eligibility, the enabled rating setting and the 14-day change window.
+
+`escalate` defaults to false. If true, this rating counts toward the second-vendor
+trigger. It can open a `SCORECARD_SECOND_VENDOR` case for Nova platform staff.
+Get the user's explicit approval before setting it to true.
+`reason` explains the rating. `impressive_attribute` selects a strong point;
+`negative_attribute` selects a weak point. Attribute choices are turnaround time,
+communication, professionalism, work quality and price.
+
+`escalate` tiene el valor predeterminado false. Con true, la calificación cuenta
+para el criterio de un segundo proveedor. Puede abrir un caso
+`SCORECARD_SECOND_VENDOR` para el personal de la plataforma Nova. Obtén la
+aprobación explícita del usuario antes de usar true. `reason` explica la
+calificación; `impressive_attribute` indica un punto positivo y
+`negative_attribute` un punto negativo.
+
+Errors preserve the distinction between invalid choices (400), sign-in (401),
+permission refusal (403), missing repair (404), repair state/custody/deadline
+conflict (409), schema errors (422), and unavailable body ratings (503). Repeated
+submissions use native update/supersession; there is no duplicate-rating error.
+An uncertain response requires reading the repair before another attempt. Writes
+are never retried automatically.
+
+Confirma la calificación con el usuario antes de enviarla. Para pedir al taller
+que repare el trabajo de nuevo, confirma también la solicitud de corrección.
+Esta solicitud vuelve a abrir la orden o crea trabajo de corrección y requiere
+un motivo y el permiso de corrección. Las calificaciones normales usan el permiso
+de envío. Usa un máximo de 1000 caracteres para el motivo. No mezcles los campos
+de carrocería con los de una orden de trabajo. Consulta la reparación después
+de un resultado desconocido antes de intentar de nuevo.
+
+Commands: `nova vendor-scorecard rate-work-order WO-7`,
+`nova vendor-scorecard request-correction WO-7 --reason "Repair the finish"`,
+and `nova vendor-scorecard rate-body-repair BRR-7 --stars 5 --tags good_repair_quality`.
+Repeat `--tags` for multiple tags. Read each command's `--help` for optional fields.
+
+This package uses browser/S256 delegated authentication. It does not expose
+service-account keys, password login, a hosted HTTP service or a separate
+ChatGPT plugin UI. Use the matching machine client for service-account access.
+
+## Team invitations and Roger setup
+
+List pending invitations with `team-invitation list`. Before `team-invitation invite`,
+confirm the invitee email and role with the user. Set `--email`, `--role` and
+integer `--org-id`; optional fields are `--full-name`, `--phone`, `--language en|es`
+and `--station`. Use `resend INV-7` or `revoke INV-7` under the same command.
+The invitee gets the join link by email. Clients strip `accept_url` and never
+fetch or build that link. SMTP acceptance does not prove recipient acceptance.
+Platform invitation writes require the web app.
+
+Use `roger status`, `roger start` and `roger channel`.
+Open the returned `authorize_url` unchanged and select Allow in Slack.
+The link expires within minutes (at most 600 seconds, bounded by credential
+expiry). For `slack_setup_reconnect_required`, refresh or reconnect and start
+again. Read status after browser consent. Starting setup needs write consent,
+although it uses GET. Omit `--intake-channel-id` to keep the current channel;
+pass an empty value to clear it. MCP also accepts explicit null to clear.
+No callback, OAuth code exchange, token provisioning, token read or disconnect
+tool is exposed. No change is retried automatically after an uncertain outcome.
+
+Confirma el correo y el rol con el usuario antes de invitar. La persona invitada
+recibe el enlace por correo. Usa la aplicación web para invitaciones de plataforma.
+Abre el enlace de Slack y selecciona Permitir. El enlace caduca en minutos.
+Actualiza o vuelve a conectar y solicita otro enlace si caduca. Consulta el estado
+después del permiso en Slack. Omite el canal para conservarlo; vacío o null lo borra.
+
+Requires the matching API release. Do not release these clients ahead of it.
+The API owns role, tenant, Station, duplicate, rate-limit and consent checks.
+Machine invitation access requires a live acting-user binding, an organization
+and unrestricted Station scope. The service account remains the audit actor.
+Errors retain structured API codes and distinguish 400 invalid requests, 401
+authentication, 403 authority, 404 missing/unavailable, 409 conflicts, 422 invalid
+fields, 429 rate limits and 503 temporary infrastructure failures.
+
+The customer package exposes CLI and local stdio MCP with browser/S256 OAuth.
+It has no hosted endpoint or separate ChatGPT plugin and no machine login.
+Request fresh exact operation consent and `nova:read nova:write` for writes.
+
+### DSP Body repair decisions
+
+Select a quote with `select_body_repair_quote` (`body_repair.quotes.select.v1`).
+Required: `request_ref`, `quote_id`. Optional: `pickup_details`, `suggested_time`,
+`grade` (3–5), `scope` (`new_damage`), `pickup_report_id`. Pickup details require
+`van_location` and `key_location`; optional fields are `address`, `contact_name`,
+`contact_phone`, `access_notes`, `expected_version`. A suggested time requires
+`proposed_date` (ISO date), `pickup_window`, `reason`, and pickup details.
+Selection records the shop-side lead fee and collects no DSP payment. Referral
+credit requires the browser; these tools do not accept or send that field.
+
+Use `confirm_body_repair_pickup` (`body_repair.pickup.confirm.v1`) for the first
+fleet answer, with `van_location`, `key_location`, and `expected_version` from
+the read's `pickup_schedule_version`. Use `accept_body_repair_pickup`
+(`body_repair.pickup.accept.v1`) for a later shop offer after locations are saved.
+Acceptance requires `expected_version` and does not accept `return_date`.
+Use version 0 explicitly for legacy orders. Read after 409 or an unknown outcome
+before another decision. Writes are sent once, without automatic retries.
+
+Each operation needs current role, fleet/Station access and explicit write
+consent. Existing grants do not expand; connect again to review new permissions.
+400 means invalid quote/logistics; 401 means invalid authentication; 403 means
+consent/role/Station/offer-side refusal; 404 means unavailable order/quote;
+409 means stale version, state, dates or custody; 422 means invalid fields;
+503 means unavailable Station policy. Reads retain native response fields.
+
+Body order reads surface `browser_action` with an absolute Nova web URL and
+bilingual guidance, including when `payment_url` is null. `sign_off` opens the
+report page; `pay` opens the payment page. An HTTPS `payment_url` is labeled
+"Invoice or receipt / Factura o recibo" without a payment instruction. Invalid
+links are omitted with a bilingual note. Sign-off and payment must finish in the
+browser; no write tool performs them. At `awaiting_return`, the DSP has no physical-return step.
+The shop records check-in after the payment guard. No deposit step is added.
+
+Selecciona una cotización y confirma la recogida con los permisos indicados.
+Envía `pickup_schedule_version` como `expected_version`. Consulta la orden después
+de un conflicto o resultado desconocido antes de otro intento. El crédito por
+recomendación, la aprobación final y el pago requieren el navegador. El taller
+registra la entrada del van después de comprobar el pago; el DSP no registra la devolución.
+
+Release these commands only after the matching Nova API is available.
+
+Commands use the same fields as the tools:
+
+```sh
+nova body-repair select-quote BRR-7 --quote-id BRQ-9 --grade 4
+nova body-repair confirm-pickup BRR-7 --expected-version 7 --van-location 'Bay 2' --key-location Office
+nova body-repair accept-pickup BRR-7 --expected-version 8
+```
+
+`--pickup-details` and `--suggested-time` accept JSON objects (at most 64 KiB each).

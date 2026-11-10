@@ -3,12 +3,17 @@
 import re
 
 PDF_ROUTES = {
+    r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[1-9][0-9]*/fmc\.pdf": "capacity.fmc_packet.get.v1",
     r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/invoice": "body_repair.documents.invoice.read.v1",
     r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/quote": "body_repair.documents.quote.read.v1",
     r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/scope": "body_repair.documents.scope.read.v1",
 }
 
 READ_ROUTES = {
+    r"/body-repair/repair-leads": "body_repair.repair_leads.list.v1",
+    r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/quotes": "body_repair.quotes.list.v1",
+    r"/auth/invitations": "invitations.list.v1",
+    r"/slack/installation/status": "slack.status.get.v1",
     r"/defect-bundle-offers/staff/evidence": "capacity.evidence.list.v1",
     r"/defect-bundle-offers/staff/evidence/[0-9]+": "capacity.evidence.get.v1",
     r"/defect-bundle-offers/staff/evidence/[0-9]+/content": "capacity.evidence.content.v1",
@@ -91,7 +96,7 @@ READ_ROUTES = {
     r"/assistant/defects": "defects.list.v1",
     r"/assistant/defects/(?:FD-)?[0-9]+": "defects.get.v1",
 }
-PUBLIC_READS = {"/health", "/health/ready"}
+PUBLIC_READS = {"/health", "/health/ready", "/assistant-announcements"}
 
 
 def admitted_read(path):
