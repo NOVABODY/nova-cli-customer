@@ -37,7 +37,6 @@ from nova_cli_public import (
     scheduled_work,
     scorecard_reads,
     shop_ratings,
-
     team_setup,
     tire_vendor_setup,
     vehicle_metadata,
