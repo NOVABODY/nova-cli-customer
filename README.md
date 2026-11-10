@@ -688,3 +688,55 @@ policy; `--reroute` and `--no-reroute` explicitly select another behavior.
 MCP exposes `list_defect_opportunities`, `accept_defect`, and `reject_defect`.
 Decisions require write access and the corresponding consent or machine
 permissions. After an unknown outcome, read the defect before another attempt.
+
+### DSP Body repair decisions
+
+Select a quote with `select_body_repair_quote` (`body_repair.quotes.select.v1`).
+Required: `request_ref`, `quote_id`. Optional: `pickup_details`, `suggested_time`,
+`grade` (3–5), `scope` (`new_damage`), `pickup_report_id`. Pickup details require
+`van_location` and `key_location`; optional fields are `address`, `contact_name`,
+`contact_phone`, `access_notes`, `expected_version`. A suggested time requires
+`proposed_date` (ISO date), `pickup_window`, `reason`, and pickup details.
+Selection records the shop-side lead fee and collects no DSP payment. Referral
+credit requires the browser; these tools do not accept or send that field.
+
+Use `confirm_body_repair_pickup` (`body_repair.pickup.confirm.v1`) for the first
+fleet answer, with `van_location`, `key_location`, and `expected_version` from
+the read's `pickup_schedule_version`. Use `accept_body_repair_pickup`
+(`body_repair.pickup.accept.v1`) for a later shop offer after locations are saved.
+Acceptance requires `expected_version` and does not accept `return_date`.
+Use version 0 explicitly for legacy orders. Read after 409 or an unknown outcome
+before another decision. Writes are sent once, without automatic retries.
+
+Each operation needs current role, fleet/Station access and explicit write
+consent. Existing grants do not expand; connect again to review new permissions.
+400 means invalid quote/logistics; 401 means invalid authentication; 403 means
+consent/role/Station/offer-side refusal; 404 means unavailable order/quote;
+409 means stale version, state, dates or custody; 422 means invalid fields;
+503 means unavailable Station policy. Reads retain native response fields.
+
+Body order reads surface `browser_action` with an absolute Nova web URL and
+bilingual guidance, including when `payment_url` is null. `sign_off` opens the
+report page; `pay` opens the payment page. An HTTPS `payment_url` is labeled
+"Invoice or receipt / Factura o recibo" without a payment instruction. Invalid
+links are omitted with a bilingual note. Sign-off and payment must finish in the
+browser; no write tool performs them. At `awaiting_return`, the DSP has no physical-return step.
+The shop records check-in after the payment guard. No deposit step is added.
+
+Selecciona una cotización y confirma la recogida con los permisos indicados.
+Envía `pickup_schedule_version` como `expected_version`. Consulta la orden después
+de un conflicto o resultado desconocido antes de otro intento. El crédito por
+recomendación, la aprobación final y el pago requieren el navegador. El taller
+registra la entrada del van después de comprobar el pago; el DSP no registra la devolución.
+
+Release these commands only after the matching Nova API is available.
+
+Commands use the same fields as the tools:
+
+```sh
+nova body-repair select-quote BRR-7 --quote-id BRQ-9 --grade 4
+nova body-repair confirm-pickup BRR-7 --expected-version 7 --van-location 'Bay 2' --key-location Office
+nova body-repair accept-pickup BRR-7 --expected-version 8
+```
+
+`--pickup-details` and `--suggested-time` accept JSON objects (at most 64 KiB each).

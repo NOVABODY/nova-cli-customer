@@ -251,6 +251,11 @@ Los permisos existentes no incluyen estas operaciones nuevas. Autoriza la conexi
 | `nova defect accept` | `accept_defect` | remote_write | `nova:read nova:write` |
 | `nova defect reject` | `reject_defect` | remote_write | `nova:read nova:write` |
 
+| `nova body-repair select-quote` | `select_body_repair_quote` | remote_write | `nova:read nova:write` |
+| `nova body-repair confirm-pickup` | `confirm_body_repair_pickup` | remote_write | `nova:read nova:write` |
+| `nova body-repair accept-pickup` | `accept_body_repair_pickup` | remote_write | `nova:read nova:write` |
+
+See [DSP Body repair decisions](../README.md#dsp-body-repair-decisions) for quote selection, versioned pickup, and browser sign-off/payment.
 
 `nova auth login` includes `announcements` with current public features and repair
 offers. Run `nova announcements --json` or MCP `get_announcements` to refresh it.
