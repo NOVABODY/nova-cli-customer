@@ -884,3 +884,19 @@ nova body-repair accept-pickup BRR-7 --expected-version 8
 ```
 
 `--pickup-details` and `--suggested-time` accept JSON objects (at most 64 KiB each).
+
+### Reject one customer-paid defect before a quote
+
+With the coordinated API update, use `nova work-order decline WO-42
+--defect-id 7 --decline-reason-code parts_unavailable`. Local MCP accepts
+`defect_id` on `decline_work_order`. It targets one unquoted CMR/CNMR defect,
+including an unaccepted same-van candidate; sibling work is preserved. The API
+owns reason-based routing and rejects quoted, priced, started, or foreign scope.
+The canceled-order response identifies `source_work_order_id` and
+`declined_defect_id`. No quote is sent. Read the source and returned order after
+an unknown result before any further write. The existing decline grant applies.
+
+Con la actualización coordinada de la API, usa `--defect-id` o `defect_id` en
+MCP para rechazar solo un defecto CMR/CNMR sin cotización. La API aplica el
+motivo y conserva los otros trabajos. No se envía una cotización. Consulta el
+resultado antes de otra escritura si el resultado es desconocido.
