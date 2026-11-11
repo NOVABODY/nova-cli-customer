@@ -27,6 +27,20 @@ for pricing in (
     CASES.append(('vans', 'list_bought_bundle_vans', {'ref': 'B-1'}, '/bundle-offers/B-1/vans',
         {'vans': [{'unit': 1, 'state': 'lapsed', 'workflow': WORKFLOW, 'pricing': pricing}]}))
 
+
+SLIDING = {'rule': 'sliding_allocations_v3', 'first_limit': 1000, 'second_limit': 2000,
+           'first_percent': 8, 'second_percent': 6, 'tail_percent': 4,
+           'payment_rule': 'approved_readiness_v1'}
+SLIDING_REPORT = {'ref': 'B-1', 'status': 'open', 'report': {'pricing': SLIDING,
+    'units': [{'unit': 1, 'vin': '1FTBW2CM0NKA99999', 'asking_price': 80.03}]}}
+CASES.append(('report', 'get_bundle_offer_report', {'ref': 'B-1'}, '/bundle-offers/B-1/report', SLIDING_REPORT))
+
+TRANSPORT = {**SLIDING, 'rule': 'sliding_transport_v5', 'first_percent': 5,
+             'second_percent': 4, 'tail_percent': 3, 'transport_fee': 50}
+TRANSPORT_REPORT = {**SLIDING_REPORT, 'report': {'pricing': TRANSPORT,
+    'units': [{'unit': 1, 'asking_price': 100.02, 'lines': [{'allocated_price': 50.02}]}]}}
+CASES.append(('report', 'get_bundle_offer_report', {'ref': 'B-1'}, '/bundle-offers/B-1/report', TRANSPORT_REPORT))
+
 class Api:
     profile = SimpleNamespace(auth='service')
 
@@ -71,3 +85,20 @@ def test_malformed_response_is_not_presented_as_a_valid_workflow(value):
     from nova_cli_public.errors import ApiError
     with pytest.raises(ApiError):
         execute(Api(value), 'list_bought_bundle_vans', {'ref': 'B-1'})
+
+
+def test_incomplete_sliding_terms_are_rejected():
+    from nova_cli_public.bundle_workflow import Pricing
+
+    with pytest.raises(ValidationError):
+        Pricing.model_validate({key: value for key, value in SLIDING.items() if key != 'tail_percent'})
+
+
+@pytest.mark.parametrize('missing', ['first_percent', 'transport_fee'])
+def test_incomplete_transport_terms_are_rejected(missing):
+    from pydantic import ValidationError
+
+    from nova_cli_public.bundle_workflow import Pricing
+
+    with pytest.raises(ValidationError):
+        Pricing.model_validate({key: value for key, value in TRANSPORT.items() if key != missing})
