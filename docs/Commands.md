@@ -390,3 +390,32 @@ Supported values: AMR, CMR, CNMR, Body, PM, Tires, Detailing, Netradyne. A corre
 
 Solo los administradores del sitio pueden cambiar la categoría de reparación. Consulta primero el defecto y usa su valor exacto de `updated_at`.
 El permiso es `defects.category.update.v1`. El cambio queda registrado y no cambia el taller, los presupuestos ni la facturación existentes.
+
+
+### Inspection quality review / Revisión de calidad de inspecciones
+
+| Command | MCP tool | Effects | Scope |
+|---|---|---|---|
+| `nova inspection-review queue` | `list_inspection_reviews` | remote_read | `nova:read` |
+| `nova inspection-review show` | `get_inspection_review` | remote_read | `nova:read` |
+| `nova inspection-review start` | `start_inspection_review` | remote_write | `nova:read nova:write` |
+| `nova inspection-review set` | `set_inspection_review_item` | remote_write | `nova:read nova:write` |
+| `nova inspection-review complete` | `complete_inspection_review` | remote_write | `nova:read nova:write` |
+| `nova inspection-review quality` | `get_inspector_quality` | remote_read | `nova:read` |
+| `nova inspection-review feedback` | `list_inspection_review_feedback` | remote_read | `nova:read` |
+
+Site admins can review platform inspections. Use the current defect update time
+for a verdict. Comments are visible to the customer. Complete the review to apply
+its score. An invalid finding after the decision window closes affects only the
+score. Category changes preserve routing and prices. Inspectors can read their
+own quality and feedback. Each command needs its dedicated operation consent.
+Read the review before another attempt when a change outcome is unknown.
+
+Los administradores del sitio pueden revisar inspecciones de la plataforma. Usa
+la hora de actualización actual del defecto para guardar un resultado. Los
+comentarios son visibles para el cliente. Completa la revisión para aplicar su
+puntuación. Un hallazgo no válido después del plazo de decisión solo afecta la
+puntuación. Los cambios de categoría mantienen el taller y los precios. Cada
+inspector puede consultar su propia calidad y comentarios. Cada comando requiere
+su permiso específico. Consulta la revisión antes de otro intento si no se conoce
+el resultado de un cambio.
