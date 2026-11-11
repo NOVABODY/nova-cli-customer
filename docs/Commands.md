@@ -6,6 +6,12 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova cmr-quote list` | `list_cmr_quotes` | remote_read | `nova:read` |
+| `nova cmr-quote get` | `get_cmr_quote` | remote_read | `nova:read` |
+| `nova cmr-quote submit` | `submit_cmr_quote` | remote_write | `nova:read nova:write` |
+| `nova cmr-quote withdraw` | `withdraw_cmr_quote` | remote_write | `nova:read nova:write` |
+| `nova cmr-quote dismiss` | `dismiss_cmr_quote_line` | remote_write | `nova:read nova:write` |
+| `nova cmr-quote decide` | `decide_cmr_quote_line` | remote_write | `nova:read nova:write` |
 | `nova skills list` | `list_skills` | remote_read | `nova:read` |
 | `nova skills get` | `get_skill` | remote_read | `nova:read` |
 | `nova body-repair repair-leads` | `list_body_repair_leads` | remote_read | `nova:read` |
