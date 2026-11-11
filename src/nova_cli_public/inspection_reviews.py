@@ -13,7 +13,7 @@ from nova_cli_public.errors import ApiError
 
 Identifier = Annotated[int, Field(strict=True, gt=0, le=2147483647)]
 Comment = Annotated[str, StringConstraints(strip_whitespace=True, max_length=2000)]
-Token = Annotated[str, StringConstraints(min_length=1, max_length=512, pattern=r'^\S+$')]
+Token = Annotated[str, StringConstraints(min_length=1, max_length=128, pattern=r'^\S+$')]
 UNKNOWN = 'outcome_unknown: Read the review before another attempt. / Consulta la revisión antes de otro intento.'
 STALE = ('inspection_review_preview_stale: The review changed after the preview. Nothing was applied. '
     'Check the new effects, then preview and complete again. / La revisión cambió después de la vista previa. '
@@ -21,9 +21,18 @@ STALE = ('inspection_review_preview_stale: The review changed after the preview.
 UNDECIDED = ('inspection_review_undecided: Some defects have no decision. Set a verdict for each one, or use '
     'confirm_remaining to confirm the rest. Nothing was applied. / Algunos defectos no tienen decisión. Guarda un '
     'resultado para cada uno o usa confirm_remaining para confirmar el resto. No se aplicó nada.')
-
+ALREADY_APPLIED = ('An earlier review pass already applied this correction, so this draft cannot change it. Read the '
+    'review and keep that decision. / Una revisión anterior ya aplicó esta corrección y este borrador no puede '
+    'cambiarla. Consulta la revisión y mantén esa decisión.')
+GROUP_LOCKED = ('recategorize_not_allowed: The repair group of this defect cannot be changed now. Choose Confirm or '
+    'Not valid instead. Nothing was applied. / El grupo de reparación de este defecto no se puede cambiar ahora. '
+    'Elige Confirmar o No válido. No se aplicó nada.')
 BLOCKED = ('inspection_review_blocked: Change the verdict of the blocked defects listed above. Nothing was applied. '
     '/ Cambia el resultado de los defectos bloqueados de la lista. No se aplicó nada.')
+# 409 refusals that the caller can fix; each message says how.
+REFUSALS = {'inspection_review_undecided': UNDECIDED, 'recategorize_not_allowed': GROUP_LOCKED,
+    'quality_rejection_already_applied': 'quality_rejection_already_applied: ' + ALREADY_APPLIED,
+    'quality_category_already_applied': 'quality_category_already_applied: ' + ALREADY_APPLIED}
 
 
 class Query(BaseModel):
@@ -34,13 +43,15 @@ class Query(BaseModel):
 class Queue(Query):
     status: Literal['unreviewed', 'in_progress', 'completed', 'all'] = 'unreviewed'
     dsp_id: Identifier | None = None
-    since: str | None = None
-    limit: int = Field(default=100, ge=1, le=200)
+    station_code: Annotated[str, StringConstraints(pattern=r'^[A-Za-z0-9-]{1,16}$')] | None = None
+    submitted_since: str | None = None
+    has_critical: bool | None = None
+    limit: int = Field(default=50, ge=1, le=200)
     offset: int = Field(default=0, ge=0)
 
     @model_validator(mode='after')
     def valid_since(self):
-        if self.since is not None and datetime.fromisoformat(self.since).tzinfo is None:
+        if self.submitted_since is not None and datetime.fromisoformat(self.submitted_since).tzinfo is None:
             raise ValueError('Use a date with a time zone. / Usa una fecha con zona horaria.')
         return self
 
@@ -50,6 +61,8 @@ class Quality(Query):
 
 
 class Feedback(Quality):
+    verdict: Literal['corrections', 'confirmed', 'all'] = 'corrections'
+    unseen: bool | None = None
     limit: int = Field(default=100, ge=1, le=200)
     offset: int = Field(default=0, ge=0)
 
@@ -81,8 +94,8 @@ class Item(Observation):
         return self
 
 
-class Summary(BaseModel):
-    model_config = ConfigDict(extra='forbid', strict=True)
+class Summary(Quality):
+    """Inspectors read their own; site admins must choose an inspector_id."""
 
 
 class Seen(BaseModel):
@@ -114,8 +127,8 @@ ACTIONS = dict(zip(MODELS, ['queue', 'show', 'start', 'set', 'unset', 'preview',
     'feedback-summary', 'feedback-seen']))
 WRITES = {'start_inspection_review', SET, UNSET, COMPLETE, SEEN}
 GRANTS = dict(zip(MODELS, ['inspection_reviews.queue.list.v1', 'inspection_reviews.get.v1',
-    'inspection_reviews.start.v1', 'inspection_reviews.items.set.v1', 'inspection_reviews.items.clear.v1',
-    'inspection_reviews.preview.get.v1', 'inspection_reviews.complete.v1',
+    'inspection_reviews.start.v1', 'inspection_reviews.items.set.v1', 'inspection_reviews.items.unset.v1',
+    'inspection_reviews.completion_preview.get.v1', 'inspection_reviews.complete.v1',
     'inspection_reviews.quality.get.v1', 'inspection_reviews.feedback.list.v1',
     'inspection_reviews.feedback.summary.get.v1', 'inspection_reviews.feedback.seen.v1']))
 DESCRIPTIONS = dict(zip(MODELS, ['Read the inspection review queue. / Consulta la cola de revisión de inspecciones.',
@@ -140,6 +153,10 @@ EFFECTS = {
 }
 
 
+def _flags(data):
+    return {key: str(value).lower() if isinstance(value, bool) else value for key, value in data.items()}
+
+
 def request_parts(name, query):
     data = query.model_dump(exclude_none=True)
     root = '/inspection-reviews'
@@ -155,11 +172,11 @@ def request_parts(name, query):
     if name == 'get_inspection_review':
         return 'GET', f'{root}/{data["review_id"]}', {}
     if name == SUMMARY:
-        return 'GET', f'{root}/feedback/summary', {}
+        return 'GET', f'{root}/feedback/summary', {'query': _flags(data)}
     if name == SEEN:
         return 'POST', f'{root}/feedback/{data["item_id"]}/seen', {'retry_auth': False}
     suffix = {'list_inspection_reviews': 'queue', 'get_inspector_quality': 'quality', 'list_inspection_review_feedback': 'feedback'}[name]
-    return 'GET', f'{root}/{suffix}', {'query': data}
+    return 'GET', f'{root}/{suffix}', {'query': _flags(data)}
 
 
 def effect_lines(preview):
@@ -210,8 +227,8 @@ def execute(client, name, arguments):
             fresh = _fresh_preview(client, exc, query)
             message = '\n'.join([STALE, *effect_lines(fresh or {})])
             raise ApiError(message, status=409, code=exc.code, detail={'preview': fresh}) from exc
-        if name == COMPLETE and exc.status == 409 and exc.code == 'inspection_review_undecided':
-            raise ApiError(UNDECIDED, status=409, code=exc.code, detail=exc.detail) from exc
+        if exc.status == 409 and exc.code in REFUSALS:
+            raise ApiError(REFUSALS[exc.code], status=409, code=exc.code, detail=exc.detail) from exc
         raise
     if name == UNSET and result is None:
         return {'review_id': query.review_id, 'observation_id': query.observation_id, 'verdict': None}
@@ -254,8 +271,8 @@ def declarations():
         for field, info in CLI_MODELS[name].model_fields.items():
             positional = field in {'review_id', 'observation_id', 'inspection_id', 'item_id'}
             flag = '--' + field.replace('_', '-')
-            if info.annotation is bool:
-                arguments.append(([flag], {'action': 'store_true'}))
+            if info.annotation in (bool, bool | None):
+                arguments.append(([flag], {'action': 'store_true', 'default': info.default}))
                 continue
             options = {'type': 'int'} if field.endswith('_id') or field in {'days', 'limit', 'offset'} else {}
             if not positional:

@@ -451,15 +451,23 @@ intento si no se conoce el resultado de un cambio.
 
 
 Inspection queue filters: `--status unreviewed|in_progress|completed|all`,
-`--dsp-id`, `--inspector-id`, `--since`, `--limit` (default 100, maximum 200),
-and `--offset` (default 0). Feedback accepts `--inspector-id`, `--days`
-(default 30), `--limit`, and `--offset`. Quality also defaults to 30 days.
-Use `offset + limit` to request the next page. MCP uses the same field names
-with underscores, for example `dsp_id` and `inspector_id`.
+`--dsp-id`, `--inspector-id`, `--station-code`, `--submitted-since` (a time with a time
+zone), `--has-critical`, `--limit` (default 50, maximum 200), and `--offset` (default 0).
+Feedback accepts `--inspector-id`, `--days` (default 30), `--verdict
+corrections|confirmed|all` (default `corrections`), `--unseen`, `--limit` (default 100),
+and `--offset`. Quality also defaults to 30 days. Feedback summary
+accepts `--inspector-id` and `--days`; site admins must give `--inspector-id`, and
+inspectors read their own. Only the inspector who owns an item can mark it seen
+(admins and service accounts get 403). Use `offset + limit` to request
+the next page. MCP uses the same field names with underscores, for example
+`submitted_since` and `inspector_id`.
 
 Filtros de la cola: `--status unreviewed|in_progress|completed|all`, `--dsp-id`,
-`--inspector-id`, `--since`, `--limit` (100 por defecto, máximo 200) y
-`--offset` (0 por defecto). Los comentarios aceptan `--inspector-id`,
-`--days` (30 por defecto), `--limit` y `--offset`. La calidad también usa
-30 días por defecto. Usa `offset + limit` para solicitar la página siguiente.
+`--inspector-id`, `--station-code`, `--submitted-since` (con zona horaria),
+`--has-critical`, `--limit` (50 por defecto, máximo 200) y `--offset` (0 por defecto).
+Los comentarios aceptan `--inspector-id`, `--days` (30 por defecto), `--verdict`
+(`corrections` por defecto), `--unseen`, `--limit` y `--offset`. La calidad también usa
+30 días por defecto. El resumen acepta `--inspector-id` y
+`--days`; los administradores deben indicar `--inspector-id`. Solo el inspector al que
+pertenece un comentario puede marcarlo como visto. Usa `offset + limit` para solicitar la página siguiente.
 Las herramientas MCP usan los mismos nombres de campo con guiones bajos.

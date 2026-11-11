@@ -5,7 +5,7 @@ import re
 WRITE_ROUTES = {
     ("POST", r"/inspection-reviews"): "inspection_reviews.start.v1",
     ("PUT", r"/inspection-reviews/[1-9][0-9]{0,9}/items/[1-9][0-9]{0,9}"): "inspection_reviews.items.set.v1",
-    ("DELETE", r"/inspection-reviews/[1-9][0-9]{0,9}/items/[1-9][0-9]{0,9}"): "inspection_reviews.items.clear.v1",
+    ("DELETE", r"/inspection-reviews/[1-9][0-9]{0,9}/items/[1-9][0-9]{0,9}"): "inspection_reviews.items.unset.v1",
     ("POST", r"/inspection-reviews/[1-9][0-9]{0,9}/complete"): "inspection_reviews.complete.v1",
     ("POST", r"/inspection-reviews/feedback/[1-9][0-9]{0,9}/seen"): "inspection_reviews.feedback.seen.v1",
     ('POST', r'/cmr-quotes'): 'cmr_quotes.submit.v1',

@@ -15,7 +15,7 @@ READ_ROUTES = {
     r"/inspection-reviews/feedback": "inspection_reviews.feedback.list.v1",
     r"/inspection-reviews/feedback/summary": "inspection_reviews.feedback.summary.get.v1",
     r"/inspection-reviews/[1-9][0-9]{0,9}": "inspection_reviews.get.v1",
-    r"/inspection-reviews/[1-9][0-9]{0,9}/completion-preview": "inspection_reviews.preview.get.v1",
+    r"/inspection-reviews/[1-9][0-9]{0,9}/completion-preview": "inspection_reviews.completion_preview.get.v1",
     r'/cmr-quotes': 'cmr_quotes.list.v1',
     r'/cmr-quotes/[1-9][0-9]{0,9}': 'cmr_quotes.get.v1',
     r"/agent-skills(?:/nova-[a-z0-9-]+)?": None,

@@ -59,8 +59,8 @@ def test_cli_and_mcp_share_the_draft_payload_and_consent(monkeypatch):
 
 
 @pytest.mark.parametrize('command,operation,scope,method', [
-    ('inspection-review unset', 'inspection_reviews.items.clear.v1', 'nova:read nova:write', 'DELETE'),
-    ('inspection-review preview', 'inspection_reviews.preview.get.v1', 'nova:read', 'GET'),
+    ('inspection-review unset', 'inspection_reviews.items.unset.v1', 'nova:read nova:write', 'DELETE'),
+    ('inspection-review preview', 'inspection_reviews.completion_preview.get.v1', 'nova:read', 'GET'),
     ('inspection-review complete', 'inspection_reviews.complete.v1', 'nova:read nova:write', 'POST'),
     ('inspection-review feedback-summary', 'inspection_reviews.feedback.summary.get.v1', 'nova:read', 'GET'),
     ('inspection-review feedback-seen', 'inspection_reviews.feedback.seen.v1', 'nova:read nova:write', 'POST'),
@@ -108,9 +108,12 @@ def test_feedback_summary_through_cli_and_mcp(monkeypatch):
     summary = {'unseen_count': 2, 'latest': None, 'score': 91.0, 'band': 'good'}
     api = SimpleNamespace(request=Mock(return_value=summary))
     assert run_cli(monkeypatch, api, 'feedback-summary') == summary
+    assert run_cli(monkeypatch, api, 'feedback-summary', '--inspector-id', '5') == summary
     _, [result] = call_tools(api, ('get_inspection_review_feedback_summary', {}))
     assert result.structuredContent == summary
-    assert api.request.call_args_list == [(('GET', '/inspection-reviews/feedback/summary'), {})] * 2
+    assert api.request.call_args_list == [(('GET', '/inspection-reviews/feedback/summary'), {'query': {'days': 30}}),
+        (('GET', '/inspection-reviews/feedback/summary'), {'query': {'inspector_id': 5, 'days': 30}}),
+        (('GET', '/inspection-reviews/feedback/summary'), {'query': {'days': 30}})]
 
 
 def test_preview_is_a_read(monkeypatch):
@@ -192,8 +195,13 @@ def test_unknown_write_is_not_replayed(name, arguments):
 @pytest.mark.parametrize('action,flags,tool,path,params', [
     ('queue', ['--status', 'completed', '--limit', '200', '--offset', '200'],
      'list_inspection_reviews', '/inspection-reviews/queue', {'status': 'completed', 'limit': 200, 'offset': 200}),
+    ('queue', ['--submitted-since', '2026-11-01T00:00:00Z', '--station-code', 'DCA1', '--has-critical'],
+     'list_inspection_reviews', '/inspection-reviews/queue', {'status': 'unreviewed', 'station_code': 'DCA1',
+     'submitted_since': '2026-11-01T00:00:00Z', 'has_critical': 'true', 'limit': 50, 'offset': 0}),
     ('feedback', ['--days', '60', '--limit', '50', '--offset', '100'],
-     'list_inspection_review_feedback', '/inspection-reviews/feedback', {'days': 60, 'limit': 50, 'offset': 100}),
+     'list_inspection_review_feedback', '/inspection-reviews/feedback', {'days': 60, 'verdict': 'corrections', 'limit': 50, 'offset': 100}),
+    ('feedback', ['--verdict', 'all', '--unseen'],
+     'list_inspection_review_feedback', '/inspection-reviews/feedback', {'days': 30, 'verdict': 'all', 'unseen': 'true', 'limit': 100, 'offset': 0}),
     ('quality', [], 'get_inspector_quality', '/inspection-reviews/quality', {'days': 30}),
 ])
 def test_review_cli_forwards_filters_and_page(monkeypatch, action, flags, tool, path, params):
@@ -228,7 +236,7 @@ def test_local_mcp_review_schema_exposes_pagination():
     feedback = tools['list_inspection_review_feedback'].inputSchema['properties']
     assert feedback['days']['default'] == 30 and feedback['offset']['default'] == 0
     assert not result.isError
-    api.request.assert_called_once_with('GET', '/inspection-reviews/feedback', query={'days': 60, 'limit': 50, 'offset': 100})
+    api.request.assert_called_once_with('GET', '/inspection-reviews/feedback', query={'days': 60, 'verdict': 'corrections', 'limit': 50, 'offset': 100})
 
 
 class Opener:
@@ -263,3 +271,27 @@ def test_real_client_sends_query_and_reads_the_stale_body():
     assert opener.calls[0].full_url == 'https://nova.example/api/inspection-reviews/queue?status=in_progress&limit=5&offset=0'
     assert json.loads(opener.calls[1].data) == {'confirm_remaining': False, 'preview_token': 'tok-1'}
     assert error.value.detail['preview']['effects'] == PREVIEW['effects'] and len(opener.calls) == 2
+
+
+@pytest.mark.parametrize('name,arguments,code', [
+    ('set_inspection_review_item', {**ITEM, 'verdict': 'confirmed', 'invalid_reason': None}, 'quality_rejection_already_applied'),
+    ('unset_inspection_review_item', {'review_id': 4, 'observation_id': 8}, 'quality_category_already_applied'),
+    ('set_inspection_review_item', {'review_id': 4, 'observation_id': 8, 'verdict': 'recategorized', 'group_to': 'AMR'}, 'recategorize_not_allowed'),
+    ('complete_inspection_review', {'review_id': 4, 'preview_token': 'tok-1'}, 'recategorize_not_allowed'),
+])
+def test_fixable_refusals_say_what_to_do(name, arguments, code):
+    api = SimpleNamespace(request=Mock(side_effect=ApiError('refused', status=409, code=code)))
+    with pytest.raises(ApiError) as error:
+        inspection_reviews.execute(api, name, {key: value for key, value in arguments.items() if value is not None})
+    assert error.value.code == code and str(error.value).startswith(code + ':')
+    assert ('Nothing was applied' if code == 'recategorize_not_allowed' else 'earlier review pass') in str(error.value)
+    assert api.request.call_count == 1
+
+
+def test_queue_rejects_the_old_since_filter_and_long_tokens():
+    api = SimpleNamespace(request=Mock())
+    with pytest.raises(ValidationError):
+        inspection_reviews.execute(api, 'list_inspection_reviews', {'since': '2026-11-01T00:00:00Z'})
+    with pytest.raises(ValidationError):
+        inspection_reviews.execute(api, 'complete_inspection_review', {'review_id': 4, 'preview_token': 'x' * 129})
+    api.request.assert_not_called()
