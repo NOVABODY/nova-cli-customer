@@ -33,7 +33,7 @@ class Summary(Record):
     timezone: str
 
 class Pricing(Record):
-    rule: Literal['allocated_declines_v2', 'legacy_tiers', 'sliding_allocations_v3']
+    rule: Literal['allocated_declines_v2', 'legacy_tiers', 'sliding_allocations_v3', 'sliding_transport_v5']
     threshold: int | float | None = None
     high: int | float | None = None
     low: int | float | None = None
@@ -42,11 +42,14 @@ class Pricing(Record):
     first_percent: int | float | None = None
     second_percent: int | float | None = None
     tail_percent: int | float | None = None
+    transport_fee: int | float | None = Field(default=None, ge=0)
 
     @model_validator(mode='after')
     def complete_frozen_terms(self):
-        sliding = self.rule == 'sliding_allocations_v3'
+        sliding = self.rule in ('sliding_allocations_v3', 'sliding_transport_v5')
         required = ('first_limit', 'second_limit', 'first_percent', 'second_percent', 'tail_percent') if sliding else ('threshold', 'high', 'low')
+        if self.rule == 'sliding_transport_v5':
+            required = (*required, 'transport_fee')
         if not set(required) <= self.model_fields_set or (sliding and any(getattr(self, key) is None for key in required)):
             raise ValueError('Incomplete frozen bundle pricing')
         return self
