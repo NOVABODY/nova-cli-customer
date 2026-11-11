@@ -23,6 +23,7 @@ from nova_cli_public import (
     bundle_shop_steps,
     bundle_workflow,
     capacity_evidence,
+    cmr_quotes,
     defect_cost,
     defect_reviews,
     defect_routing,
@@ -57,8 +58,8 @@ from nova_cli_public.events import run_event_tool
 from nova_cli_public.read_commands import READ_COMMANDS
 from nova_cli_public.write_commands import WRITE_COMMANDS
 
-ALL_COMMANDS = bundle_fee.COMMANDS + body_quotes.COMMANDS + capacity_evidence.COMMANDS + tire_vendor_setup.COMMANDS + first_recap.COMMANDS + pave_scheduling.COMMANDS + body_intake.COMMANDS + defect_routing.COMMANDS + bundle_workflow.COMMANDS + bundle_address.COMMANDS + bundle_returns.COMMANDS + bundle_schedules.COMMANDS + bundle_sharing.COMMANDS + vendor_agreement.COMMANDS + inspection_confirmations.COMMANDS + scheduled_work.COMMANDS + fleet_decisions.COMMANDS + READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + vehicle_note_edit.COMMANDS + defect_cost.COMMANDS + repair_requests.COMMANDS + repair_cancel.COMMANDS + aggregate_reports.COMMANDS + scorecard_reads.COMMANDS + rental_dismissal.COMMANDS + quality_reports.COMMANDS + fmc_choice.COMMANDS + external_preview.COMMANDS + bundle_shop_steps.COMMANDS + shop_ratings.COMMANDS + team_setup.COMMANDS + skills.COMMANDS
-WRITE_TOOLS = bundle_fee.WRITES | body_quotes.WRITES | capacity_evidence.WRITES | tire_vendor_setup.WRITES | first_recap.WRITES | pave_scheduling.WRITES | body_intake.WRITES | {"route_repair_request"} | bundle_address.WRITES | {bundle_returns.NAME} | bundle_schedules.WRITES | bundle_sharing.WRITES | inspection_confirmations.WRITES | {"acknowledge_dsp_daily_work_summary"} | {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review", "update_vehicle", "create_vehicle", "update_vehicle_note", "delete_vehicle_note", "set_defect_cost", "resolve_fleet_issue", "cancel_repair_request", "dismiss_rental_routing", "set_vehicle_fmc_company"} | bundle_shop_steps.WRITES | shop_ratings.WRITES | team_setup.WRITES
+ALL_COMMANDS = cmr_quotes.COMMANDS + bundle_fee.COMMANDS + body_quotes.COMMANDS + capacity_evidence.COMMANDS + tire_vendor_setup.COMMANDS + first_recap.COMMANDS + pave_scheduling.COMMANDS + body_intake.COMMANDS + defect_routing.COMMANDS + bundle_workflow.COMMANDS + bundle_address.COMMANDS + bundle_returns.COMMANDS + bundle_schedules.COMMANDS + bundle_sharing.COMMANDS + vendor_agreement.COMMANDS + inspection_confirmations.COMMANDS + scheduled_work.COMMANDS + fleet_decisions.COMMANDS + READ_COMMANDS + WRITE_COMMANDS + EVENT_COMMANDS + CORTEX_COMMANDS + CORTEX_IMPORT_COMMANDS + defect_reviews.COMMANDS + vehicle_metadata.COMMANDS + vehicle_note_edit.COMMANDS + defect_cost.COMMANDS + repair_requests.COMMANDS + repair_cancel.COMMANDS + aggregate_reports.COMMANDS + scorecard_reads.COMMANDS + rental_dismissal.COMMANDS + quality_reports.COMMANDS + fmc_choice.COMMANDS + external_preview.COMMANDS + bundle_shop_steps.COMMANDS + shop_ratings.COMMANDS + team_setup.COMMANDS + skills.COMMANDS
+WRITE_TOOLS = cmr_quotes.WRITES | bundle_fee.WRITES | body_quotes.WRITES | capacity_evidence.WRITES | tire_vendor_setup.WRITES | first_recap.WRITES | pave_scheduling.WRITES | body_intake.WRITES | {"route_repair_request"} | bundle_address.WRITES | {bundle_returns.NAME} | bundle_schedules.WRITES | bundle_sharing.WRITES | inspection_confirmations.WRITES | {"acknowledge_dsp_daily_work_summary"} | {entry["tool"] for entry in WRITE_COMMANDS + CORTEX_IMPORT_COMMANDS} | {"approve_defect_review", "reject_defect_review", "update_vehicle", "create_vehicle", "update_vehicle_note", "delete_vehicle_note", "set_defect_cost", "resolve_fleet_issue", "cancel_repair_request", "dismiss_rental_routing", "set_vehicle_fmc_company"} | bundle_shop_steps.WRITES | shop_ratings.WRITES | team_setup.WRITES
 
 
 BY_COMMAND = {entry["command"]: entry for entry in ALL_COMMANDS}
@@ -144,6 +145,8 @@ def _inspection_date_order(value, info):
 
 
 def input_model(entry, *, mcp=False):
+    if entry['tool'] in cmr_quotes.MODELS:
+        return cmr_quotes.MODELS[entry['tool']]
     if entry["tool"] in skills.MODELS:
         return skills.MODELS[entry["tool"]]
     if entry['tool'] in bundle_shop_steps.MODELS:
@@ -416,6 +419,8 @@ class CustomerReadService:
         }
 
     def run(self, name, arguments):
+        if name in cmr_quotes.MODELS:
+            return cmr_quotes.execute(self.client, name, arguments)
         if name in bundle_shop_steps.MODELS:
             value = bundle_shop_steps.execute(self.client, name, arguments)
             return body_documents.EmbeddedDocument(value) if name == bundle_shop_steps.PDF else value

@@ -3,6 +3,10 @@
 import re
 
 WRITE_ROUTES = {
+    ('POST', r'/cmr-quotes'): 'cmr_quotes.submit.v1',
+    ('POST', r'/cmr-quotes/[1-9][0-9]{0,9}/withdraw'): 'cmr_quotes.withdraw.v1',
+    ('POST', r'/cmr-quotes/[1-9][0-9]{0,9}/lines/[1-9][0-9]{0,9}/dismiss'): 'cmr_quotes.dismiss.v1',
+    ('POST', r'/cmr-quotes/[1-9][0-9]{0,9}/lines/[1-9][0-9]{0,9}/decision'): 'cmr_quotes.decide.v1',
     ("POST", r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/scope/read"): "body_repair.scope.confirm.v1",
     ("POST", r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/quotes"): "body_repair.quotes.submit.v1",
     ("POST", r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/quotes/(?:BRQ-)?[0-9]{1,100}/withdraw"): "body_repair.quotes.withdraw.v1",

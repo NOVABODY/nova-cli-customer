@@ -12,6 +12,7 @@ Availability in discovery does not grant account access.
 | Reports | Read aggregate reports, repair ratings and problem queues, inspector/driver quality, scheduled fleet work, and daily work summaries; mark a daily summary as read. |
 | Notes and custody | Read and manage permitted van notes; read checkout history; check vans in or out with required evidence. |
 | Defects | Read catalog and defects, report and route a defect, read reviews, approve/reject a review, set cost, read photo references, and transfer permitted evidence. |
+| CMR/CNMR quotes | List, read, submit, withdraw, dismiss a line, and approve or reject a line with the current amount. |
 | Shop work | Read and create work orders; assign, schedule, accept, decline, release, cancel or complete eligible work; read activity and notes; manage supported repair-line fields. |
 | Repair requests | Read requests and repair-provider choices; preview provider choices; cancel eligible requests; dismiss a rental-routing reminder. |
 | Cortex | Review a source file with corrections, preview reviewed fleet rows, and apply permitted imports. |
@@ -41,3 +42,30 @@ File limits and transfers are described in the main guide and
 the CLI; they are not remote download links.
 
 DSP quote selection and pickup use the [named decisions](../README.md#dsp-body-repair-decisions). Sign-off and payment remain browser handoffs. The shop records physical return; no DSP return command exists.
+
+## CMR and CNMR quotes
+
+CMR and CNMR are Nova repair-category terms. Use `cmr-quote list`, `get`,
+`submit`, `withdraw`, `dismiss`, or `decide`. Amounts are integer cents.
+Submit the quote as JSON with `--data`. Use `--expected-amount-cents` for a
+line decision. The API checks the role, organization, amount, and quote state.
+
+```sh
+nova cmr-quote list --status all --defect-ids 7 --defect-ids 8
+nova cmr-quote submit --data '{"vehicle_id":"VAN-2","lines":[{"defect_id":"FD-7","amount_cents":1250}]}' --idempotency-key 12345678-1234-4234-8234-123456789abc
+nova cmr-quote decide 9 --defect-id FD-7 --decision approved --expected-amount-cents 1250
+```
+
+Each change sends one idempotency key and does not retry automatically. After
+an unknown outcome, read the quote. Use the same key and input for the same
+request; a new key can create another quote. Complete payment setup in Nova.
+Listing a command or tool does not grant permission.
+
+Cotizaciones CMR y CNMR: usa importes en centavos enteros. La API comprueba el
+rol, la organización, el importe y el estado. Tras un resultado desconocido,
+consulta la cotización. Reutiliza la misma clave y los mismos datos para la
+misma solicitud. Termina la configuración del pago en Nova.
+
+Quote reads require `cmr_quotes.list.v1` or `cmr_quotes.get.v1`. Changes require
+write consent and the matching `cmr_quotes.submit.v1`, `withdraw.v1`, `dismiss.v1`,
+or `decide.v1` operation. Add these permissions through browser consent.
