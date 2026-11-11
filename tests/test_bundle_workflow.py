@@ -16,6 +16,17 @@ PRICING = {'rule': 'allocated_declines_v2', 'threshold': 1000, 'high': 150, 'low
 WORKFLOW = {'step': 6, 'action': 'ended', 'owner': 'done', 'group': 'completed', 'deadline': None}
 CASES = [('list', 'list_bundle_offers', {}, '/bundle-offers', {'rows': [{'ref': 'B-1', 'status': 'awarded', 'total_price_cents': 15000, 'workflow_summary': SUMMARY}]}), ('report', 'get_bundle_offer_report', {'ref': 'B-1'}, '/bundle-offers/B-1/report', {'ref': 'B-1', 'status': 'awarded', 'report': {'pricing': PRICING, 'units': []}}), ('vans', 'list_bought_bundle_vans', {'ref': 'B-1'}, '/bundle-offers/B-1/vans', {'vans': [{'unit': 1, 'state': 'lapsed', 'workflow': WORKFLOW}]})]
 
+# New offers and saved sliding offers must pass through CLI and local MCP unchanged.
+for pricing in (
+    {'rule': 'value_allocations_v4', 'threshold': 1000, 'high': 150, 'low': 75, 'line_base_price': 5},
+    {'rule': 'sliding_allocations_v3', 'first_limit': 1000, 'second_limit': 2000,
+     'first_percent': 8, 'second_percent': 6, 'tail_percent': 4},
+):
+    CASES.append(('report', 'get_bundle_offer_report', {'ref': 'B-1'}, '/bundle-offers/B-1/report',
+        {'ref': 'B-1', 'status': 'awarded', 'report': {'pricing': pricing, 'units': []}}))
+    CASES.append(('vans', 'list_bought_bundle_vans', {'ref': 'B-1'}, '/bundle-offers/B-1/vans',
+        {'vans': [{'unit': 1, 'state': 'lapsed', 'workflow': WORKFLOW, 'pricing': pricing}]}))
+
 class Api:
     profile = SimpleNamespace(auth='service')
 

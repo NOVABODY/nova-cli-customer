@@ -33,10 +33,16 @@ class Summary(Record):
     timezone: str
 
 class Pricing(Record):
-    rule: Literal['allocated_declines_v2', 'legacy_tiers']
-    threshold: int | float | None
-    high: int | float | None
-    low: int | float | None
+    rule: Literal['value_allocations_v4', 'sliding_allocations_v3', 'allocated_declines_v2', 'legacy_tiers']
+    threshold: int | float | None = None
+    high: int | float | None = None
+    low: int | float | None = None
+    line_base_price: int | float | None = None
+    first_limit: int | float | None = None
+    second_limit: int | float | None = None
+    first_percent: int | float | None = None
+    second_percent: int | float | None = None
+    tail_percent: int | float | None = None
 
 class Offer(Record):
     browser_url: str | None = None
