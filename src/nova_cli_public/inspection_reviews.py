@@ -17,9 +17,11 @@ class Query(BaseModel):
 
 
 class Queue(Query):
-    status: Literal['unreviewed', 'all'] = 'unreviewed'
+    status: Literal['unreviewed', 'in_progress', 'completed', 'all'] = 'unreviewed'
     dsp_id: Identifier | None = None
     since: str | None = None
+    limit: int = Field(default=100, ge=1, le=200)
+    offset: int = Field(default=0, ge=0)
 
     @model_validator(mode='after')
     def valid_since(self):
@@ -29,7 +31,12 @@ class Queue(Query):
 
 
 class Quality(Query):
-    days: int = Field(default=90, ge=1, le=365)
+    days: int = Field(default=30, ge=1, le=365)
+
+
+class Feedback(Quality):
+    limit: int = Field(default=100, ge=1, le=200)
+    offset: int = Field(default=0, ge=0)
 
 
 class Review(BaseModel):
@@ -60,7 +67,7 @@ class Item(Review):
 
 MODELS = {'list_inspection_reviews': Queue, 'get_inspection_review': Review,
     'start_inspection_review': Start, 'set_inspection_review_item': Item,
-    'complete_inspection_review': Review, 'get_inspector_quality': Quality, 'list_inspection_review_feedback': Query}
+    'complete_inspection_review': Review, 'get_inspector_quality': Quality, 'list_inspection_review_feedback': Feedback}
 WRITES = {'start_inspection_review', 'set_inspection_review_item', 'complete_inspection_review'}
 GRANTS = dict(zip(MODELS, ['inspection_reviews.queue.list.v1', 'inspection_reviews.get.v1',
     'inspection_reviews.start.v1', 'inspection_reviews.items.set.v1', 'inspection_reviews.complete.v1',
@@ -114,7 +121,7 @@ def declarations():
         arguments = []
         for field, info in MODELS[name].model_fields.items():
             positional = field in {'review_id', 'observation_id', 'inspection_id'}
-            options = {'type': 'int'} if field.endswith('_id') or field == 'days' else {}
+            options = {'type': 'int'} if field.endswith('_id') or field in {'days', 'limit', 'offset'} else {}
             if not positional:
                 options.update(required=info.is_required())
                 if not info.is_required():

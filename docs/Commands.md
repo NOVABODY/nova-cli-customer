@@ -419,3 +419,18 @@ puntuación. Los cambios de categoría mantienen el taller y los precios. Cada
 inspector puede consultar su propia calidad y comentarios. Cada comando requiere
 su permiso específico. Consulta la revisión antes de otro intento si no se conoce
 el resultado de un cambio.
+
+
+Inspection queue filters: `--status unreviewed|in_progress|completed|all`,
+`--dsp-id`, `--inspector-id`, `--since`, `--limit` (default 100, maximum 200),
+and `--offset` (default 0). Feedback accepts `--inspector-id`, `--days`
+(default 30), `--limit`, and `--offset`. Quality also defaults to 30 days.
+Use `offset + limit` to request the next page. MCP uses the same field names
+with underscores, for example `dsp_id` and `inspector_id`.
+
+Filtros de la cola: `--status unreviewed|in_progress|completed|all`, `--dsp-id`,
+`--inspector-id`, `--since`, `--limit` (100 por defecto, máximo 200) y
+`--offset` (0 por defecto). Los comentarios aceptan `--inspector-id`,
+`--days` (30 por defecto), `--limit` y `--offset`. La calidad también usa
+30 días por defecto. Usa `offset + limit` para solicitar la página siguiente.
+Las herramientas MCP usan los mismos nombres de campo con guiones bajos.
