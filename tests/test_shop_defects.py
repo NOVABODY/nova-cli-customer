@@ -84,3 +84,22 @@ def test_customer_mcp_dispatches_typed_shop_operations(name, arguments, value):
     client = Client(value)
     assert CustomerReadService(client).run(name, arguments) == value
     assert len(client.calls) == 1
+
+
+def test_decline_targets_only_the_unquoted_defect(monkeypatch):
+    client = Client({})
+    monkeypatch.setattr(cli, 'client_from_args', lambda args: client)
+    args = cli.build_parser().parse_args(['work-order', 'decline', 'WO-3',
+        '--defect-id', '7', '--decline-reason-code', 'parts_unavailable'])
+    args.handler(args)
+    assert client.calls[0][1]['json_body'] == {'defect_id': 7, 'decline_reason_code': 'parts_unavailable'}
+
+
+def test_customer_mcp_targets_one_prequote_defect():
+    from nova_cli_public.reads import CustomerReadService
+
+    result = {'id': 'WO-9', 'source_work_order_id': 3, 'declined_defect_id': 7, 'status': 'canceled'}
+    client = Client(result)
+    assert CustomerReadService(client).run('decline_work_order', {
+        'wo_id': 'WO-3', 'defect_id': 7, 'decline_reason_code': 'parts_unavailable'}) == result
+    assert client.calls[0][1]['json_body'] == {'defect_id': 7, 'decline_reason_code': 'parts_unavailable'}

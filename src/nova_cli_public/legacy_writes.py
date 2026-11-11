@@ -241,6 +241,7 @@ def cmd_work_order_add_delay_reason(args: argparse.Namespace) -> Any:
 
 def cmd_work_order_decline(args: argparse.Namespace) -> Any:
     body = {
+        "defect_id": args.defect_id,
         "decline_reason_code": args.decline_reason_code,
         "reason": args.reason,
         "reroute": None if args.no_reroute is None else not args.no_reroute,
