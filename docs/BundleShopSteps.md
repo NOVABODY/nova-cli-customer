@@ -65,3 +65,14 @@ use `YYYY-MM-DD`; timestamps and epoch numbers are not accepted.
 Los enlaces deben usar HTTPS, el origen web configurado de Nova y la ruta del
 paquete. Los enlaces no seguros se quitan con una nota bilingüe. Las horas deben
 ser cadenas ISO 8601 con zona horaria. La fecha de regreso usa `YYYY-MM-DD`.
+
+
+## Sliding prices and recipient details
+
+Bundle report reads preserve saved sliding-price bands and optional recipient
+VINs exactly as returned by the API. Public links and revoked recipients do not
+receive this disclosure. Payment setup and readiness keep their browser handoff.
+
+Las lecturas de informes conservan los precios por tramos y los VIN que la API
+permite ver al destinatario. Los enlaces públicos y los destinatarios revocados
+no reciben estos datos. El método de pago y la disponibilidad se confirman en el navegador.
