@@ -400,25 +400,54 @@ El permiso es `defects.category.update.v1`. El cambio queda registrado y no camb
 | `nova inspection-review show` | `get_inspection_review` | remote_read | `nova:read` |
 | `nova inspection-review start` | `start_inspection_review` | remote_write | `nova:read nova:write` |
 | `nova inspection-review set` | `set_inspection_review_item` | remote_write | `nova:read nova:write` |
+| `nova inspection-review unset` | `unset_inspection_review_item` | remote_write | `nova:read nova:write` |
+| `nova inspection-review preview` | `preview_inspection_review` | remote_read | `nova:read` |
 | `nova inspection-review complete` | `complete_inspection_review` | remote_write | `nova:read nova:write` |
 | `nova inspection-review quality` | `get_inspector_quality` | remote_read | `nova:read` |
 | `nova inspection-review feedback` | `list_inspection_review_feedback` | remote_read | `nova:read` |
+| `nova inspection-review feedback-summary` | `get_inspection_review_feedback_summary` | remote_read | `nova:read` |
+| `nova inspection-review feedback-seen` | `mark_inspection_review_feedback_seen` | remote_write | `nova:read nova:write` |
 
-Site admins can review platform inspections. Use the current defect update time
-for a verdict. Comments are visible to the customer. Complete the review to apply
-its score. An invalid finding after the decision window closes affects only the
-score. Category changes preserve routing and prices. Inspectors can read their
-own quality and feedback. Each command needs its dedicated operation consent.
-Read the review before another attempt when a change outcome is unknown.
+Site admins can review platform inspections. `set REVIEW OBSERVATION --verdict ...`
+saves the verdict and an optional comment as a draft: nothing changes for the DSP or
+shop until you complete the review. `--comment ""` clears a saved comment and
+`unset REVIEW OBSERVATION` clears the draft. `preview REVIEW [--confirm-remaining]`
+lists what completing will do (DSP queue removals, shop request withdrawals, group
+changes, comments and who can read them, ungrounding, and the inspector's score
+change) and changes nothing. `complete REVIEW [--confirm-remaining]` fetches a
+preview, prints its effects, then completes with that preview's token; add
+`--preview-token TOKEN` to complete a preview you already read. Every defect needs a
+decision, and `--confirm-remaining` confirms the undecided ones. If a defect changed
+after the preview, nothing is applied, the new effects are printed and the command
+stops; it never retries. The `complete_inspection_review` tool requires the
+`preview_token` from `preview_inspection_review`, so show its effects before
+completing. A stale preview returns `inspection_review_preview_stale` with the new
+effects and no token.
 
-Los administradores del sitio pueden revisar inspecciones de la plataforma. Usa
-la hora de actualización actual del defecto para guardar un resultado. Los
-comentarios son visibles para el cliente. Completa la revisión para aplicar su
-puntuación. Un hallazgo no válido después del plazo de decisión solo afecta la
-puntuación. Los cambios de categoría mantienen el taller y los precios. Cada
-inspector puede consultar su propia calidad y comentarios. Cada comando requiere
-su permiso específico. Consulta la revisión antes de otro intento si no se conoce
-el resultado de un cambio.
+An invalid finding after the decision window closes affects only the score. Category
+changes preserve routing and prices. Inspectors can read their own quality and
+feedback. `feedback-summary` returns the unseen count, latest review and score shown
+on the Home card. `feedback-seen ITEM` is the Got it action: only the inspector who
+owns the item can use it, and Nova sends no push or email. Each command needs its
+dedicated operation consent. Read the review before another attempt when a change
+outcome is unknown.
+
+Los administradores del sitio pueden revisar inspecciones de la plataforma. `set`
+guarda el resultado y un comentario opcional como borrador: nada cambia para el DSP ni
+el taller hasta que completes la revisión. `--comment ""` borra el comentario y
+`unset` borra el borrador. `preview` muestra lo que hará completar la revisión sin
+cambiar nada. `complete` obtiene una vista previa, muestra sus efectos y completa con
+su token; usa `--preview-token` para completar una vista previa que ya revisaste. Si
+un defecto cambió después de la vista previa, no se aplica nada, se muestran los
+nuevos efectos y el comando se detiene sin reintentar. La herramienta
+`complete_inspection_review` requiere el `preview_token` de
+`preview_inspection_review`. Un hallazgo no válido después del plazo de decisión solo
+afecta la puntuación. Los cambios de categoría mantienen el taller y los precios.
+Cada inspector puede consultar su propia calidad y comentarios. `feedback-summary`
+devuelve los comentarios sin ver, la última revisión y la puntuación. `feedback-seen`
+marca un comentario propio como visto; no se envían notificaciones push ni correos.
+Cada comando requiere su permiso específico. Consulta la revisión antes de otro
+intento si no se conoce el resultado de un cambio.
 
 
 Inspection queue filters: `--status unreviewed|in_progress|completed|all`,

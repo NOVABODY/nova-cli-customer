@@ -172,7 +172,7 @@ def input_model(entry, *, mcp=False):
     if entry["tool"] in defect_routing.MODELS:
         return defect_routing.MODELS[entry["tool"]]
     if entry["tool"] in inspection_reviews.MODELS:
-        return inspection_reviews.MODELS[entry["tool"]]
+        return (inspection_reviews.MODELS if mcp else inspection_reviews.CLI_MODELS)[entry["tool"]]
     if entry["tool"] in bundle_fee.MODELS:
         return bundle_fee.MODELS[entry["tool"]]
     if entry["tool"] in bundle_address.MODELS:

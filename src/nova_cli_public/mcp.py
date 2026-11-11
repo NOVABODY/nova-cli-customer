@@ -166,6 +166,13 @@ def create_server(service, *, file_root=None, announcements=None):
                     structuredContent={"error": {"code": exc.code, "status": exc.status}},
                     content=[types.TextContent(type="text", text=str(exc))])
 
+            from nova_cli_public.inspection_reviews import MODELS as REVIEW_MODELS
+            if name in REVIEW_MODELS and exc.code:
+                # Review refusals keep their code; a stale preview carries the new effects without a token.
+                return types.CallToolResult(isError=True, content=[types.TextContent(type='text', text=str(exc))],
+                    structuredContent={'error': {'code': exc.code, 'status': exc.status,
+                        **({'detail': exc.detail} if exc.detail is not None else {})}})
+
             from .body_intake import STEPS
             if name in STEPS:
                 return types.CallToolResult(isError=True,
