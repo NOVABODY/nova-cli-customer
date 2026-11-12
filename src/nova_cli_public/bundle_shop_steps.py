@@ -23,6 +23,7 @@ PDF = 'get_bundle_fmc_packet_pdf'
 PICKUP = 'update_bundle_pickup'
 NO_CHARGE = 'confirm_bundle_no_charge'
 CONTACT = 'request_bundle_contact'
+REJECT = 'reject_cmr_bundle'
 UNKNOWN = 'The outcome is unknown. Read the vans before another attempt. / El resultado no se conoce. Consulta las vans antes de otro intento.'
 BROWSER = 'Open browser_url to buy, set initial pickup or change payment. / Abre browser_url para comprar, programar la recogida inicial o cambiar el pago.'
 GUIDANCE = {
@@ -35,10 +36,17 @@ GUIDANCE = {
 }
 
 
-class Van(BaseModel):
+class Bundle(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
     ref: str = Field(pattern=r'^[A-Za-z0-9][A-Za-z0-9-]{0,79}$')
+
+
+class Van(Bundle):
     unit: int = Field(ge=1)
+
+
+class Rejection(Bundle):
+    reason: str = Field(min_length=1, max_length=1000, pattern=r'\S')
 
 
 class Pickup(Van):
@@ -73,6 +81,11 @@ class Receipt(BaseModel):
     refresh_required: bool = False
 
 
+class RejectionReceipt(Receipt):
+    ref: str
+    rejected: Literal[True]
+
+
 class PickupReceipt(Receipt):
     tasks: list[dict]
 
@@ -85,11 +98,12 @@ class ContactReceipt(Receipt):
     status: Literal['requested', 'already_requested']
 
 
-MODELS = {PDF: Van, PICKUP: Pickup, NO_CHARGE: Van, CONTACT: Van}
-OUTPUTS = {PICKUP: PickupReceipt, NO_CHARGE: NoChargeReceipt, CONTACT: ContactReceipt}
-WRITES = {PICKUP, NO_CHARGE, CONTACT}
+MODELS = {REJECT: Rejection, PDF: Van, PICKUP: Pickup, NO_CHARGE: Van, CONTACT: Van}
+OUTPUTS = {REJECT: RejectionReceipt, PICKUP: PickupReceipt, NO_CHARGE: NoChargeReceipt, CONTACT: ContactReceipt}
+WRITES = {PICKUP, NO_CHARGE, CONTACT, REJECT}
 SUFFIXES = {PDF: 'fmc.pdf', PICKUP: 'pickup', NO_CHARGE: 'confirm-no-charge', CONTACT: 'contact'}
 DESCRIPTIONS = {
+    REJECT: 'Reject all remaining work in an accepted CMR bundle before any van leaves for repair or work starts. Give a reason. Accepted fee terms still apply. / Rechaza todo el trabajo pendiente de un paquete CMR aceptado antes de que una van salga para reparación o comience el trabajo. Indica el motivo. Se mantienen los términos de cargos aceptados.',
     PDF: 'Download the FMC packet. Nova does not send it to the FMC. Use upload_capacity_evidence with kind=pending after submission, or kind=authorization with authorization_number and a file. / Descarga el paquete FMC. Nova no lo envía a la FMC. Usa upload_capacity_evidence con kind=pending tras enviarlo, o kind=authorization con authorization_number y un archivo.',
     PICKUP: 'Change pickup dates, or book transport for a paid or waived van. Initial readiness stays in the browser. DSP approval and live API rules apply. / Cambia las fechas de recogida o programa transporte para una van pagada o exenta. La preparación inicial se hace en el navegador. Se aplican la aprobación del DSP y las reglas de la API.',
     NO_CHARGE: 'Confirm a zero-price exit with reviewed declines. No payment is made. / Confirma una salida sin cobro con rechazos revisados. No se hace ningún pago.',
@@ -107,12 +121,13 @@ def mapped_error(exc):
 def execute(client, name, arguments, *, pdf_max_bytes=1024 * 1024):
     # JSON mode accepts ISO dates while retaining strict reference and unit checks.
     query = MODELS[name].model_validate_json(json.dumps(arguments))
-    path = f'/bundle-offers/{query.ref}/vans/{query.unit}/{SUFFIXES[name]}'
+    path = (f'/bundle-offers/{query.ref}/reject' if name == REJECT else
+            f'/bundle-offers/{query.ref}/vans/{query.unit}/{SUFFIXES[name]}')
     try:
         if name == PDF:
             return client.request('GET', path, pdf=True, pdf_max_bytes=pdf_max_bytes)
         options = {'retry_auth': False}
-        if name == PICKUP:
+        if name in (PICKUP, REJECT):
             options['json_body'] = query.model_dump(mode='json', exclude={'ref', 'unit'}, exclude_none=True)
         value = client.request('POST', path, **options)
     except ApiError as exc:
@@ -159,8 +174,13 @@ COMMANDS = []
 for action, name, grant in [('fmc-pdf', PDF, 'capacity.fmc_packet.get.v1'),
         ('pickup', PICKUP, 'capacity.pickup.update.v1'),
         ('confirm-no-charge', NO_CHARGE, 'capacity.no_charge.confirm.v1'),
-        ('contact', CONTACT, 'capacity.contact.create.v1')]:
-    arguments = [(['ref'], {}), (['unit'], {'type': 'int'})]
+        ('contact', CONTACT, 'capacity.contact.create.v1'),
+        ('reject', REJECT, 'capacity.bundles.reject.v1')]:
+    arguments = [(['ref'], {})]
+    if name == REJECT:
+        arguments += [(['--reason'], {'required': True})]
+    else:
+        arguments += [(['unit'], {'type': 'int'})]
     if name == PDF:
         arguments += [(['--out'], {'required': True})]
     if name == PICKUP:

@@ -109,6 +109,8 @@ def test_cli_and_local_mcp_dispatch_all_steps_and_pdf(monkeypatch, tmp_path):
                 return b'%PDF-1.4\nsynthetic\n%%EOF'
             if method == 'GET':
                 return VANS
+            if path.endswith('/reject'):
+                return {'ref': 'B-1', 'rejected': True}
             return {'tasks': []} if path.endswith('/pickup') else {'state': 'lapsed'} if path.endswith('/confirm-no-charge') else {'status': 'already_requested'}
 
     from nova_cli_public import cli, legacy_reads
@@ -128,6 +130,9 @@ def test_cli_and_local_mcp_dispatch_all_steps_and_pdf(monkeypatch, tmp_path):
         async with create_connected_server_and_client_session(server) as sdk:
             tools = {tool.name: tool for tool in (await sdk.list_tools()).tools}
             assert steps.MODELS.keys() <= tools.keys()
+            assert set(tools[steps.REJECT].inputSchema['required']) == {'ref', 'reason'}
+            rejected = await sdk.call_tool(steps.REJECT, {'ref': 'B-1', 'reason': 'Cannot repair'})
+            assert not rejected.isError and rejected.structuredContent['rejected'] is True
             assert tools[steps.PDF].annotations.readOnlyHint
             assert not tools[steps.CONTACT].annotations.readOnlyHint
             pdf = await sdk.call_tool(steps.PDF, {'ref': 'B-1', 'unit': 1})
@@ -151,11 +156,14 @@ def test_customer_route_admission_and_discovery():
     from nova_cli_public.capabilities import manifest
     from nova_cli_public.write_routes import admitted_write
     for name in steps.WRITES:
-        suffix = steps.SUFFIXES[name]
-        assert admitted_write('POST', '/bundle-offers/B-1/vans/1/' + suffix)
+        route = '/bundle-offers/B-1/reject' if name == steps.REJECT else '/bundle-offers/B-1/vans/1/' + steps.SUFFIXES[name]
+        assert admitted_write('POST', route)
     for suffix in ('readiness', 'accept', 'payment', 'update-payment'):
         assert not admitted_write('POST', '/bundle-offers/B-1/vans/1/' + suffix)
     assert not admitted_write('POST', '/bundle-offers/B-1/accept')
+    rejection = manifest(cli.build_parser(), 'bundle-shop reject')['commands'][0]
+    assert rejection['required_operation'] == 'capacity.bundles.reject.v1'
+    assert rejection['effects'] == ['remote_write']
     entry = manifest(cli.build_parser(), 'bundle-shop contact')['commands'][0]
     assert entry['required_operation'] == 'capacity.contact.create.v1'
     assert entry['required_scope'] == 'nova:read nova:write'
@@ -203,3 +211,31 @@ def test_local_mcp_keeps_localized_errors_without_retry(status):
             assert 'Detalle localizado.' in result.content[0].text
     asyncio.run(check())
     assert api.request.call_count == 1
+
+
+def test_reject_cmr_bundle_has_no_unit_and_refreshes_confirmed_receipt():
+    result = {'ref': 'B-1', 'rejected': True}
+    client = SimpleNamespace(request=Mock(side_effect=[result, VANS]))
+    value = steps.execute(client, steps.REJECT, {'ref': 'B-1', 'reason': 'Cannot repair'})
+    assert value == {**result, **VANS}
+    assert client.request.call_args_list[0].args == ('POST', '/bundle-offers/B-1/reject')
+    assert client.request.call_args_list[0].kwargs == {'retry_auth': False, 'json_body': {'reason': 'Cannot repair'}}
+    command = next(entry for entry in steps.COMMANDS if entry['tool'] == steps.REJECT)
+    assert command['grant'] == 'capacity.bundles.reject.v1'
+    assert command['effect'] == 'remote_write'
+
+
+@pytest.mark.parametrize('arguments', [{'ref': 'B-1', 'reason': ' '}, {'ref': 'B-1', 'reason': 'Cannot repair', 'unit': 1}])
+def test_reject_cmr_bundle_requires_whole_bundle_and_reason(arguments):
+    client = SimpleNamespace(request=Mock())
+    with pytest.raises(ValidationError):
+        steps.execute(client, steps.REJECT, arguments)
+    client.request.assert_not_called()
+
+
+def test_reject_cmr_bundle_does_not_repeat_uncertain_write():
+    client = SimpleNamespace(request=Mock(side_effect=ApiError('offline', status=503)))
+    with pytest.raises(ApiError) as error:
+        steps.execute(client, steps.REJECT, {'ref': 'B-1', 'reason': 'Cannot repair'})
+    assert error.value.code == 'outcome_unknown'
+    assert client.request.call_count == 1

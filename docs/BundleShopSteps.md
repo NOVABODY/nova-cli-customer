@@ -84,3 +84,14 @@ no reciben estos datos. El método de pago y la disponibilidad se confirman en e
 $1,000 and remainder, plus $50 per van. The van price includes transport; defect
 allocations exclude it. All released work has zero charge. Saved older offers
 keep their original pricing. The server calculates prices and enforces access.
+
+## Reject an accepted CMR bundle
+
+Use `nova bundle-shop reject REF --reason "Cannot repair"` or the
+`reject_cmr_bundle` tool to reject all remaining work before any van is collected
+or work starts. The operation is `capacity.bundles.reject.v1`; delegated
+connections need fresh explicit consent. A vendor admin or service writer must
+belong to the awarded shop. PM/AMR bundles are excluded. The API rejects the
+whole action if any van has started. Signed acceptance and applicable saved fee
+terms remain. After a confirmed write, read the vans; do not retry an uncertain
+write. Coordinate release with the API and web implementation.
