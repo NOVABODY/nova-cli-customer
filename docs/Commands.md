@@ -391,3 +391,5 @@ Supported values: AMR, CMR, CNMR, Body, PM, Tires, Detailing, Netradyne. A corre
 
 Solo los administradores del sitio pueden cambiar la categoría de reparación. Consulta primero el defecto y usa su valor exacto de `updated_at`.
 El permiso es `defects.category.update.v1`. El cambio queda registrado y no cambia el taller, los presupuestos ni la facturación existentes.
+
+| `nova bundle-shop reject` | `reject_cmr_bundle` | remote_write | `nova:read nova:write` |

@@ -92,3 +92,14 @@ stays outside allocations. Three $500 defects cost $70 + $15 + $50 = $135.
 Candidate `rules.defect_base_fee` passes through as returned. Clients keep cent
 precision, read v5, v4 and older rules unchanged, and never recompute prices
 from current settings.
+
+## Reject an accepted CMR bundle
+
+Use `nova bundle-shop reject REF --reason "Cannot repair"` or the
+`reject_cmr_bundle` tool to reject all remaining work before any van is collected
+or work starts. The operation is `capacity.bundles.reject.v1`; delegated
+connections need fresh explicit consent. A vendor admin or service writer must
+belong to the awarded shop. PM/AMR bundles are excluded. The API rejects the
+whole action if any van has started. Signed acceptance and applicable saved fee
+terms remain. After a confirmed write, read the vans; do not retry an uncertain
+write. Coordinate release with the API and web implementation.
