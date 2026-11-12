@@ -16,6 +16,17 @@ PRICING = {'rule': 'allocated_declines_v2', 'threshold': 1000, 'high': 150, 'low
 WORKFLOW = {'step': 6, 'action': 'ended', 'owner': 'done', 'group': 'completed', 'deadline': None}
 CASES = [('list', 'list_bundle_offers', {}, '/bundle-offers', {'rows': [{'ref': 'B-1', 'status': 'awarded', 'total_price_cents': 15000, 'workflow_summary': SUMMARY}]}), ('report', 'get_bundle_offer_report', {'ref': 'B-1'}, '/bundle-offers/B-1/report', {'ref': 'B-1', 'status': 'awarded', 'report': {'pricing': PRICING, 'units': []}}), ('vans', 'list_bought_bundle_vans', {'ref': 'B-1'}, '/bundle-offers/B-1/vans', {'vans': [{'unit': 1, 'state': 'lapsed', 'workflow': WORKFLOW}]})]
 
+# New offers and saved sliding offers must pass through CLI and local MCP unchanged.
+for pricing in (
+    {'rule': 'value_allocations_v4', 'threshold': 1000, 'high': 150, 'low': 75, 'line_base_price': 5},
+    {'rule': 'sliding_allocations_v3', 'first_limit': 1000, 'second_limit': 2000,
+     'first_percent': 8, 'second_percent': 6, 'tail_percent': 4},
+):
+    CASES.append(('report', 'get_bundle_offer_report', {'ref': 'B-1'}, '/bundle-offers/B-1/report',
+        {'ref': 'B-1', 'status': 'awarded', 'report': {'pricing': pricing, 'units': []}}))
+    CASES.append(('vans', 'list_bought_bundle_vans', {'ref': 'B-1'}, '/bundle-offers/B-1/vans',
+        {'vans': [{'unit': 1, 'state': 'lapsed', 'workflow': WORKFLOW, 'pricing': pricing}]}))
+
 
 SLIDING = {'rule': 'sliding_allocations_v3', 'first_limit': 1000, 'second_limit': 2000,
            'first_percent': 8, 'second_percent': 6, 'tail_percent': 4,
@@ -91,3 +102,48 @@ def test_incomplete_transport_terms_are_rejected(missing):
 
     with pytest.raises(ValidationError):
         Pricing.model_validate({key: value for key, value in TRANSPORT.items() if key != missing})
+
+
+# Frozen sliding_transport_base_v6: sliding repair fee + per-defect base + separate transport.
+BASE_V6 = {**TRANSPORT, 'rule': 'sliding_transport_base_v6', 'line_base_price': 5}
+V6_UNITS = [{'unit': 1, 'asking_price': 135, 'lines': [{'allocated_price': 28.33}, {'allocated_price': 28.33}, {'allocated_price': 28.34}]}]
+V6_EXAMPLE = {'ref': 'B-1', 'status': 'open', 'report': {'pricing': BASE_V6, 'units': V6_UNITS}}
+CASES.append(('report', 'get_bundle_offer_report', {'ref': 'B-1'}, '/bundle-offers/B-1/report', V6_EXAMPLE))
+CASES.append(('vans', 'list_bought_bundle_vans', {'ref': 'B-1'}, '/bundle-offers/B-1/vans',
+    {'vans': [{'unit': 1, 'state': 'lapsed', 'workflow': WORKFLOW, 'accepted_price_cents': 13500, 'pricing': BASE_V6}]}))
+# Custom, zero-base and waived terms, and fractional-cent allocations, pass through exactly.
+for extra, units in (
+    ({'line_base_price': 0}, [{'unit': 1, 'asking_price': 120, 'lines': [{'allocated_price': 70}]}]),
+    ({'line_base_price': 12.5, 'transport_fee': 0, 'first_percent': 6}, [{'unit': 1, 'asking_price': 37.55, 'lines': [{'allocated_price': 12.52}, {'allocated_price': 25.03}]}]),
+    ({'fee_waived': True}, [{'unit': 1, 'asking_price': 0, 'lines': [{'allocated_price': 0}]}]),
+):
+    CASES.append(('report', 'get_bundle_offer_report', {'ref': 'B-1'}, '/bundle-offers/B-1/report',
+        {'ref': 'B-1', 'status': 'open', 'report': {'pricing': {**BASE_V6, **extra}, 'units': units}}))
+# Older rules without the new fields keep validating.
+for old in (SLIDING, TRANSPORT, {'rule': 'legacy_tiers', 'threshold': 1000, 'high': 150, 'low': 75}):
+    CASES.append(('report', 'get_bundle_offer_report', {'ref': 'B-1'}, '/bundle-offers/B-1/report',
+        {'ref': 'B-1', 'status': 'open', 'report': {'pricing': old, 'units': []}}))
+
+
+@pytest.mark.parametrize('missing', ['first_percent', 'transport_fee', 'line_base_price'])
+def test_incomplete_base_terms_are_rejected(missing):
+    from nova_cli_public.bundle_workflow import Pricing
+
+    with pytest.raises(ValidationError):
+        Pricing.model_validate({key: value for key, value in BASE_V6.items() if key != missing})
+
+
+def test_base_terms_keep_cents_and_extra_fields():
+    from nova_cli_public.bundle_workflow import Pricing
+
+    terms = Pricing.model_validate({**BASE_V6, 'line_base_price': 7.25, 'fee_waived': False})
+    assert terms.line_base_price == 7.25 and terms.model_dump()['payment_rule'] == 'approved_readiness_v1'
+    with pytest.raises(ValidationError):
+        Pricing.model_validate({**BASE_V6, 'line_base_price': -1})
+
+
+def test_unknown_rule_is_rejected():
+    from nova_cli_public.bundle_workflow import Pricing
+
+    with pytest.raises(ValidationError):
+        Pricing.model_validate({**BASE_V6, 'rule': 'sliding_transport_base_v7'})
