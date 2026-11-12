@@ -886,7 +886,7 @@ nova body-repair accept-pickup BRR-7 --expected-version 8
 `--pickup-details` and `--suggested-time` accept JSON objects (at most 64 KiB each).
 
 Bundle workflow reads preserve the API's frozen pricing rule and parameters,
-including per-defect base fees and older sliding-scale offers. The API computes
+including `sliding_transport_base_v6` per-defect base fees (`line_base_price`), v5 transport and older offers. The API computes
 the amounts. These clients do not recalculate fees or change purchase permissions.
 
 ### Reject one customer-paid defect before a quote

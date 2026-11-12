@@ -84,3 +84,11 @@ no reciben estos datos. El método de pago y la disponibilidad se confirman en e
 $1,000 and remainder, plus $50 per van. The van price includes transport; defect
 allocations exclude it. All released work has zero charge. Saved older offers
 keep their original pricing. The server calculates prices and enforces access.
+
+`sliding_transport_base_v6` adds the frozen `line_base_price` (USD per defect,
+default $5) to those marginal percentages and `transport_fee`. Each defect
+allocation is its base plus a repair-value share of the sliding fee; transport
+stays outside allocations. Three $500 defects cost $70 + $15 + $50 = $135.
+Candidate `rules.defect_base_fee` passes through as returned. Clients keep cent
+precision, read v5, v4 and older rules unchanged, and never recompute prices
+from current settings.
