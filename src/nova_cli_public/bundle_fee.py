@@ -1,12 +1,12 @@
 """Site-admin bundle fee waivers with explicit consent and no write replay."""
 import json
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from nova_cli_public.errors import ApiError
 
-READ, WRITE = 'get_admin_bundle', 'waive_bundle_fee'
+READ, WRITE, REMOVE = 'get_admin_bundle', 'waive_bundle_fee', 'remove_bundle'
 UNKNOWN = 'The outcome is unknown. Read the bundle before trying again. / El resultado no se conoce. Consulta el paquete antes de intentar de nuevo.'
 
 
@@ -27,26 +27,32 @@ class Result(BaseModel):
     fee_waived: bool
 
 
-MODELS, OUTPUTS, WRITES = {READ: Query, WRITE: Waiver}, {READ: Result, WRITE: Result}, {WRITE}
+class Removal(BaseModel):
+    model_config = ConfigDict(strict=True)
+    ref: str
+    status: Literal['discarded']
+
+
+MODELS, OUTPUTS, WRITES = {READ: Query, WRITE: Waiver, REMOVE: Query}, {READ: Result, WRITE: Result, REMOVE: Removal}, {WRITE, REMOVE}
 
 
 def execute(client, name, arguments):
     query = MODELS[name].model_validate(arguments)
     path = f'/defect-bundle-offers/staff/{query.ref}'
     try:
-        value = client.request('GET', path) if name == READ else client.request('POST', path + '/waive-fee',
+        value = client.request('GET', path) if name == READ else client.request('POST', path + ('/discard' if name == REMOVE else '/waive-fee'),
             json_body=query.model_dump(exclude={'ref'}, exclude_none=True), retry_auth=False)
     except ApiError as exc:
-        if name == WRITE and (exc.status is None or exc.status >= 500 or 300 <= exc.status < 400):
+        if name in WRITES and (exc.status is None or exc.status >= 500 or 300 <= exc.status < 400):
             raise ApiError(UNKNOWN, code='outcome_unknown') from exc
         raise
     try:
-        result = Result.model_validate(value)
+        result = OUTPUTS[name].model_validate(value)
         json.dumps(value, allow_nan=False)
         if result.ref != query.ref or (name == WRITE and not result.fee_waived):
             raise ValueError('Waiver not confirmed')
     except (ValueError, TypeError):
-        raise ApiError(UNKNOWN, code='outcome_unknown') if name == WRITE else ApiError(
+        raise ApiError(UNKNOWN, code='outcome_unknown') if name in WRITES else ApiError(
             'Invalid bundle response. / Respuesta del paquete no válida.') from None
     return value
 
@@ -58,6 +64,10 @@ def command(args):
 
 
 COMMANDS = [
+    {'command': 'bundle remove', 'tool': REMOVE, 'grant': 'capacity.offers.remove.v1',
+     'description': 'Remove an unaccepted bundle and revoke its links. Site admin only. Audit history remains. / Quita un paquete no aceptado y revoca sus enlaces. Solo para administradores del sitio. Se conserva el historial.',
+     'arguments': [(['ref'], {})], 'groups': [], 'handler': command, 'defaults': {'bundle_fee_tool': REMOVE},
+     'scope': 'nova:read nova:write', 'effect': 'remote_write'},
     {'command': 'bundle-fee get', 'tool': READ, 'grant': 'capacity.offers.staff.get.v1',
      'description': 'Read an admin bundle. / Consulta un paquete de administración.',
      'arguments': [(['ref'], {})], 'groups': [], 'handler': command, 'defaults': {'bundle_fee_tool': READ}},

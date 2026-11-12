@@ -900,3 +900,11 @@ Con la actualización coordinada de la API, usa `--defect-id` o `defect_id` en
 MCP para rechazar solo un defecto CMR/CNMR sin cotización. La API aplica el
 motivo y conserva los otros trabajos. No se envía una cotización. Consulta el
 resultado antes de otra escritura si el resultado es desconocido.
+
+
+Site admins can remove an unaccepted bundle with `remove_bundle` or
+`nova bundle remove REF`.
+Removal revokes offer links and releases reserved defects. The record and audit
+history remain. Accepted bundles return a conflict. Delegated access requires
+explicit `capacity.offers.remove.v1` write consent; existing grants do not gain it.
+Read the current bundle after an unknown outcome before trying again.

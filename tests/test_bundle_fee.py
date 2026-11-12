@@ -59,3 +59,33 @@ def test_discovery_and_route_admission_name_required_grant():
     assert entry['required_scope'] == 'nova:read nova:write'
     assert admitted_read('/defect-bundle-offers/staff/B-TEST')
     assert admitted_write('POST', '/defect-bundle-offers/staff/B-TEST/waive-fee')
+
+
+def test_remove_bundle_cli_and_mcp_use_one_fixed_write(monkeypatch):
+    value = {'ref': 'B-TEST', 'status': 'discarded'}
+    api = SimpleNamespace(request=Mock(return_value=value))
+    monkeypatch.setattr(legacy_reads, 'client_from_args', lambda args: api)
+    args = cli.build_parser().parse_args(['bundle', 'remove', 'B-TEST'])
+    assert args.handler(args) == value
+    async def check():
+        async with create_connected_server_and_client_session(create_server(CustomerReadService(api))) as sdk:
+            result = await sdk.call_tool('remove_bundle', {'ref': 'B-TEST'})
+            assert not result.isError and result.structuredContent == value
+    asyncio.run(check())
+    assert api.request.call_count == 2
+    assert api.request.call_args_list[0] == api.request.call_args_list[1]
+    api.request.assert_called_with('POST', '/defect-bundle-offers/staff/B-TEST/discard', json_body={}, retry_auth=False)
+    entry = manifest(cli.build_parser(), 'bundle remove')['commands'][0]
+    assert entry['required_operation'] == 'capacity.offers.remove.v1'
+    from nova_cli_public.write_routes import admitted_write
+    assert admitted_write('POST', '/defect-bundle-offers/staff/B-TEST/discard')
+
+
+@pytest.mark.parametrize('value', [None, {'ref': 'B-OTHER', 'status': 'discarded'}, {'ref': 'B-TEST', 'status': 'awarded'}])
+def test_unconfirmed_removal_is_unknown_and_not_retried(value):
+    from nova_cli_public import bundle_fee
+    from nova_cli_public.errors import ApiError
+    api = SimpleNamespace(request=Mock(return_value=value))
+    with pytest.raises(ApiError) as error:
+        bundle_fee.execute(api, bundle_fee.REMOVE, {'ref': 'B-TEST'})
+    assert error.value.code == 'outcome_unknown' and api.request.call_count == 1
