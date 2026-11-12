@@ -24,6 +24,7 @@ client support; the server checks current account access.
 | `nova bundle-shop confirm-no-charge` | `confirm_bundle_no_charge` | remote_write | `nova:read nova:write` |
 | `nova bundle-shop contact` | `request_bundle_contact` | remote_write | `nova:read nova:write` |
 
+| `nova bundle remove` | `remove_bundle` | remote_write | `nova:read nova:write` |
 | `nova bundle-fee get` | `get_admin_bundle` | remote_read | `nova:read` |
 | `nova bundle-fee waive` | `waive_bundle_fee` | remote_write | `nova:read nova:write` |
 | `nova bundle-address get` | `get_bundle_dropoff_address` | remote_read | `nova:read` |
