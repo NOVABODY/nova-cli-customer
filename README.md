@@ -930,3 +930,10 @@ The API route is `/v1/dashboards/reports/vehicle-availability` with
 `reports.vehicle_availability.get.v1` consent. Existing grants stay unchanged;
 non-admin principals receive 403. Deployment settings still govern hosted
 service-key access.
+
+
+Rush repairs require explicit cost-risk acknowledgment. Present the warning and
+obtain acknowledgment before sending `rush_acknowledged: true` with `is_rush`.
+Rush work receives priority and immediate repair before formal FMC approval;
+the DSP may have to pay the full repair cost if the FMC declines. Do not infer
+acknowledgment from the rush flag. The API enforces and audits the requirement.
