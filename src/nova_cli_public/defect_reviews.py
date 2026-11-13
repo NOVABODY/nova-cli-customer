@@ -39,6 +39,7 @@ class Decision(History):
     dsp_contact_user_id: int | None = Field(default=None, gt=0)
     override_eligibility: bool | None = None
     accept_dsp_responsibility: bool | None = None
+    accept_out_of_fmc_cost: bool | None = Field(default=None, description="Confirm that this defect stays AMR and the DSP may pay the full repair cost. Only set after explicit approval. / Confirma que este defecto sigue siendo AMR y que el DSP puede pagar el costo total. Usa esta opción solo después de la aprobación explícita.")
     service_station_code: str | None = Field(default=None, max_length=20)
     reject_reason_code: str | None = Field(default=None, max_length=40)
 
@@ -77,7 +78,7 @@ for action, tool, grant, model in [
         options = {"help": field.description} if field.description else {}
         if name in ("limit", "offset", "vendor_workshop_id", "external_vendor_id", "dsp_contact_user_id"):
             options["type"] = "int"
-        if name in ("rush_acknowledged", "is_rush", "is_critical", "override_eligibility", "accept_dsp_responsibility"):
+        if name in ("rush_acknowledged", "is_rush", "is_critical", "override_eligibility", "accept_dsp_responsibility", "accept_out_of_fmc_cost"):
             options["action"] = "BooleanOptionalAction"
         if name == "additional_defect_ids":
             options["action"] = "append"

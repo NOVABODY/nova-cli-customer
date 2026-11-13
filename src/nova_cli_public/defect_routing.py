@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
 from nova_cli_public import legacy_reads
-from nova_cli_public.defect_reviews import positive_reference
+from nova_cli_public.defect_reviews import DefectId, positive_reference
 from nova_cli_public.errors import ApiError
 
 Reference = Annotated[str, Field(pattern=r'^(?:RR-)?[0-9]{1,14}$'), AfterValidator(positive_reference)]
@@ -15,6 +15,8 @@ VehicleId = Annotated[str, Field(pattern=r'^(?:VAN-)?[0-9]{1,14}$'), AfterValida
 class Shops(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
     vehicle_id: VehicleId
+    defect_id: DefectId | None = None
+    include_out_of_scope: bool | None = None
     repair_type: Literal['mechanical', 'cnmr', 'pm', 'tires', 'detailing', 'netradyne', 'body']
     service_station_code: str | None = Field(default=None, max_length=20)
 
@@ -57,7 +59,8 @@ COMMANDS = [
      'description': 'Read shop eligibility for this van and repair type. / Consulta los talleres elegibles para esta van y este tipo de reparación.',
      'defaults': {'routing_tool': 'list_defect_routing_shops'},
      'arguments': [(['--vehicle-id'], {'required': True}), (['--repair-type'], {'required': True}),
-                   (['--service-station-code'], {'default': None})]},
+                   (['--service-station-code'], {'default': None}),
+                   (['--defect-id'], {'default': None}), (['--include-out-of-scope'], {'action': 'BooleanOptionalAction', 'default': None})]},
     {'command': 'defect-routing resume', 'tool': 'route_repair_request',
      'grant': 'repair_requests.route.v1', 'scope': 'nova:read nova:write', 'effect': 'remote_write',
      'groups': [], 'handler': run, 'defaults': {'routing_tool': 'route_repair_request'},
