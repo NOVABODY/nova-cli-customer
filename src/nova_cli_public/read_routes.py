@@ -10,6 +10,8 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/dashboards/reports/vehicle-availability": "reports.vehicle_availability.get.v1",
+
     r"/inspection-reviews/queue": "inspection_reviews.queue.list.v1",
     r"/inspection-reviews/quality": "inspection_reviews.quality.get.v1",
     r"/inspection-reviews/feedback": "inspection_reviews.feedback.list.v1",

@@ -6,6 +6,7 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova report fleet-repair-value` | `get_fleet_repair_value_report` | remote_read | `nova:read` |
 | `nova cmr-quote list` | `list_cmr_quotes` | remote_read | `nova:read` |
 | `nova cmr-quote get` | `get_cmr_quote` | remote_read | `nova:read` |
 | `nova cmr-quote submit` | `submit_cmr_quote` | remote_write | `nova:read nova:write` |

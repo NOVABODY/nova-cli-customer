@@ -376,6 +376,8 @@ class CustomerReadService:
                 if name != 'request_work_order_correction' or correction}
 
     def output_schema(self, name):
+        if name == aggregate_reports.repair.TOOL:
+            return aggregate_reports.repair.Report.model_json_schema()
         if name in skills.OUTPUTS:
             return skills.OUTPUTS[name].model_json_schema()
         if name == bundle_shop_steps.PDF:
