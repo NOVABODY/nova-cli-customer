@@ -884,3 +884,31 @@ nova body-repair accept-pickup BRR-7 --expected-version 8
 ```
 
 `--pickup-details` and `--suggested-time` accept JSON objects (at most 64 KiB each).
+
+Bundle workflow reads preserve the API's frozen pricing rule and parameters,
+including `sliding_transport_base_v6` per-defect base fees (`line_base_price`), v5 transport and older offers. The API computes
+the amounts. These clients do not recalculate fees or change purchase permissions.
+
+### Reject one customer-paid defect before a quote
+
+With the coordinated API update, use `nova work-order decline WO-42
+--defect-id 7 --decline-reason-code parts_unavailable`. Local MCP accepts
+`defect_id` on `decline_work_order`. It targets one unquoted CMR/CNMR defect,
+including an unaccepted same-van candidate; sibling work is preserved. The API
+owns reason-based routing and rejects quoted, priced, started, or foreign scope.
+The canceled-order response identifies `source_work_order_id` and
+`declined_defect_id`. No quote is sent. Read the source and returned order after
+an unknown result before any further write. The existing decline grant applies.
+
+Con la actualización coordinada de la API, usa `--defect-id` o `defect_id` en
+MCP para rechazar solo un defecto CMR/CNMR sin cotización. La API aplica el
+motivo y conserva los otros trabajos. No se envía una cotización. Consulta el
+resultado antes de otra escritura si el resultado es desconocido.
+
+
+Site admins can remove an unaccepted bundle with `remove_bundle` or
+`nova bundle remove REF`.
+Removal revokes offer links and releases reserved defects. The record and audit
+history remain. Accepted bundles return a conflict. Delegated access requires
+explicit `capacity.offers.remove.v1` write consent; existing grants do not gain it.
+Read the current bundle after an unknown outcome before trying again.

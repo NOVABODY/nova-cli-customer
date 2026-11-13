@@ -65,3 +65,41 @@ use `YYYY-MM-DD`; timestamps and epoch numbers are not accepted.
 Los enlaces deben usar HTTPS, el origen web configurado de Nova y la ruta del
 paquete. Los enlaces no seguros se quitan con una nota bilingüe. Las horas deben
 ser cadenas ISO 8601 con zona horaria. La fecha de regreso usa `YYYY-MM-DD`.
+
+
+## Sliding prices and recipient details
+
+Bundle report reads preserve saved sliding-price bands and optional recipient
+VINs exactly as returned by the API. Public links and revoked recipients do not
+receive this disclosure. Payment setup and readiness keep their browser handoff.
+
+Las lecturas de informes conservan los precios por tramos y los VIN que la API
+permite ver al destinatario. Los enlaces públicos y los destinatarios revocados
+no reciben estos datos. El método de pago y la disponibilidad se confirman en el navegador.
+
+### Configured PM/AMR transport pricing
+
+`sliding_transport_v5` preserves the frozen marginal percentages and the separate
+`transport_fee` in USD. Defaults are 5% / 4% / 3% across the first $1,000, next
+$1,000 and remainder, plus $50 per van. The van price includes transport; defect
+allocations exclude it. All released work has zero charge. Saved older offers
+keep their original pricing. The server calculates prices and enforces access.
+
+`sliding_transport_base_v6` adds the frozen `line_base_price` (USD per defect,
+default $5) to those marginal percentages and `transport_fee`. Each defect
+allocation is its base plus a repair-value share of the sliding fee; transport
+stays outside allocations. Three $500 defects cost $70 + $15 + $50 = $135.
+Candidate `rules.defect_base_fee` passes through as returned. Clients keep cent
+precision, read v5, v4 and older rules unchanged, and never recompute prices
+from current settings.
+
+## Reject an accepted CMR bundle
+
+Use `nova bundle-shop reject REF --reason "Cannot repair"` or the
+`reject_cmr_bundle` tool to reject all remaining work before any van is collected
+or work starts. The operation is `capacity.bundles.reject.v1`; delegated
+connections need fresh explicit consent. A vendor admin or service writer must
+belong to the awarded shop. PM/AMR bundles are excluded. The API rejects the
+whole action if any van has started. Signed acceptance and applicable saved fee
+terms remain. After a confirmed write, read the vans; do not retry an uncertain
+write. Coordinate release with the API and web implementation.

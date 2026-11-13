@@ -24,6 +24,7 @@ client support; the server checks current account access.
 | `nova bundle-shop confirm-no-charge` | `confirm_bundle_no_charge` | remote_write | `nova:read nova:write` |
 | `nova bundle-shop contact` | `request_bundle_contact` | remote_write | `nova:read nova:write` |
 
+| `nova bundle remove` | `remove_bundle` | remote_write | `nova:read nova:write` |
 | `nova bundle-fee get` | `get_admin_bundle` | remote_read | `nova:read` |
 | `nova bundle-fee waive` | `waive_bundle_fee` | remote_write | `nova:read nova:write` |
 | `nova bundle-address get` | `get_bundle_dropoff_address` | remote_read | `nova:read` |
@@ -391,6 +392,7 @@ Supported values: AMR, CMR, CNMR, Body, PM, Tires, Detailing, Netradyne. A corre
 Solo los administradores del sitio pueden cambiar la categoría de reparación. Consulta primero el defecto y usa su valor exacto de `updated_at`.
 El permiso es `defects.category.update.v1`. El cambio queda registrado y no cambia el taller, los presupuestos ni la facturación existentes.
 
+| `nova bundle-shop reject` | `reject_cmr_bundle` | remote_write | `nova:read nova:write` |
 
 ### Inspection quality review / Revisión de calidad de inspecciones
 
