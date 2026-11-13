@@ -1,10 +1,12 @@
 """Native aggregate reports; calculations and date defaults belong to the API."""
 import json
+from argparse import BooleanOptionalAction
 from datetime import date
 from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
+from nova_cli_public import fleet_repair_value as repair
 from nova_cli_public import legacy_reads
 from nova_cli_public.errors import ApiError
 
@@ -32,11 +34,20 @@ class Report(Compliance):
 REPORTS = ('work_order_completion', 'repair_metrics', 'inspection_compliance')
 MODELS = {'get_' + name + '_report': Compliance if name == 'inspection_compliance' else Report for name in REPORTS}
 
+MODELS[repair.TOOL] = repair.Filters
 
 def run(args):
     name = args.aggregate_tool
     query = MODELS[name].model_validate({key: getattr(args, key) for key in MODELS[name].model_fields
                                        if hasattr(args, key)}).model_dump(exclude_none=True)
+    if name == repair.TOOL:
+        value = legacy_reads.client_from_args(args).request('GET', repair.PATH, query=repair.query(query))
+        try:
+            repair.Report.model_validate(value)
+            json.dumps(value, allow_nan=False)
+        except (ValueError, TypeError, RecursionError):
+            raise ApiError('Invalid report response. / Respuesta de informe no válida.') from None
+        return value
     value = legacy_reads.client_from_args(args).request('GET', '/dashboards/reports/' + name[4:-7].replace('_', '-'), query=query)
     try:
         if not isinstance(value, dict) or any(not isinstance(value.get(key), str) for key in ('date_from', 'date_to')):
@@ -63,3 +74,11 @@ COMMANDS = [{'command': 'report ' + name.replace('_', '-'), 'tool': 'get_' + nam
     'defaults': {'aggregate_tool': 'get_' + name + '_report'},
     'arguments': [(['--' + key.replace('_', '-')], {'default': None})
                   for key in MODELS['get_' + name + '_report'].model_fields]} for name in REPORTS]
+
+COMMANDS.append({'command': 'report fleet-repair-value', 'tool': repair.TOOL,
+    'description': 'Read fleet repair values. Site administrators only. / Consulta los valores de reparación de la flota. Solo administradores del sitio.',
+    'grant': repair.GRANT, 'groups': [], 'handler': run, 'defaults': {'aggregate_tool': repair.TOOL},
+    'arguments': [(['--' + key.replace('_', '-')],
+        {'action': 'append', 'default': None} if key == 'station_code' else
+        {'action': BooleanOptionalAction, 'default': None} if key == 'grounded' else {'default': None})
+        for key in repair.Filters.model_fields]})

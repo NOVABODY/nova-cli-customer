@@ -912,3 +912,21 @@ Removal revokes offer links and releases reserved defects. The record and audit
 history remain. Accepted bundles return a conflict. Delegated access requires
 explicit `capacity.offers.remove.v1` write consent; existing grants do not gain it.
 Read the current bundle after an unknown outcome before trying again.
+
+
+### Fleet repair value
+
+Site administrators can read planning values for all matching active vans,
+including grounded vans. The API returns fleet and DSP totals, per-van values,
+missing-estimate counts and defect details. USD cents are integers; null means
+no complete repair estimate. Shared repairs are counted once by the API.
+These values are current pre-tax planning estimates, not approved quotes.
+
+Use `nova report fleet-repair-value --station-code DVA1` (repeat `--station-code` for several stations). The MCP tool is
+`get_fleet_repair_value_report`. Filters: `dsp_id`, `station_code` (array),
+`vehicle_class`, `make`, `location`, and `grounded`.
+The API route is `/v1/dashboards/reports/vehicle-availability` with
+`include_repair_value=true`. Delegated access requires new explicit
+`reports.vehicle_availability.get.v1` consent. Existing grants stay unchanged;
+non-admin principals receive 403. Deployment settings still govern hosted
+service-key access.

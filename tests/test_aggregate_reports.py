@@ -104,3 +104,22 @@ def test_report_errors_remain_errors_without_retry(status):
     with pytest.raises(TokenStoreUnavailable if status == 401 else ApiError):
         CustomerReadService(client).run('get_repair_metrics_report', {})
     assert len(opener.calls) == 1
+
+
+def test_fleet_value_cli_and_local_mcp_keep_values_and_repeat_station_filters(monkeypatch):
+    value = {'low_cents': None, 'typical_cents': None, 'high_cents': None, 'defect_count': 1, 'missing_count': 1}
+    report = {'repair_value': {**value, 'dsps': []}, 'vehicles': []}
+    opener = Opener(report)
+    client = ApiClient(Profile('test', 'https://nova.example/api'), object(), opener=opener)
+    client.access_token = 'synthetic-access'
+    monkeypatch.setattr(legacy_reads, 'client_from_args', lambda args: client)
+    parsed = cli.build_parser().parse_args(['report', 'fleet-repair-value', '--station-code', 'DVA1', '--station-code', 'DVA2'])
+    assert parsed.handler(parsed) == report
+    service = CustomerReadService(client)
+    assert service.run('get_fleet_repair_value_report', {'station_code': ['DVA1', 'DVA2']}) == report
+    assert 'repair_value' in service.output_schema('get_fleet_repair_value_report')['properties']
+    assert len(opener.calls) == 2
+    for request in opener.calls:
+        assert urlsplit(request.full_url).path == '/api/dashboards/reports/vehicle-availability'
+        params = parse_qs(urlsplit(request.full_url).query)
+        assert params['station_code'] == ['DVA1', 'DVA2'] and params['include_repair_value'][0].lower() == 'true'
