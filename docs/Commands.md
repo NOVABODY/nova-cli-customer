@@ -394,3 +394,83 @@ Solo los administradores del sitio pueden cambiar la categoría de reparación. 
 El permiso es `defects.category.update.v1`. El cambio queda registrado y no cambia el taller, los presupuestos ni la facturación existentes.
 
 | `nova bundle-shop reject` | `reject_cmr_bundle` | remote_write | `nova:read nova:write` |
+
+### Inspection quality review / Revisión de calidad de inspecciones
+
+| Command | MCP tool | Effects | Scope |
+|---|---|---|---|
+| `nova inspection-review queue` | `list_inspection_reviews` | remote_read | `nova:read` |
+| `nova inspection-review show` | `get_inspection_review` | remote_read | `nova:read` |
+| `nova inspection-review start` | `start_inspection_review` | remote_write | `nova:read nova:write` |
+| `nova inspection-review set` | `set_inspection_review_item` | remote_write | `nova:read nova:write` |
+| `nova inspection-review unset` | `unset_inspection_review_item` | remote_write | `nova:read nova:write` |
+| `nova inspection-review preview` | `preview_inspection_review` | remote_read | `nova:read` |
+| `nova inspection-review complete` | `complete_inspection_review` | remote_write | `nova:read nova:write` |
+| `nova inspection-review quality` | `get_inspector_quality` | remote_read | `nova:read` |
+| `nova inspection-review feedback` | `list_inspection_review_feedback` | remote_read | `nova:read` |
+| `nova inspection-review feedback-summary` | `get_inspection_review_feedback_summary` | remote_read | `nova:read` |
+| `nova inspection-review feedback-seen` | `mark_inspection_review_feedback_seen` | remote_write | `nova:read nova:write` |
+
+Site admins can review platform inspections. `set REVIEW OBSERVATION --verdict ...`
+saves the verdict and an optional comment as a draft: nothing changes for the DSP or
+shop until you complete the review. `--comment ""` clears a saved comment and
+`unset REVIEW OBSERVATION` clears the draft. `preview REVIEW [--confirm-remaining]`
+lists what completing will do (DSP queue removals, shop request withdrawals, group
+changes, comments and who can read them, ungrounding, and the inspector's score
+change) and changes nothing. `complete REVIEW [--confirm-remaining]` fetches a
+preview, prints its effects, then completes with that preview's token; add
+`--preview-token TOKEN` to complete a preview you already read. Every defect needs a
+decision, and `--confirm-remaining` confirms the undecided ones. If a defect changed
+after the preview, nothing is applied, the new effects are printed and the command
+stops; it never retries. The `complete_inspection_review` tool requires the
+`preview_token` from `preview_inspection_review`, so show its effects before
+completing. A stale preview returns `inspection_review_preview_stale` with the new
+effects and no token.
+
+An invalid finding after the decision window closes affects only the score. Category
+changes preserve routing and prices. Inspectors can read their own quality and
+feedback. `feedback-summary` returns the unseen count, latest review and score shown
+on the Home card. `feedback-seen ITEM` is the Got it action: only the inspector who
+owns the item can use it, and Nova sends no push or email. Each command needs its
+dedicated operation consent. Read the review before another attempt when a change
+outcome is unknown.
+
+Los administradores del sitio pueden revisar inspecciones de la plataforma. `set`
+guarda el resultado y un comentario opcional como borrador: nada cambia para el DSP ni
+el taller hasta que completes la revisión. `--comment ""` borra el comentario y
+`unset` borra el borrador. `preview` muestra lo que hará completar la revisión sin
+cambiar nada. `complete` obtiene una vista previa, muestra sus efectos y completa con
+su token; usa `--preview-token` para completar una vista previa que ya revisaste. Si
+un defecto cambió después de la vista previa, no se aplica nada, se muestran los
+nuevos efectos y el comando se detiene sin reintentar. La herramienta
+`complete_inspection_review` requiere el `preview_token` de
+`preview_inspection_review`. Un hallazgo no válido después del plazo de decisión solo
+afecta la puntuación. Los cambios de categoría mantienen el taller y los precios.
+Cada inspector puede consultar su propia calidad y comentarios. `feedback-summary`
+devuelve los comentarios sin ver, la última revisión y la puntuación. `feedback-seen`
+marca un comentario propio como visto; no se envían notificaciones push ni correos.
+Cada comando requiere su permiso específico. Consulta la revisión antes de otro
+intento si no se conoce el resultado de un cambio.
+
+
+Inspection queue filters: `--status unreviewed|in_progress|completed|all`,
+`--dsp-id`, `--inspector-id`, `--station-code`, `--submitted-since` (a time with a time
+zone), `--has-critical`, `--limit` (default 50, maximum 200), and `--offset` (default 0).
+Feedback accepts `--inspector-id`, `--days` (default 30), `--verdict
+corrections|confirmed|all` (default `corrections`), `--unseen`, `--limit` (default 100),
+and `--offset`. Quality also defaults to 30 days. Feedback summary
+accepts `--inspector-id` and `--days`; site admins must give `--inspector-id`, and
+inspectors read their own. Only the inspector who owns an item can mark it seen
+(admins and service accounts get 403). Use `offset + limit` to request
+the next page. MCP uses the same field names with underscores, for example
+`submitted_since` and `inspector_id`.
+
+Filtros de la cola: `--status unreviewed|in_progress|completed|all`, `--dsp-id`,
+`--inspector-id`, `--station-code`, `--submitted-since` (con zona horaria),
+`--has-critical`, `--limit` (50 por defecto, máximo 200) y `--offset` (0 por defecto).
+Los comentarios aceptan `--inspector-id`, `--days` (30 por defecto), `--verdict`
+(`corrections` por defecto), `--unseen`, `--limit` y `--offset`. La calidad también usa
+30 días por defecto. El resumen acepta `--inspector-id` y
+`--days`; los administradores deben indicar `--inspector-id`. Solo el inspector al que
+pertenece un comentario puede marcarlo como visto. Usa `offset + limit` para solicitar la página siguiente.
+Las herramientas MCP usan los mismos nombres de campo con guiones bajos.

@@ -5,6 +5,11 @@ import re
 WRITE_ROUTES = {
     ('POST', r'/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/reject'): 'capacity.bundles.reject.v1',
     ('POST', r'/defect-bundle-offers/staff/[A-Za-z0-9][A-Za-z0-9-]{0,39}/discard'): 'capacity.offers.remove.v1',
+    ("POST", r"/inspection-reviews"): "inspection_reviews.start.v1",
+    ("PUT", r"/inspection-reviews/[1-9][0-9]{0,9}/items/[1-9][0-9]{0,9}"): "inspection_reviews.items.set.v1",
+    ("DELETE", r"/inspection-reviews/[1-9][0-9]{0,9}/items/[1-9][0-9]{0,9}"): "inspection_reviews.items.unset.v1",
+    ("POST", r"/inspection-reviews/[1-9][0-9]{0,9}/complete"): "inspection_reviews.complete.v1",
+    ("POST", r"/inspection-reviews/feedback/[1-9][0-9]{0,9}/seen"): "inspection_reviews.feedback.seen.v1",
     ('POST', r'/cmr-quotes'): 'cmr_quotes.submit.v1',
     ('POST', r'/cmr-quotes/[1-9][0-9]{0,9}/withdraw'): 'cmr_quotes.withdraw.v1',
     ('POST', r'/cmr-quotes/[1-9][0-9]{0,9}/lines/[1-9][0-9]{0,9}/dismiss'): 'cmr_quotes.dismiss.v1',
