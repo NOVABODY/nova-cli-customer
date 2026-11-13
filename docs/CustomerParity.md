@@ -69,3 +69,9 @@ misma solicitud. Termina la configuración del pago en Nova.
 Quote reads require `cmr_quotes.list.v1` or `cmr_quotes.get.v1`. Changes require
 write consent and the matching `cmr_quotes.submit.v1`, `withdraw.v1`, `dismiss.v1`,
 or `decide.v1` operation. Add these permissions through browser consent.
+
+Fleet repair valuation is available to site administrators through
+`report fleet-repair-value` and `get_fleet_repair_value_report`. It uses the
+existing Vehicle availability API with explicit delegated read consent; the API
+rejects DSP/vendor principals and revoked connections. Values include fleet/DSP
+subtotals and missing-estimate counts, with grounded vans included by default.

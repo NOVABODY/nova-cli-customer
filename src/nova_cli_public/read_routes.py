@@ -10,6 +10,7 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/dashboards/reports/vehicle-availability": "reports.vehicle_availability.get.v1",
     r'/cmr-quotes': 'cmr_quotes.list.v1',
     r'/cmr-quotes/[1-9][0-9]{0,9}': 'cmr_quotes.get.v1',
     r"/agent-skills(?:/nova-[a-z0-9-]+)?": None,

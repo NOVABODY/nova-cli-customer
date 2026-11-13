@@ -26,6 +26,7 @@ DETAILS = {
            ("respond", "Confirm or decline one inspection.", "nova inspection-confirmation respond DVIC-7 --response Y --expected-scheduled-at 2026-10-28T02:00:00Z --expected-confirmation-id 17"),
        ]},
     "daily-work scheduled": ("Read scheduled fleet work.", ["remote_read"], "nova daily-work scheduled DSP-7 --service-date 2026-06-14"),
+    "report fleet-repair-value": ("Read fleet repair values as a site administrator.", ["remote_read"], "nova report fleet-repair-value"),
     "report inspector-performance": ("Read inspector report quality.", ["remote_read"], "nova report inspector-performance"),
     "report driver-da-quality": ("Read driver report quality.", ["remote_read"], "nova report driver-da-quality"),
     "vendor-scorecard pending-feedback": ("Read repairs that need a rating.", ["remote_read"], "nova vendor-scorecard pending-feedback"),
