@@ -18,6 +18,7 @@ class Client:
     ("queue", "list_defect_review_queue", {}, "/defect-reviews/queue", {"query": {"limit": 50, "offset": 0}}),
     ("history", "list_defect_reviews", {"defect_id": "FD-1"}, "/defect-reviews/defect/FD-1", {}),
     ("approve", "approve_defect_review", {"defect_id": "FD-1", "external_vendor_id": 3, "additional_defect_ids": ["FD-2"]}, "/defect-reviews/defect/FD-1/approve", {"json_body": {"external_vendor_id": 3, "additional_defect_ids": ["FD-2"]}}),
+    ("approve", "approve_defect_review", {"defect_id": "FD-1", "vendor_workshop_id": 3, "accept_out_of_fmc_cost": True}, "/defect-reviews/defect/FD-1/approve", {"json_body": {"vendor_workshop_id": 3, "accept_out_of_fmc_cost": True}}),
     ("reject", "reject_defect_review", {"defect_id": "FD-1", "reject_reason_code": "duplicate"}, "/defect-reviews/defect/FD-1/reject", {"json_body": {"reject_reason_code": "duplicate"}}),
 ])
 def test_cli_and_mcp_send_same_native_review_request(monkeypatch, action, tool, arguments, path, kwargs):
@@ -29,7 +30,7 @@ def test_cli_and_mcp_send_same_native_review_request(monkeypatch, action, tool, 
     for key, value in arguments.items():
         if key != "defect_id":
             for item in value if isinstance(value, list) else [value]:
-                argv += ["--" + key.replace("_", "-"), str(item)]
+                argv += ["--" + key.replace("_", "-")] + ([] if item is True else [str(item)])
     args = cli.build_parser().parse_args(argv)
     args.handler(args)
     CustomerReadService(client).run(tool, arguments)
