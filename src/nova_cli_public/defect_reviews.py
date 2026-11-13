@@ -30,6 +30,7 @@ class History(BaseModel):
 class Decision(History):
     reason: str | None = Field(default=None, max_length=500)
     is_rush: bool | None = None
+    rush_acknowledged: bool | None = Field(default=None, description='Confirm priority repair before FMC approval and DSP full-cost risk if declined. / Confirma la reparación prioritaria antes de la aprobación de la FMC y el riesgo de que el DSP pague el costo total.')
     is_critical: bool | None = None
     key_location: str | None = Field(default=None, max_length=80)
     vendor_workshop_id: int | None = None
@@ -74,10 +75,10 @@ for action, tool, grant, model in [
 ]:
     arguments = []
     for name, field in model.model_fields.items():
-        options = {}
+        options = {"help": field.description} if field.description else {}
         if name in ("limit", "offset", "vendor_workshop_id", "external_vendor_id", "dsp_contact_user_id"):
             options["type"] = "int"
-        if name in ("is_rush", "is_critical", "override_eligibility", "accept_dsp_responsibility", "accept_out_of_fmc_cost"):
+        if name in ("rush_acknowledged", "is_rush", "is_critical", "override_eligibility", "accept_dsp_responsibility", "accept_out_of_fmc_cost"):
             options["action"] = "BooleanOptionalAction"
         if name == "additional_defect_ids":
             options["action"] = "append"

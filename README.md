@@ -932,6 +932,12 @@ non-admin principals receive 403. Deployment settings still govern hosted
 service-key access.
 
 
+Rush repairs require explicit cost-risk acknowledgment. Present the warning and
+obtain acknowledgment before sending `rush_acknowledged: true` with `is_rush`.
+Rush work receives priority and immediate repair before formal FMC approval;
+the DSP may have to pay the full repair cost if the FMC declines. Do not infer
+acknowledgment from the rush flag. The API enforces and audits the requirement.
+
 For AMR routing outside the van's FMC relationship, inspect `defect-routing shops` with `--defect-id` and `--include-out-of-scope`. An authorized DSP owner or manager can use `defect-review approve --accept-out-of-fmc-cost` only after explicit approval that the DSP may pay the full repair cost. CLI and local MCP share this field. The API keeps the defect and billing category AMR and records the confirmation with the selected shop.
 
 Para asignar trabajo AMR a un taller sin una relación activa con la FMC, consulta la advertencia con esas opciones. Usa `--accept-out-of-fmc-cost` solo después de la aprobación explícita del costo total. La API mantiene la categoría AMR y registra la confirmación para el taller seleccionado.
