@@ -85,7 +85,7 @@ COMMANDS = [
      'description': 'List pickup and return schedules for your DSP. / Consulta los horarios de recogida y devolución de tu DSP.',
      'arguments': [], 'groups': [], 'handler': command, 'defaults': {'bundle_schedule_tool': READ}},
     {'command': 'bundle-schedules decide', 'tool': WRITE, 'grant': 'capacity.schedules.decide.v1',
-     'description': 'Approve or decline the exact schedule version. / Aprueba o rechaza la versión exacta del horario.',
+     'description': 'Approve or decline the exact pickup and return schedule. Approval starts the shop fee under its saved terms. / Aprueba o rechaza el horario exacto de recogida y devolución. La aprobación inicia el cargo al taller según sus términos guardados.',
      'arguments': [(['ref'], {}), (['unit'], {'type': 'int'}), (['--version'], {'required': True}),
                    (['--decision'], {'choices': ['approved', 'declined'], 'required': True})],
      'groups': [], 'handler': command, 'defaults': {'bundle_schedule_tool': WRITE},
