@@ -39,6 +39,7 @@ def test_cli_and_mcp_submit_exact_version_once(monkeypatch, decision):
         async with create_connected_server_and_client_session(create_server(CustomerReadService(api))) as sdk:
             tools = {tool.name: tool for tool in (await sdk.list_tools()).tools}
             assert not tools[bundle_schedules.WRITE].annotations.readOnlyHint
+            assert 'Approval starts the shop fee' in tools[bundle_schedules.WRITE].description
             read = await sdk.call_tool(bundle_schedules.READ, {})
             assert read.structuredContent['rows'][0]['schedule']['version'] == SCHEDULE['version']
             result = await sdk.call_tool(bundle_schedules.WRITE, {'ref': 'DFS-B-2026-0001', 'unit': 1, 'version': SCHEDULE['version'], 'decision': decision})

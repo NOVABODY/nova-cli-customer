@@ -30,7 +30,7 @@ for pricing in (
 
 SLIDING = {'rule': 'sliding_allocations_v3', 'first_limit': 1000, 'second_limit': 2000,
            'first_percent': 8, 'second_percent': 6, 'tail_percent': 4,
-           'payment_rule': 'approved_readiness_v1'}
+           'payment_rule': 'dsp_schedule_v2'}
 SLIDING_REPORT = {'ref': 'B-1', 'status': 'open', 'report': {'pricing': SLIDING,
     'units': [{'unit': 1, 'vin': '1FTBW2CM0NKA99999', 'asking_price': 80.03}]}}
 CASES.append(('report', 'get_bundle_offer_report', {'ref': 'B-1'}, '/bundle-offers/B-1/report', SLIDING_REPORT))
@@ -137,7 +137,7 @@ def test_base_terms_keep_cents_and_extra_fields():
     from nova_cli_public.bundle_workflow import Pricing
 
     terms = Pricing.model_validate({**BASE_V6, 'line_base_price': 7.25, 'fee_waived': False})
-    assert terms.line_base_price == 7.25 and terms.model_dump()['payment_rule'] == 'approved_readiness_v1'
+    assert terms.line_base_price == 7.25 and terms.model_dump()['payment_rule'] == 'dsp_schedule_v2'
     with pytest.raises(ValidationError):
         Pricing.model_validate({**BASE_V6, 'line_base_price': -1})
 
