@@ -37,7 +37,7 @@ READ_ROUTES = {
     r"/vendor-workshops": "vendor_workshops.list.v1",
     r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/dropoff-address": "capacity.dropoff_address.get.v1",
     r"/bundle-offers/schedules": "capacity.schedules.list.v1",
-    r"/first-inspection-recaps/[0-9]{1,14}/report": "first_recaps.report.v1",
+    r"/first-inspection-recaps/[0-9]{1,14}/report": "first_recaps.report.get.v1",
     r"/vendor-referrals": "vendor_referrals.list.v1",
     r'/onboarding/dsp/tire-vendors': 'onboarding.tire_vendors.list.v1',
     r'/vendor-setup-requests': 'vendor_setup_requests.list.v1',

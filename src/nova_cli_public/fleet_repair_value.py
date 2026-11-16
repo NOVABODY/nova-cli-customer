@@ -1,7 +1,8 @@
 """Typed fleet repair planning read; the API owns scope and integer-cent totals."""
-from typing import Annotated
+from datetime import date
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
 TOOL = 'get_fleet_repair_value_report'
 PATH = '/dashboards/reports/vehicle-availability'
@@ -10,8 +11,19 @@ Text = Annotated[str, Field(max_length=200)]
 Count = Annotated[int, Field(ge=0)]
 
 
+def iso_day(value):
+    date.fromisoformat(value)
+    return value
+
+
+Day = Annotated[str, Field(pattern=r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$"), AfterValidator(iso_day)]
+
+
 class Filters(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
+    date_from: Day | None = None
+    date_to: Day | None = None
+    repair_category: list[Literal["AMR", "CMR", "other"]] | None = None
     dsp_id: Annotated[str, Field(pattern=r'^[1-9][0-9]*$', max_length=10)] | None = None
     station_code: list[Text] | None = None
     vehicle_class: Text | None = None
@@ -34,6 +46,10 @@ class DspValue(Value):
 
 
 class FleetValue(Value):
+    date_from: Day | None = None
+    date_to: Day | None = None
+    timezone: str | None = None
+    repair_categories: list[Literal["AMR", "CMR", "other"]] | None = None
     dsps: list[DspValue]
 
 

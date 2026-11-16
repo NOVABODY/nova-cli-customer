@@ -110,7 +110,7 @@ def execute(client, name, arguments):
         path, method, body = f'/vendor-setup-requests/{query.request_id}', 'PATCH', {'status': 'handled'}
     params = {key: value for key, value in query.model_dump(include={'dsp_id', 'request_id'}, exclude_none=True).items()
               if not (name == 'handle_vendor_setup_request' and key == 'request_id')}
-    value = client.request(method, path, **({'params': params} if params else {}),
+    value = client.request(method, path, **({'query': params} if params else {}),
                            **({'json_body': body} if name in WRITES else {}))
     try:
         result = OUTPUTS[name].model_validate(value)

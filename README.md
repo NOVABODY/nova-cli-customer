@@ -941,3 +941,32 @@ acknowledgment from the rush flag. The API enforces and audits the requirement.
 For AMR routing outside the van's FMC relationship, inspect `defect-routing shops` with `--defect-id` and `--include-out-of-scope`. An authorized DSP owner or manager can use `defect-review approve --accept-out-of-fmc-cost` only after explicit approval that the DSP may pay the full repair cost. CLI and local MCP share this field. The API keeps the defect and billing category AMR and records the confirmation with the selected shop.
 
 Para asignar trabajo AMR a un taller sin una relación activa con la FMC, consulta la advertencia con esas opciones. Usa `--accept-out-of-fmc-cost` solo después de la aprobación explícita del costo total. La API mantiene la categoría AMR y registra la confirmación para el taller seleccionado.
+
+Fleet repair values accept `date_from` and `date_to` (CLI: `--date-from`,
+`--date-to`) as YYYY-MM-DD. Dates include both endpoints in America/New_York
+and filter the first defect report date. The API defaults to today and the
+previous 13 calendar days. Other report filters and access rules still apply.
+
+### Bundle schedule fees (candidate API change)
+
+New PM/AMR (`dsp_schedule_v2`) and CMR (`cmr_schedule_v1`) offers start the shop
+fee when the DSP approves the exact pickup and return schedule. CMR charges
+10% of approved repair prices. Readiness, repair quote approval and a proposed
+schedule do not start this fee. Existing offers retain their saved terms.
+
+PM/AMR also charges each van 7 calendar days after purchase when no approval or
+decline is posted for it. Any partial approval or decline stops that fallback;
+pending evidence does not extend it. A declined document under staff review
+stops the fallback; staff rejection of invalid evidence restores eligibility.
+Pickup requires the current DSP schedule approval and confirmed PM/AMR payment,
+including bank payments. Timeout payment alone does not permit pickup.
+
+The existing version-bound decision tool remains a consented write. Dispatch
+once and read back an unknown outcome. No new grants, product skills, release
+or hosted deployment are included. Vendor projections preserve
+`fee_collection=schedule_charge` and frozen pricing/payment metadata.
+
+Fleet repair values accept repeated `repair_category` values (`AMR`, `CMR`, `other`).
+Use repeated `--repair-category` CLI flags where available. AMR includes PM; CMR
+includes CNMR; Other includes all remaining or unclassified groups. Omit the
+filter to include every category. The API echoes `repair_value.repair_categories`.
