@@ -15,12 +15,16 @@ from nova_cli_public.reads import CustomerReadService
 KEY = '12345678-1234-4234-8234-123456789abc'
 QUOTE = {'id': 9, 'source': 'service_writer', 'vehicle_id': 2, 'status': 'submitted',
     'lines': [{'defect_id': 7, 'amount_cents': 1250, 'decision': None}], 'native_extension': True}
+EXPIRED = {**QUOTE, 'status': 'expired', 'lines': [{**QUOTE['lines'][0], 'decision': 'expired', 'dismissed_at': '2026-11-16T12:00:00Z'}]}
 SUBMIT = {'vehicle_id': 'VAN-2', 'lines': [{'defect_id': 'FD-7', 'amount_cents': 1250}], 'idempotency_key': KEY}
 
 
 @pytest.mark.parametrize('action,tool,values,path,result', [
     ('submit', 'submit_cmr_quote', SUBMIT, '/cmr-quotes', QUOTE),
     ('get', 'get_cmr_quote', {'quote_id': 9}, '/cmr-quotes/9', QUOTE),
+    ('get', 'get_cmr_quote', {'quote_id': 9}, '/cmr-quotes/9', EXPIRED),
+    ('list', 'list_cmr_quotes', {'status': 'all'}, '/cmr-quotes', {'rows': [{**EXPIRED, 'status': 'closed'}], 'count': 1}),
+    ('dismiss', 'dismiss_cmr_quote_line', {'quote_id': 9, 'defect_id': 'FD-7', 'idempotency_key': KEY}, '/cmr-quotes/9/lines/7/dismiss', EXPIRED),
     ('list', 'list_cmr_quotes', {'status': 'all', 'defect_ids': [7]}, '/cmr-quotes', {'rows': [QUOTE], 'count': 1}),
     ('withdraw', 'withdraw_cmr_quote', {'quote_id': 9, 'idempotency_key': KEY}, '/cmr-quotes/9/withdraw', {**QUOTE, 'status': 'withdrawn'}),
     ('dismiss', 'dismiss_cmr_quote_line', {'quote_id': 9, 'defect_id': 'FD-7', 'idempotency_key': KEY}, '/cmr-quotes/9/lines/7/dismiss',

@@ -31,7 +31,7 @@ CASES = [
         "GET",
         "/body-repair/requests/BRR-7/quotes",
         None,
-        {"request_id": "BRR-7", "quotes": []},
+        {"is_vendor": True, "is_admin": False, "is_customer": False, "quotes": []},
     ),
     (
         quotes.NAMES[2],

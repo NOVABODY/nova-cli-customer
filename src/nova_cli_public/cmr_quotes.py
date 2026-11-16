@@ -11,8 +11,8 @@ from nova_cli_public.errors import ApiError, UsageError
 KEY = re.compile(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
 CODE = re.compile(r'[a-z][a-z0-9_]{0,63}\Z')
 SOURCES = {'capacity', 'service_writer'}
-STATUSES = {'submitted', 'decided', 'expired', 'withdrawn'}
-LINE_DECISIONS = {'approved', 'rejected'}
+STATUSES = {'submitted', 'decided', 'expired', 'withdrawn', 'closed'}
+LINE_DECISIONS = {'approved', 'rejected', 'expired'}
 Cents = Annotated[int, Field(ge=0, le=99999999)]
 Record = Annotated[int, Field(ge=1, le=2147483647)]
 Note = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
