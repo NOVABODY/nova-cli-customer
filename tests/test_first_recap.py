@@ -1,11 +1,13 @@
 """Named confirmation tools preserve explicit opt-in and one-appointment decisions."""
 import asyncio
+import inspect
 
 import pytest
 from mcp.shared.memory import create_connected_server_and_client_session
 
 from nova_cli_public import cli, legacy_reads
 from nova_cli_public.capabilities import manifest
+from nova_cli_public.client import ApiClient
 from nova_cli_public.mcp import create_server
 from nova_cli_public.read_routes import admitted_read
 from nova_cli_public.reads import CustomerReadService
@@ -21,6 +23,7 @@ class Api:
         self.value, self.calls = value, []
 
     def request(self, method, path, **kwargs):
+        inspect.signature(ApiClient.request).bind(self, method, path, **kwargs)
         self.calls.append((method, path, kwargs))
         return self.value
 
@@ -47,10 +50,10 @@ def test_cli_and_mcp_preserve_explicit_fields(monkeypatch, argv, tool, arguments
             assert not result.isError and result.structuredContent == ({'items': value} if isinstance(value, list) else value)
     asyncio.run(check())
     assert api.calls == [(method, path,
-        {'params': {'limit': 50, 'offset': 0, 'state': ''}} if tool == 'list_vendor_referrals' else {} if body is None else {'json_body': body})] * 2
+        {'query': {'limit': 50, 'offset': 0, 'state': ''}} if tool == 'list_vendor_referrals' else {} if body is None else {'json_body': body})] * 2
     capability = manifest(cli.build_parser(), ' '.join(argv[:2]))['commands'][0]
     assert capability['required_scope'] == ('nova:read' if method == 'GET' else 'nova:read nova:write')
-    assert capability['required_operation'] == ('first_recaps.report.v1' if 'recap' in tool else 'vendor_referrals.submit.v1' if method == 'POST' else 'vendor_referrals.list.v1')
+    assert capability['required_operation'] == ('first_recaps.report.get.v1' if 'recap' in tool else 'vendor_referrals.submit.v1' if method == 'POST' else 'vendor_referrals.list.v1')
     assert admitted_read(path) if method == 'GET' else admitted_write(method, path)
 
 

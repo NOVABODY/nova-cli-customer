@@ -64,7 +64,7 @@ def run(args):
     report = isinstance(query, ReportQuery)
     path = f"/first-inspection-recaps/{int(query.dsp_id.split('-')[-1])}/report" if report else '/vendor-referrals'
     value = legacy_reads.client_from_args(args).request('POST' if name in WRITES else 'GET', path,
-        **({'json_body': query.model_dump()} if name in WRITES else {'params': query.model_dump()} if not report else {}))
+        **({'json_body': query.model_dump()} if name in WRITES else {'query': query.model_dump()} if not report else {}))
     try:
         from pydantic import TypeAdapter
         result = TypeAdapter(OUTPUTS[name]).validate_python(value)
@@ -77,7 +77,7 @@ def run(args):
 
 
 COMMANDS = [
- {'command': 'inspection-recap report', 'tool': 'get_first_inspection_recap_report', 'grant': 'first_recaps.report.v1',
+ {'command': 'inspection-recap report', 'tool': 'get_first_inspection_recap_report', 'grant': 'first_recaps.report.get.v1',
   'description': 'Read your scoped first platform recap. / Consulta tu resumen de plataforma con el alcance autorizado.',
   'arguments': [(['dsp_id'], {})], 'groups': [], 'handler': run, 'defaults': {'recap_tool': 'get_first_inspection_recap_report'}},
  {'command': 'vendor-referral list', 'tool': 'list_vendor_referrals', 'grant': 'vendor_referrals.list.v1',
