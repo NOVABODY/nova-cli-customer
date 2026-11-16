@@ -10,6 +10,7 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/organizations/(?:V-)?[0-9]{1,14}/cmr-auto-accept": "vendor.cmr_auto_accept.get.v1",
     r"/dashboards/reports/vehicle-availability": "reports.vehicle_availability.get.v1",
 
     r"/inspection-reviews/queue": "inspection_reviews.queue.list.v1",

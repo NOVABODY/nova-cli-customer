@@ -6,6 +6,8 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova vendor-cmr-auto-accept get` | `get_vendor_cmr_auto_accept` | remote_read | `nova:read` |
+| `nova vendor-cmr-auto-accept set` | `set_vendor_cmr_auto_accept` | remote_write | `nova:read nova:write` |
 | `nova report fleet-repair-value` | `get_fleet_repair_value_report` | remote_read | `nova:read` |
 | `nova cmr-quote list` | `list_cmr_quotes` | remote_read | `nova:read` |
 | `nova cmr-quote get` | `get_cmr_quote` | remote_read | `nova:read` |
@@ -474,3 +476,20 @@ Los comentarios aceptan `--inspector-id`, `--days` (30 por defecto), `--verdict`
 `--days`; los administradores deben indicar `--inspector-id`. Solo el inspector al que
 pertenece un comentario puede marcarlo como visto. Usa `offset + limit` para solicitar la página siguiente.
 Las herramientas MCP usan los mismos nombres de campo con guiones bajos.
+
+
+## Same-van CMR/CNMR automatic acceptance
+
+`nova vendor-cmr-auto-accept get V-7` reads the vendor setting.
+`nova vendor-cmr-auto-accept set V-7 --enabled` enables it; `--no-enabled`
+disables it. It defaults off. The vendor administrator can change their own
+vendor. Site administrators and account managers retain their organization
+permissions. MCP tools are `get_vendor_cmr_auto_accept` and
+`set_vendor_cmr_auto_accept`; both require `vendor_id`, and writes require a
+boolean `enabled`. The server checks tenant, role and current credentials.
+
+This setting applies to ordinary CMR/CNMR defects on vans already assigned to
+the shop. Automatic acceptance also requires a complete repair estimate within
+the DSP price threshold. Bundles are excluded. Manual acceptance remains
+available, and existing accepted work is unchanged. An uncertain write is never
+retried automatically: read the setting before trying again.
