@@ -10,10 +10,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from nova_cli_public.delegated import OPERATIONS
+from nova_cli_public.delegated import OPERATIONS, WRITE_OPERATIONS
 from nova_cli_public.reads import BY_TOOL
 
 print(json.dumps({"native_operations": {
-    operation: sorted(name for name, entry in BY_TOOL.items() if entry["grant"] == operation)
+    operation: {
+        "scope": "nova:read nova:write" if operation in WRITE_OPERATIONS else "nova:read",
+        "tools": sorted(name for name, entry in BY_TOOL.items() if entry["grant"] == operation),
+    }
     for operation in sorted(OPERATIONS)
 }}, indent=2))
