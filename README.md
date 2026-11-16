@@ -970,3 +970,7 @@ Fleet repair values accept repeated `repair_category` values (`AMR`, `CMR`, `oth
 Use repeated `--repair-category` CLI flags where available. AMR includes PM; CMR
 includes CNMR; Other includes all remaining or unclassified groups. Omit the
 filter to include every category. The API echoes `repair_value.repair_categories`.
+
+Body quote lists preserve the API's quotes and role flags without requiring
+a top-level request ID. CMR quote responses preserve closed quotes and expired
+line decisions. Decision inputs remain approved/rejected; writes do not replay.

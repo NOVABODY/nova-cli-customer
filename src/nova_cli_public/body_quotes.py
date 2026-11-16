@@ -199,7 +199,7 @@ def valid(name, result):
     if name == NAMES[0]:
         return isinstance(result.get("items"), list)
     if name == NAMES[1]:
-        return isinstance(result.get("request_id"), str) and isinstance(result.get("quotes"), list)
+        return isinstance(result.get("quotes"), list) and all(isinstance(quote, dict) for quote in result["quotes"])
     if name == NAMES[2]:
         return type(result.get("scope_revision")) is int and isinstance(
             result.get("last_viewed_at"), str
