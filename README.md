@@ -942,6 +942,11 @@ For AMR routing outside the van's FMC relationship, inspect `defect-routing shop
 
 Para asignar trabajo AMR a un taller sin una relación activa con la FMC, consulta la advertencia con esas opciones. Usa `--accept-out-of-fmc-cost` solo después de la aprobación explícita del costo total. La API mantiene la categoría AMR y registra la confirmación para el taller seleccionado.
 
+Fleet repair values accept `date_from` and `date_to` (CLI: `--date-from`,
+`--date-to`) as YYYY-MM-DD. Dates include both endpoints in America/New_York
+and filter the first defect report date. The API defaults to today and the
+previous 13 calendar days. Other report filters and access rules still apply.
+
 ### Bundle schedule fees (candidate API change)
 
 New PM/AMR (`dsp_schedule_v2`) and CMR (`cmr_schedule_v1`) offers start the shop

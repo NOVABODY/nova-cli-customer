@@ -108,18 +108,27 @@ def test_report_errors_remain_errors_without_retry(status):
 
 def test_fleet_value_cli_and_local_mcp_keep_values_and_repeat_station_filters(monkeypatch):
     value = {'low_cents': None, 'typical_cents': None, 'high_cents': None, 'defect_count': 1, 'missing_count': 1}
-    report = {'repair_value': {**value, 'dsps': []}, 'vehicles': []}
+    report = {'repair_value': {**value, 'dsps': [], 'date_from': '2026-10-31', 'date_to': '2026-11-01', 'timezone': 'America/New_York'}, 'vehicles': []}
     opener = Opener(report)
     client = ApiClient(Profile('test', 'https://nova.example/api'), object(), opener=opener)
     client.access_token = 'synthetic-access'
     monkeypatch.setattr(legacy_reads, 'client_from_args', lambda args: client)
-    parsed = cli.build_parser().parse_args(['report', 'fleet-repair-value', '--station-code', 'DVA1', '--station-code', 'DVA2'])
+    parsed = cli.build_parser().parse_args(['report', 'fleet-repair-value', '--station-code', 'DVA1', '--station-code', 'DVA2', '--date-from', '2026-10-31', '--date-to', '2026-11-01'])
     assert parsed.handler(parsed) == report
     service = CustomerReadService(client)
-    assert service.run('get_fleet_repair_value_report', {'station_code': ['DVA1', 'DVA2']}) == report
+    assert service.run('get_fleet_repair_value_report', {'station_code': ['DVA1', 'DVA2'], 'date_from': '2026-10-31', 'date_to': '2026-11-01'}) == report
     assert 'repair_value' in service.output_schema('get_fleet_repair_value_report')['properties']
     assert len(opener.calls) == 2
     for request in opener.calls:
         assert urlsplit(request.full_url).path == '/api/dashboards/reports/vehicle-availability'
         params = parse_qs(urlsplit(request.full_url).query)
+        assert params['date_from'] == ['2026-10-31'] and params['date_to'] == ['2026-11-01']
         assert params['station_code'] == ['DVA1', 'DVA2'] and params['include_repair_value'][0].lower() == 'true'
+
+
+@pytest.mark.parametrize("invalid", ["2026-02-30", "20261101", "not-a-date"])
+def test_fleet_value_rejects_invalid_report_dates(invalid):
+    from nova_cli_public import fleet_repair_value
+
+    with pytest.raises(ValueError):
+        fleet_repair_value.query({"date_from": invalid})
