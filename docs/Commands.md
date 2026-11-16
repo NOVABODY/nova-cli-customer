@@ -474,3 +474,17 @@ Los comentarios aceptan `--inspector-id`, `--days` (30 por defecto), `--verdict`
 `--days`; los administradores deben indicar `--inspector-id`. Solo el inspector al que
 pertenece un comentario puede marcarlo como visto. Usa `offset + limit` para solicitar la página siguiente.
 Las herramientas MCP usan los mismos nombres de campo con guiones bajos.
+
+### Customer operation availability
+
+Customer CLI and local MCP use delegated browser consent. The registered native
+client must allow each requested operation before the consent page can open.
+Internal service-account access does not verify this path. The inspection recap
+report requires `first_recaps.report.get.v1`. Vendor-referral and tire-vendor
+queries use the shared client query transport. Existing connections must review
+new permissions before using newly allowed tools.
+
+When tool operations change, run `uv run python scripts/export_agent_operation_catalog.py`
+and update the native operation catalog in `nova-john-app/test-contracts/customer-agent-operations.json`
+in the coordinated infrastructure PR. Keep the export, operation names, client
+allowance, and issuer admission checks aligned before release.

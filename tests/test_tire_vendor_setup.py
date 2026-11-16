@@ -1,5 +1,6 @@
 """The command and SDK tool preserve the same scoped tire setup request."""
 import asyncio
+import inspect
 from types import SimpleNamespace
 
 import pytest
@@ -7,6 +8,7 @@ from mcp.shared.memory import create_connected_server_and_client_session
 from pydantic import ValidationError
 
 from nova_cli_public import cli, legacy_reads
+from nova_cli_public.client import ApiClient
 from nova_cli_public.errors import ApiError
 from nova_cli_public.mcp import create_server
 from nova_cli_public.reads import CustomerReadService
@@ -15,7 +17,7 @@ SAVED = {'id': 12, 'dsp_id': 7, 'station_id': 4, 'status': 'submitted', 'vendor_
          'contact_name': 'Desk', 'contact_email': None, 'contact_phone': '+17035550100'}
 CASES = [
     (['list', '--dsp-id', 'DSP-7'], 'list_station_tire_vendors', {'dsp_id': 'DSP-7'},
-     'GET', '/onboarding/dsp/tire-vendors', {'params': {'dsp_id': 'DSP-7'}}, {'stations': []}),
+     'GET', '/onboarding/dsp/tire-vendors', {'query': {'dsp_id': 'DSP-7'}}, {'stations': []}),
     (['add', 'TEST1', '9'], 'add_station_tire_vendor', {'station_code': 'TEST1', 'vendor_workshop_id': 9},
      'POST', '/onboarding/dsp/tire-vendors', {'json_body': {'station_code': 'TEST1', 'vendor_workshop_id': 9}},
      {'dsp_id': 7, 'vendor_workshop_id': 9, 'repair_type': 'tires', 'is_active': True}),
@@ -23,7 +25,7 @@ CASES = [
      'share_tire_vendor_contact', {'station_code': 'TEST1', 'vendor_name': 'Local Tires', 'contact_name': 'Desk', 'contact_phone': '+17035550100'},
      'POST', '/onboarding/dsp/tire-vendor-requests', {'json_body': {'station_code': 'TEST1', 'vendor_name': 'Local Tires', 'contact_name': 'Desk', 'contact_phone': '+17035550100'}}, SAVED),
     (['requests', '--request-id', '12'], 'list_vendor_setup_requests', {'request_id': 12},
-     'GET', '/vendor-setup-requests', {'params': {'request_id': 12}}, {'items': [SAVED]}),
+     'GET', '/vendor-setup-requests', {'query': {'request_id': 12}}, {'items': [SAVED]}),
     (['handle', '12'], 'handle_vendor_setup_request', {'request_id': 12},
      'PATCH', '/vendor-setup-requests/12', {'json_body': {'status': 'handled'}}, {**SAVED, 'status': 'handled'}),
 ]
@@ -34,6 +36,7 @@ class Api:
     def __init__(self, value):
         self.value, self.calls = value, []
     def request(self, method, path, **kwargs):
+        inspect.signature(ApiClient.request).bind(self, method, path, **kwargs)
         self.calls.append((method, path, kwargs))
         return self.value
 
