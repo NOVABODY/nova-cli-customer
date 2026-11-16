@@ -79,6 +79,6 @@ COMMANDS.append({'command': 'report fleet-repair-value', 'tool': repair.TOOL,
     'description': 'Read fleet repair values. Site administrators only. / Consulta los valores de reparación de la flota. Solo administradores del sitio.',
     'grant': repair.GRANT, 'groups': [], 'handler': run, 'defaults': {'aggregate_tool': repair.TOOL},
     'arguments': [(['--' + key.replace('_', '-')],
-        {'action': 'append', 'default': None} if key == 'station_code' else
+        {'action': 'append', 'default': None} if key in ('station_code', 'repair_category') else
         {'action': BooleanOptionalAction, 'default': None} if key == 'grounded' else {'default': None})
         for key in repair.Filters.model_fields]})

@@ -965,3 +965,8 @@ The existing version-bound decision tool remains a consented write. Dispatch
 once and read back an unknown outcome. No new grants, product skills, release
 or hosted deployment are included. Vendor projections preserve
 `fee_collection=schedule_charge` and frozen pricing/payment metadata.
+
+Fleet repair values accept repeated `repair_category` values (`AMR`, `CMR`, `other`).
+Use repeated `--repair-category` CLI flags where available. AMR includes PM; CMR
+includes CNMR; Other includes all remaining or unclassified groups. Omit the
+filter to include every category. The API echoes `repair_value.repair_categories`.

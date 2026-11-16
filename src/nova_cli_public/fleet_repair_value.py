@@ -1,6 +1,6 @@
 """Typed fleet repair planning read; the API owns scope and integer-cent totals."""
 from datetime import date
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
@@ -23,6 +23,7 @@ class Filters(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
     date_from: Day | None = None
     date_to: Day | None = None
+    repair_category: list[Literal["AMR", "CMR", "other"]] | None = None
     dsp_id: Annotated[str, Field(pattern=r'^[1-9][0-9]*$', max_length=10)] | None = None
     station_code: list[Text] | None = None
     vehicle_class: Text | None = None
@@ -48,6 +49,7 @@ class FleetValue(Value):
     date_from: Day | None = None
     date_to: Day | None = None
     timezone: str | None = None
+    repair_categories: list[Literal["AMR", "CMR", "other"]] | None = None
     dsps: list[DspValue]
 
 
