@@ -125,3 +125,37 @@ def test_http_api_origin_cannot_authorize_nonloopback_upload():
     with pytest.raises(UsageError):
         api.put_bytes('http://foreign.example/signed', b'image', content_type='image/png')
     assert not handler.calls
+
+
+@pytest.mark.parametrize('api_url,target,allowed', [
+    ('https://app.nova4a.com/api',
+     'https://nova-fora-prod-objects-258083583532.s3.us-east-1.amazonaws.com', True),
+    ('https://staging.nova4a.com/api',
+     'https://nova-fora-staging-objects-017719539850.s3.us-east-1.amazonaws.com', True),
+    ('https://app.nova4a.com/api',
+     'https://nova-fora-staging-objects-017719539850.s3.us-east-1.amazonaws.com', False),
+    ('https://staging.nova4a.com/api',
+     'https://nova-fora-prod-objects-258083583532.s3.us-east-1.amazonaws.com', False),
+    ('https://custom.example/api',
+     'https://nova-fora-prod-objects-258083583532.s3.us-east-1.amazonaws.com', False),
+    ('https://app.nova4a.com.attacker.example/api',
+     'https://nova-fora-prod-objects-258083583532.s3.us-east-1.amazonaws.com', False),
+    ('https://app.nova4a.com/api', 'https://other-bucket.s3.us-east-1.amazonaws.com', False),
+    ('https://app.nova4a.com/api',
+     'https://nova-fora-prod-objects-258083583532.s3.us-east-1.amazonaws.com.attacker.example', False),
+])
+def test_default_photo_upload_origin_is_bound_to_its_nova_environment(monkeypatch, api_url, target, allowed):
+    monkeypatch.delenv('NOVA_UPLOAD_ORIGINS', raising=False)
+    handler = HTTPS()
+    api = client(handler)
+    api.profile = Profile('photos', api_url)
+    api.access_token = 'PRIVATE'
+    if allowed:
+        api.put_bytes(target + '/signed', b'image', content_type='image/png')
+        request, = handler.calls
+        assert request.data == b'image' and request.method == 'PUT'
+        assert not {'authorization', 'cookie', 'proxy-authorization'} & {k.lower() for k in request.headers}
+    else:
+        with pytest.raises(UsageError):
+            api.put_bytes(target + '/signed', b'image', content_type='image/png')
+        assert not handler.calls
