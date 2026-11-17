@@ -11,6 +11,7 @@ VANS = {'vans': []}
 
 
 @pytest.mark.parametrize('name,payload,suffix,result', [
+    ('update_bundle_pickup', {'pickup_date': '2026-11-20', 'estimated_return_date': '2026-11-21'}, 'pickup', {'tasks': []}),
     ('update_bundle_pickup', {'start': '2026-11-12T10:00:00Z', 'end': '2026-11-12T12:00:00Z', 'estimated_return_date': '2026-11-14'}, 'pickup', {'tasks': []}),
     ('confirm_bundle_no_charge', {}, 'confirm-no-charge', {'state': 'lapsed'}),
     ('request_bundle_contact', {}, 'contact', {'status': 'already_requested'}),
@@ -123,7 +124,7 @@ def test_cli_and_local_mcp_dispatch_all_steps_and_pdf(monkeypatch, tmp_path):
     assert args.handler(args)['content_type'] == 'application/pdf'
     assert (tmp_path / 'fmc.pdf').read_bytes().startswith(b'%PDF-')
     args = cli.build_parser().parse_args(['bundle-shop', 'pickup', 'B-1', '1',
-        '--start', '2026-11-12T10:00:00Z', '--end', '2026-11-12T12:00:00Z'])
+        '--pickup-date', '2026-11-20'])
     assert args.handler(args)['tasks'] == []
 
     async def check():
@@ -239,3 +240,13 @@ def test_reject_cmr_bundle_does_not_repeat_uncertain_write():
         steps.execute(client, steps.REJECT, {'ref': 'B-1', 'reason': 'Cannot repair'})
     assert error.value.code == 'outcome_unknown'
     assert client.request.call_count == 1
+
+
+def test_pickup_accepts_date_only_and_rejects_mixed_time_input():
+    from pydantic import ValidationError
+
+    model = steps.MODELS['update_bundle_pickup']
+    payload = {'ref': 'B-1', 'unit': 2, 'pickup_date': '2026-11-20', 'estimated_return_date': '2026-11-21'}
+    assert model.model_validate(payload).model_dump(mode='json', exclude_none=True) == payload
+    with pytest.raises(ValidationError):
+        model.model_validate({**payload, 'start': '2026-11-20T13:00:00Z', 'end': '2026-11-20T16:00:00Z'})

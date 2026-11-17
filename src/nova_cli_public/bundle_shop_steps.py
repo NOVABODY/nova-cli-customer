@@ -50,18 +50,21 @@ class Rejection(Bundle):
 
 
 class Pickup(Van):
-    start: AwareDatetime = Field(strict=False)
-    end: AwareDatetime = Field(strict=False)
+    pickup_date: date | None = Field(default=None, strict=False)
+    start: AwareDatetime | None = Field(default=None, strict=False)
+    end: AwareDatetime | None = Field(default=None, strict=False)
     estimated_return_date: date | None = Field(default=None, strict=False)
 
     @field_validator('start', 'end', mode='before')
     @classmethod
     def iso_timestamp(cls, value):
+        if value is None:
+            return value
         if not isinstance(value, str) or not re.match(r'^\d{4}-\d{2}-\d{2}T', value):
             raise ValueError('Use an ISO 8601 time with a UTC offset. / Usa una hora ISO 8601 con zona horaria.')
         return value
 
-    @field_validator('estimated_return_date', mode='before')
+    @field_validator('pickup_date', 'estimated_return_date', mode='before')
     @classmethod
     def calendar_date(cls, value):
         if value is not None and type(value) is not date and (not isinstance(value, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', value)):
@@ -70,6 +73,12 @@ class Pickup(Van):
 
     @model_validator(mode='after')
     def ordered(self):
+        if self.pickup_date is not None:
+            if self.start is not None or self.end is not None:
+                raise ValueError('Use a date without times. / Usa una fecha sin horas.')
+            return self
+        if self.start is None or self.end is None:
+            raise ValueError('Provide a pickup date. / Indica una fecha de recogida.')
         if self.end <= self.start:
             raise ValueError('End must follow start. / El fin debe ser posterior al inicio.')
         return self
@@ -184,7 +193,7 @@ for action, name, grant in [('fmc-pdf', PDF, 'capacity.fmc_packet.get.v1'),
     if name == PDF:
         arguments += [(['--out'], {'required': True})]
     if name == PICKUP:
-        arguments += [(['--start'], {'required': True}), (['--end'], {'required': True}), (['--estimated-return-date'], {})]
+        arguments += [(['--pickup-date'], {}), (['--start'], {}), (['--end'], {}), (['--estimated-return-date'], {})]
     COMMANDS.append({'command': 'bundle-shop ' + action, 'tool': name, 'grant': grant,
         'description': DESCRIPTIONS[name], 'arguments': arguments, 'groups': [],
         'handler': command, 'defaults': {'bundle_shop_tool': name},
