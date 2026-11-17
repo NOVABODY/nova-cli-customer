@@ -6,6 +6,7 @@ client support; the server checks current account access.
 
 | Command | Local MCP tool | Effect | Scope |
 | --- | --- | --- | --- |
+| `nova bug-report submit` | `report_bug` | remote_write, local_file_read | `nova:read nova:write` |
 | `nova vendor-cmr-auto-accept get` | `get_vendor_cmr_auto_accept` | remote_read | `nova:read` |
 | `nova vendor-cmr-auto-accept set` | `set_vendor_cmr_auto_accept` | remote_write | `nova:read nova:write` |
 | `nova report fleet-repair-value` | `get_fleet_repair_value_report` | remote_read | `nova:read` |

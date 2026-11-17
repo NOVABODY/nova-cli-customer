@@ -974,3 +974,21 @@ filter to include every category. The API echoes `repair_value.repair_categories
 Body quote lists preserve the API's quotes and role flags without requiring
 a top-level request ID. CMR quote responses preserve closed quotes and expired
 line decisions. Decision inputs remain approved/rejected; writes do not replay.
+
+
+### Report a problem
+
+Use `nova bug-report submit --note "The inspection button fails." --report-id UUID`
+with optional repeated `--photo-file screen.png`. Generate and keep a UUID for
+each report. Include only data you can share with Nova support. The
+`report_bug` MCP tool accepts the same fields and up to three image data URLs
+in `photos`. Each photo is limited to 4,000,000 characters; the total is limited
+to 6,000,000. CLI files can be PNG, JPEG, or WebP.
+
+The API uses the same enabled intake, storage, and optional Slack and sheet copies
+as the in-app reporter. Keep the report ID after an unknown outcome. Do not send
+a new report or automatically repeat the write. Reuse the same ID and content
+for an explicit retry. A receipt contains `ok` and `duplicate`. Customer delegated
+access requires `nova:read nova:write` and `bug_reports.create.v1` consent; reconnect
+to add this operation to an existing connection. Updated packages, API admission
+and client registration must be released together.
