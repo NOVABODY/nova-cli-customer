@@ -974,3 +974,12 @@ filter to include every category. The API echoes `repair_value.repair_categories
 Body quote lists preserve the API's quotes and role flags without requiring
 a top-level request ID. CMR quote responses preserve closed quotes and expired
 line decisions. Decision inputs remain approved/rejected; writes do not replay.
+
+Bundle pickup accepts `pickup_date` (YYYY-MM-DD), without start/end times.
+The API derives midnight through DSP/Station loadout. CLI: `bundle-shop pickup
+B-1 1 --pickup-date 2026-11-20 --estimated-return-date 2026-11-21`. Legacy
+start/end requests remain supported; do not combine them with `pickup_date`.
+This requires the coordinated API update. / La recogida de paquetes acepta
+`pickup_date` (AAAA-MM-DD), sin horas de inicio y fin. La API calcula el intervalo
+desde medianoche hasta la salida del DSP/estación. No combines la fecha con horas.
+Se requiere la actualización coordinada de la API.
