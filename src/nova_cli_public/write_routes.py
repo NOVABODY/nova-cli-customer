@@ -55,6 +55,7 @@ WRITE_ROUTES = {
     ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[0-9]{1,14}/schedule-decision"): "capacity.schedules.decide.v1",
     ("PATCH", r"/dsp-settings/(?:DSP-)?[0-9]{1,14}/defect-data-sharing"): "dsp.bundle_sharing.update.v1",
     ('POST', r'/bundle-offers/transport/[0-9]+/check-in'): 'capacity.transport.check_in.v1',
+    ("POST", r"/bug-reports"): "bug_reports.create.v1",
     ("POST", r"/vendor-referrals"): "vendor_referrals.submit.v1",
     ('POST', r'/onboarding/dsp/tire-vendors'): 'onboarding.tire_vendors.add.v1',
     ('POST', r'/onboarding/dsp/tire-vendor-requests'): 'vendor_setup_requests.create.v1',
