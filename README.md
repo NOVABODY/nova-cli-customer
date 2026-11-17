@@ -983,3 +983,9 @@ This requires the coordinated API update. / La recogida de paquetes acepta
 `pickup_date` (AAAA-MM-DD), sin horas de inicio y fin. La API calcula el intervalo
 desde medianoche hasta la salida del DSP/estación. No combines la fecha con horas.
 Se requiere la actualización coordinada de la API.
+
+Bundle readers accept `sliding_transport_minimum_v7` with the frozen
+`line_minimum_price`, marginal bands and transport. The API applies the
+minimum to each defect share; clients preserve prices and allocations without
+recalculating them. Existing v6 added-base and older pricing rules remain readable.
+This reader update must be released before the API starts producing v7 offers.
