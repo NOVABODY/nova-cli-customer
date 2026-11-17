@@ -73,7 +73,8 @@ def execute(client, arguments):
 
 def run(args):
     from nova_cli_public.legacy_reads import client_from_args
-    return execute(client_from_args(args), cli_arguments(args))
+    arguments = cli_arguments(args)
+    return execute(client_from_args(args), arguments)
 
 
 COMMANDS = [{'command': 'bug-report submit', 'tool': NAME, 'grant': OPERATION,
@@ -112,4 +113,7 @@ def cli_arguments(args):
         photos.append('data:' + content_type + ';base64,' + base64.b64encode(content).decode())
     values.setdefault('display_mode', 'cli')
     values['photos'] = photos
-    return Report.model_validate(values).model_dump(exclude_none=True)
+    try:
+        return Report.model_validate(values).model_dump(exclude_none=True)
+    except ValueError as exc:
+        raise UsageError('Check the report arguments. / Comprueba los argumentos del informe.') from exc

@@ -99,3 +99,10 @@ def test_cli_photo_files_are_encoded_and_bounded(tmp_path):
     from nova_cli_public.errors import UsageError
     with pytest.raises(UsageError):
         cli_arguments(args)
+
+
+def test_cli_invalid_note_returns_a_usage_error():
+    from nova_cli_public.bug_reports import cli_arguments
+    from nova_cli_public.errors import UsageError
+    with pytest.raises(UsageError):
+        cli_arguments(SimpleNamespace(note=' ', report_id=REPORT_ID))
