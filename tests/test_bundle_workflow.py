@@ -40,6 +40,10 @@ TRANSPORT = {**SLIDING, 'rule': 'sliding_transport_v5', 'first_percent': 5,
 TRANSPORT_REPORT = {**SLIDING_REPORT, 'report': {'pricing': TRANSPORT,
     'units': [{'unit': 1, 'asking_price': 100.02, 'lines': [{'allocated_price': 50.02}]}]}}
 CASES.append(('report', 'get_bundle_offer_report', {'ref': 'B-1'}, '/bundle-offers/B-1/report', TRANSPORT_REPORT))
+MINIMUM_REPORT = {**SLIDING_REPORT, 'report': {'pricing': {**TRANSPORT,
+    'rule': 'sliding_transport_minimum_v7', 'line_minimum_price': 5},
+    'units': [{'unit': 1, 'asking_price': 75.02, 'lines': [{'allocated_price': 5}, {'allocated_price': 20.02}]}]}}
+CASES.append(('report', 'get_bundle_offer_report', {'ref': 'B-1'}, '/bundle-offers/B-1/report', MINIMUM_REPORT))
 
 class Api:
     profile = SimpleNamespace(auth='service')
@@ -147,3 +151,21 @@ def test_unknown_rule_is_rejected():
 
     with pytest.raises(ValidationError):
         Pricing.model_validate({**BASE_V6, 'rule': 'sliding_transport_base_v7'})
+
+
+@pytest.mark.parametrize('minimum', [0, 5, 7.25])
+def test_minimum_v7_report_preserves_frozen_floor_and_cent_prices(minimum):
+    from nova_cli_public.bundle_workflow import Pricing
+    terms = Pricing.model_validate({**TRANSPORT, 'rule': 'sliding_transport_minimum_v7',
+                                   'line_minimum_price': minimum})
+    assert terms.model_dump()['line_minimum_price'] == minimum
+    assert terms.line_base_price is None
+
+
+@pytest.mark.parametrize('change', [{'line_minimum_price': -1}, {'line_minimum_price': None},
+                                     {'transport_fee': None}, {'first_percent': None}])
+def test_minimum_v7_rejects_invalid_or_incomplete_frozen_terms(change):
+    from nova_cli_public.bundle_workflow import Pricing
+    with pytest.raises(ValidationError):
+        Pricing.model_validate({**TRANSPORT, 'rule': 'sliding_transport_minimum_v7',
+                               'line_minimum_price': 5, **change})

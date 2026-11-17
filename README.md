@@ -974,3 +974,10 @@ filter to include every category. The API echoes `repair_value.repair_categories
 Body quote lists preserve the API's quotes and role flags without requiring
 a top-level request ID. CMR quote responses preserve closed quotes and expired
 line decisions. Decision inputs remain approved/rejected; writes do not replay.
+
+
+Bundle readers accept `sliding_transport_minimum_v7` with the frozen
+`line_minimum_price`, marginal bands and transport. The API applies the
+minimum to each defect share; clients preserve prices and allocations without
+recalculating them. Existing v6 added-base and older pricing rules remain readable.
+This reader update must be released before the API starts producing v7 offers.
