@@ -515,3 +515,36 @@ The name has a maximum of 120 characters. Only site admins can read the name
 through `bundle-fee get`; shop and DSP reports do not contain it. Delegated
 connections need explicit consent for `capacity.internal_name.update.v1`.
 The MCP tool is `set_bundle_internal_name` with `ref` and `internal_name`.
+
+### FMC decline proof
+
+For each declined defect, use `capacity-evidence upload --kind decline --lines N`.
+Supply the first file with `--content-type` and `--content-base64`. Add up to nine
+files with `--attachments '[{"content_type":"image/png","content_base64":"..."}]'`.
+Each file is limited to 10 MiB. Authorization and pending evidence use one file.
+
+To reuse proof from another defect on the same van, use `--reuse-evidence-id ID`
+without file content or attachments. The API checks access and creates a separate
+submission. A review of one submission does not review the reused submission.
+
+Staff can review one defect with `capacity-evidence review --evidence-id ID
+--line N --decision accepted`. Rejection requires `--note`. The receipt identifies
+`reviewed_line` and `decision`; other defects may still be unreviewed. Omit `--line`
+only to use the existing whole-submission review. Read attachment N with
+`capacity-evidence file --evidence-id ID --file N`; file 1 is the original file.
+
+The local MCP tools use the same fields: `attachments`, `reuse_evidence_id`,
+`line`, and `file`. Existing role, tenant, and explicit write-consent rules apply.
+After an unknown write result, read the evidence before another attempt.
+
+Para cada defecto rechazado, usa `capacity-evidence upload --kind decline --lines N`.
+Envía el primer archivo con `--content-type` y `--content-base64`. Añade hasta nueve
+archivos con `--attachments`. Cada archivo tiene un límite de 10 MiB. La autorización
+y la evidencia pendiente usan un archivo. Para reutilizar pruebas de la misma van,
+usa `--reuse-evidence-id ID` sin contenido ni archivos nuevos. Se crea una entrega
+independiente. El personal revisa un defecto con `--line N`; el rechazo requiere
+`--note`. Lee un archivo con `--file N`. El archivo 1 es el original. Las herramientas
+MCP locales usan los mismos campos y permisos. Si no se conoce el resultado de un
+cambio, consulta la evidencia antes de otro intento.
+
+Evidence uploads accept up to 10 files. Each file and all files combined must be at most 50 MiB after base64 decoding. / Las cargas de evidencia admiten hasta 10 archivos. Cada archivo y todos los archivos juntos deben tener como máximo 50 MiB después de decodificar base64.
