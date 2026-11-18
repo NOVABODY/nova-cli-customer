@@ -1,6 +1,6 @@
 import asyncio
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, create_autospec
 
 import pytest
 from mcp.shared.memory import create_connected_server_and_client_session
@@ -89,3 +89,33 @@ def test_unconfirmed_removal_is_unknown_and_not_retried(value):
     with pytest.raises(ApiError) as error:
         bundle_fee.execute(api, bundle_fee.REMOVE, {'ref': 'B-TEST'})
     assert error.value.code == 'outcome_unknown' and api.request.call_count == 1
+
+
+@pytest.mark.parametrize('name,expected', [(' Monday ', 'Monday'), ('', None), (None, None)])
+def test_internal_names_share_cli_and_mcp_transport(monkeypatch, name, expected):
+    from nova_cli_public.client import ApiClient
+    value = {'ref': 'B-TEST', 'internal_name': expected}
+    api = SimpleNamespace(request=create_autospec(ApiClient, instance=True).request)
+    api.request.return_value = value
+    monkeypatch.setattr(legacy_reads, 'client_from_args', lambda args: api)
+    args = cli.build_parser().parse_args(['bundle', 'name', 'B-TEST', name or ''])
+    assert args.handler(args) == value
+    async def check():
+        async with create_connected_server_and_client_session(create_server(CustomerReadService(api))) as sdk:
+            tools = {tool.name: tool for tool in (await sdk.list_tools()).tools}
+            assert not tools[bundle_fee.NAME].annotations.readOnlyHint
+            result = await sdk.call_tool(bundle_fee.NAME, {'ref': 'B-TEST', 'internal_name': name})
+            assert not result.isError and result.structuredContent == value
+    asyncio.run(check())
+    assert api.request.call_count == 2
+    assert api.request.call_args.args == ('POST', '/defect-bundle-offers/staff/B-TEST/internal-name')
+    # The CLI uses an empty string for clearing; the MCP can send null.
+    assert api.request.call_args.kwargs == {'json_body': {'internal_name': name}, 'retry_auth': False}
+
+
+def test_name_discovery_matches_issuer_admission():
+    from nova_cli_public.write_routes import admitted_write
+    entry = manifest(cli.build_parser(), 'bundle name')['commands'][0]
+    assert entry['required_operation'] == 'capacity.internal_name.update.v1'
+    assert entry['required_scope'] == 'nova:read nova:write'
+    assert admitted_write('POST', '/defect-bundle-offers/staff/B-TEST/internal-name')
