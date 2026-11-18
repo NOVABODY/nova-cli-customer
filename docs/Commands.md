@@ -27,6 +27,7 @@ client support; the server checks current account access.
 | `nova bundle-shop confirm-no-charge` | `confirm_bundle_no_charge` | remote_write | `nova:read nova:write` |
 | `nova bundle-shop contact` | `request_bundle_contact` | remote_write | `nova:read nova:write` |
 
+| `nova bundle name` | `set_bundle_internal_name` | remote_write | `nova:read nova:write` |
 | `nova bundle remove` | `remove_bundle` | remote_write | `nova:read nova:write` |
 | `nova bundle-fee get` | `get_admin_bundle` | remote_read | `nova:read` |
 | `nova bundle-fee waive` | `waive_bundle_fee` | remote_write | `nova:read nova:write` |
@@ -506,3 +507,11 @@ the shop. Automatic acceptance also requires a complete repair estimate within
 the DSP price threshold. Bundles are excluded. Manual acceptance remains
 available, and existing accepted work is unchanged. An uncertain write is never
 retried automatically: read the setting before trying again.
+
+
+Site admins can set a private AMR or CMR bundle name with
+`nova bundle name REF "Monday fleet"`. Use `nova bundle name REF ""` to clear it.
+The name has a maximum of 120 characters. Only site admins can read the name
+through `bundle-fee get`; shop and DSP reports do not contain it. Delegated
+connections need explicit consent for `capacity.internal_name.update.v1`.
+The MCP tool is `set_bundle_internal_name` with `ref` and `internal_name`.
