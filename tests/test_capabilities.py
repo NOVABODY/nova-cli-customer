@@ -56,3 +56,9 @@ def test_logout_discovery_reports_remote_revocation_attempt(capsys):
 def test_unknown_capability_is_an_error_not_a_successful_empty_result(capsys):
     assert cli.main(["capabilities", "--command", "admin users", "--json"]) == 2
     assert "Unknown customer command" in capsys.readouterr().err
+
+
+def test_remote_evidence_file_number_is_not_a_local_file_read(capsys):
+    (entry,) = manifest(capsys, "--command", "capacity-evidence file")["commands"]
+    assert entry["effects"] == ["remote_read"]
+    assert entry["input_schema"]["properties"]["file"]["type"] == "integer"

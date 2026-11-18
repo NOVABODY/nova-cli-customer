@@ -8,6 +8,10 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 
 from nova_cli_public.errors import ApiError, NovaCliError, UsageError
 
+MAX_FILE_BYTES = 50 * 1024 * 1024
+MAX_BASE64_LENGTH = ((MAX_FILE_BYTES + 2) // 3) * 4
+MAX_REQUEST_BODY_BYTES = MAX_BASE64_LENGTH + 256 * 1024 + 40
+
 BASE = '/defect-bundle-offers/staff/evidence'
 UNKNOWN = 'The outcome is unknown. Read the evidence before another attempt. / El resultado no se conoce. Consulta la evidencia antes de otro intento.'
 
@@ -20,9 +24,14 @@ class File(Query):
     evidence_id: int = Field(ge=1)
 
 
+class Content(File):
+    file: int = Field(default=1, ge=1, le=10)
+
+
 class Review(File):
     decision: Literal['accepted', 'rejected']
     note: str = Field(default='', max_length=2000)
+    line: int | None = Field(default=None, ge=1)
 
     @model_validator(mode='after')
     def rejection_note(self):
@@ -31,32 +40,55 @@ class Review(File):
         return self
 
 
+class Attachment(Query):
+    content_type: Literal['image/png', 'image/jpeg', 'image/webp', 'application/pdf']
+    content_base64: str = Field(min_length=4, max_length=MAX_BASE64_LENGTH)
+
+    @model_validator(mode='after')
+    def valid_file(self):
+        try:
+            content = base64.b64decode(self.content_base64, validate=True)
+        except (binascii.Error, ValueError):
+            raise ValueError('Invalid file. / Archivo no válido.') from None
+        if not content or len(content) > MAX_FILE_BYTES:
+            raise ValueError('Invalid file size. / Tamaño de archivo no válido.')
+        return self
+
+
 class Upload(Query):
     ref: str = Field(pattern=r'^[A-Za-z0-9][A-Za-z0-9-]{0,79}$')
     unit: int = Field(ge=1)
     kind: Literal['decline', 'pending', 'authorization']
-    content_type: Literal['image/png', 'image/jpeg', 'image/webp', 'application/pdf']
-    content_base64: str = Field(min_length=4, max_length=13981016)
+    content_type: Literal['image/png', 'image/jpeg', 'image/webp', 'application/pdf'] | None = None
+    content_base64: str | None = Field(default=None, min_length=4, max_length=MAX_BASE64_LENGTH)
+    attachments: list[Attachment] = Field(default_factory=list, max_length=9)
+    reuse_evidence_id: int | None = Field(default=None, ge=1)
     lines: list[int] = Field(default_factory=list, max_length=200)
     authorization_number: str = Field(default='', max_length=200)
 
     @model_validator(mode='after')
     def valid_upload(self):
-        try:
-            content = base64.b64decode(self.content_base64, validate=True)
-        except binascii.Error:
-            raise ValueError('Invalid file. / Archivo no válido.') from None
-        if not content or len(content) > 10 * 1024 * 1024:
-            raise ValueError('Invalid file size. / Tamaño de archivo no válido.')
         if self.kind == 'decline' and (not self.lines or any(number < 1 for number in self.lines)):
             raise ValueError('Select defects. / Selecciona defectos.')
+        if self.reuse_evidence_id is not None:
+            if self.kind != 'decline' or self.content_type is not None or self.content_base64 is not None or self.attachments:
+                raise ValueError('Reuse decline proof without new files. / Reutiliza evidencia de rechazo sin archivos nuevos.')
+        else:
+            Attachment.model_validate({'content_type': self.content_type, 'content_base64': self.content_base64})
+            if self.attachments and self.kind != 'decline':
+                raise ValueError('Only decline proof supports multiple files. / Solo la evidencia de rechazo admite varios archivos.')
+        if self.content_base64 is not None:
+            files = [self.content_base64, *(item.content_base64 for item in self.attachments)]
+            total = sum(len(base64.b64decode(item, validate=True)) for item in files)
+            if total > MAX_FILE_BYTES:
+                raise ValueError('The combined files exceed 50 MiB. / Los archivos juntos superan 50 MiB.')
         if self.kind == 'authorization' and not self.authorization_number.strip():
             raise ValueError('Enter the FMC authorization number. / Escribe el número de autorización de la FMC.')
         return self
 
 
 MODELS = {'list_capacity_evidence': Query, 'get_capacity_evidence': File,
-          'read_capacity_evidence_file': File, 'review_capacity_evidence': Review,
+          'read_capacity_evidence_file': Content, 'review_capacity_evidence': Review,
           'upload_capacity_evidence': Upload}
 WRITES = {'review_capacity_evidence', 'upload_capacity_evidence'}
 
@@ -68,12 +100,13 @@ def execute(client, name, arguments):
         target += f'/{query.evidence_id}'
     if name == 'read_capacity_evidence_file':
         target += '/content'
+        options = {'query': {'file': query.file}}
     if isinstance(query, Review):
         method, target = 'POST', target + '/review'
-        options = {'json_body': {'decision': query.decision, 'note': query.note}, 'retry_auth': False}
+        options = {'json_body': query.model_dump(exclude={'evidence_id'}, exclude_none=True), 'retry_auth': False}
     if isinstance(query, Upload):
         method, target = 'POST', f'/bundle-offers/{query.ref}/vans/{query.unit}/evidence-content'
-        options = {'json_body': query.model_dump(exclude={'ref', 'unit'}), 'retry_auth': False}
+        options = {'json_body': query.model_dump(exclude={'ref', 'unit'}, exclude_none=True), 'retry_auth': False}
     try:
         value = client.request(method, target, **options)
         valid = isinstance(value, dict)
@@ -84,7 +117,11 @@ def execute(client, name, arguments):
         else:
             valid = valid and type(value.get('id')) is int and value.get('review_state') in ('unreviewed', 'accepted', 'rejected')
             if isinstance(query, Review):
-                valid = valid and value['id'] == query.evidence_id and value['review_state'] == query.decision
+                valid = valid and value['id'] == query.evidence_id
+                if query.line is None:
+                    valid = valid and value['review_state'] == query.decision
+                else:
+                    valid = valid and type(value.get('reviewed_line')) is int and value.get('reviewed_line') == query.line and value.get('decision') == query.decision
         if not valid:
             raise ApiError('Invalid evidence response. / Respuesta de evidencia no válida.')
         json.dumps(value, allow_nan=False)
@@ -105,7 +142,13 @@ def command(args):
     from nova_cli_public.legacy_reads import client_from_args
     name = args.evidence_tool
     try:
-        return execute(client_from_args(args), name, {key: getattr(args, key) for key in MODELS[name].model_fields})
+        arguments = {key: getattr(args, key) for key in MODELS[name].model_fields}
+        if isinstance(arguments.get('attachments'), str):
+            try:
+                arguments['attachments'] = json.loads(arguments['attachments'])
+            except (ValueError, TypeError):
+                raise UsageError('Use a JSON array of files. / Usa una lista JSON de archivos.') from None
+        return execute(client_from_args(args), name, arguments)
     except ValidationError as exc:
         raise UsageError('Check evidence arguments. / Comprueba los argumentos de evidencia.') from exc
 
@@ -117,11 +160,11 @@ for action, name, operation in [('list', 'list_capacity_evidence', 'list'), ('ge
         ('upload', 'upload_capacity_evidence', 'upload')]:
     arguments = []
     for key, field in MODELS[name].model_fields.items():
-        options = {'type': 'int'} if key in ('unit', 'evidence_id') else {}
+        options = {'type': 'int'} if key in ('unit', 'evidence_id', 'line', 'file', 'reuse_evidence_id') else {}
         if key == 'lines':
             options = {'nargs': '+', 'type': 'int'}
         options['required'] = field.is_required()
-        options['default'] = [] if key == 'lines' else field.default if not field.is_required() else None
+        options['default'] = [] if key in ('lines', 'attachments') else field.default if not field.is_required() else None
         arguments.append((['--' + key.replace('_', '-')], options))
     COMMANDS.append({'command': 'capacity-evidence ' + action, 'tool': name,
         'grant': 'capacity.evidence.' + operation + '.v1',
