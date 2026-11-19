@@ -1,6 +1,7 @@
 """Pinned customer write declarations; no platform-admin or generic API commands."""
 
 from nova_cli_public import legacy_writes as handlers
+from nova_cli_public.defect_reviews import Decision
 from nova_cli_public.shop_defects import DESCRIPTIONS, MODELS
 from nova_cli_public.shop_defects import command as shop_command
 
@@ -44,6 +45,8 @@ WRITE_COMMANDS = [
             (["--notes"], {}),
             (["--reported-at"], {"type": "iso_datetime_arg"}),
             (["--vendor-workshop-id"], {"type": "positive_id"}),
+            (["--accept-out-of-fmc-cost"], {"action": "store_true", "default": None,
+                "help": Decision.model_fields["accept_out_of_fmc_cost"].description}),
             (["--external-vendor-id"], {"type": "positive_id"}),
             (["--dsp-contact-user-id"], {"type": "positive_id"}),
             (["--service-station-code"], {}),

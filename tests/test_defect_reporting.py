@@ -46,6 +46,7 @@ def test_cli_and_local_mcp_report_with_same_catalog_and_routing_body(part, kind)
             kind,
             "--vendor-workshop-id",
             "3",
+            "--accept-out-of-fmc-cost",
             "--details",
             '{"observed":"dark"}',
             "--notes",
@@ -59,7 +60,7 @@ def test_cli_and_local_mcp_report_with_same_catalog_and_routing_body(part, kind)
             "create_defect",
             {
                 **BASE, "part": part, "defect_type": kind,
-                "vendor_workshop_id": 3,
+                "vendor_workshop_id": 3, "accept_out_of_fmc_cost": True,
                 "details": '{"observed":"dark"}',
                 "notes": "Left lamp",
             },
@@ -75,7 +76,7 @@ def test_cli_and_local_mcp_report_with_same_catalog_and_routing_body(part, kind)
                 "/defects",
                 {
                     **BASE, "part": part, "defect_type": kind,
-                    "vendor_workshop_id": 3,
+                    "vendor_workshop_id": 3, "accept_out_of_fmc_cost": True,
                     "details": {"observed": "dark"},
                     "notes": "Left lamp",
                 },

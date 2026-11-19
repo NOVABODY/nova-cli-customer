@@ -17,6 +17,7 @@ class Shops(BaseModel):
     vehicle_id: VehicleId
     defect_id: DefectId | None = None
     include_out_of_scope: bool | None = None
+    repair_group: Literal["AMR", "PM"] | None = None
     repair_type: Literal['mechanical', 'cnmr', 'pm', 'tires', 'detailing', 'netradyne', 'body']
     service_station_code: str | None = Field(default=None, max_length=20)
 
@@ -59,6 +60,8 @@ COMMANDS = [
      'description': 'Read shop eligibility for this van and repair type. / Consulta los talleres elegibles para esta van y este tipo de reparación.',
      'defaults': {'routing_tool': 'list_defect_routing_shops'},
      'arguments': [(['--vehicle-id'], {'required': True}), (['--repair-type'], {'required': True}),
+                   (['--repair-group'], {'choices': ['AMR', 'PM'],
+                    'help': 'Catalog group for a new defect. / Grupo del catálogo para un defecto nuevo.'}),
                    (['--service-station-code'], {'default': None}),
                    (['--defect-id'], {'default': None}), (['--include-out-of-scope'], {'action': 'BooleanOptionalAction', 'default': None})]},
     {'command': 'defect-routing resume', 'tool': 'route_repair_request',
