@@ -548,3 +548,19 @@ MCP locales usan los mismos campos y permisos. Si no se conoce el resultado de u
 cambio, consulta la evidencia antes de otro intento.
 
 Evidence uploads accept up to 10 files. Each file and all files combined must be at most 50 MiB after base64 decoding. / Las cargas de evidencia admiten hasta 10 archivos. Cada archivo y todos los archivos juntos deben tener como máximo 50 MiB después de decodificar base64.
+
+## Inspection schedules
+
+Select one or more stations for a visit or a recurring schedule. Set `workshop_id` for shop schedules. Omit it for platform schedules. The server checks your role and station access. Read the schedule after an unknown write result before you try again.
+
+Selecciona una o más estaciones para una visita o un programa recurrente. Usa `workshop_id` para programas del taller. Omítelo para programas de la plataforma. El servidor comprueba tu rol y acceso a las estaciones. Lee el programa después de un resultado desconocido antes de intentar de nuevo.
+
+| Command | Local MCP tool | Effect | Scope |
+| --- | --- | --- | --- |
+| `nova inspection-schedule stations` | `list_inspection_stations` | remote_read | `nova:read` |
+| `nova inspection-schedule list` | `list_inspection_schedules` | remote_read | `nova:read` |
+| `nova inspection-schedule create` | `create_inspection_schedule` | remote_write | `nova:read nova:write` |
+| `nova inspection-schedule cancel` | `cancel_inspection_schedule` | remote_write | `nova:read nova:write` |
+| `nova inspection-schedule recurrences` | `list_inspection_recurrences` | remote_read | `nova:read` |
+| `nova inspection-schedule create-recurrence` | `create_inspection_recurrence` | remote_write | `nova:read nova:write` |
+| `nova inspection-schedule update-recurrence` | `update_inspection_recurrence` | remote_write | `nova:read nova:write` |

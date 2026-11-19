@@ -55,6 +55,7 @@ class SettingsResult(BaseModel):
 
 class Result(BaseModel):
     model_config = ConfigDict(strict=True)
+    station_codes: list[str] | None = None
     schedule_id: int
     confirmation_id: Annotated[int, Field(ge=1)] | None
     status: STATUS
