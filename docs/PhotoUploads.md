@@ -33,8 +33,12 @@ nova upload photo ./damage.png --kind defect --parent-id FD-0001 --commit
 The API accepts JPEG, PNG, WebP, HEIC and HEIF, up to 50 MiB (52,428,800 bytes)
 per image, subject to its configured storage limit. Send raw bytes to the signed
 URL without a Nova bearer credential or cookies. Upload URLs must use HTTPS
-and the API origin or an exact origin in `NOVA_UPLOAD_ORIGINS` (a comma-separated
-list such as `https://storage.example,https://uploads.example`). Entries are
+and the API origin, the matching Nova object-storage origin, or an exact
+origin in `NOVA_UPLOAD_ORIGINS`. The official production and staging API
+profiles each allow only their own object bucket by default. No environment
+variable is needed for those buckets. For a custom deployment, set
+`NOVA_UPLOAD_ORIGINS` to the exact storage origins approved by its operator
+(a comma-separated list such as `https://storage.example,https://uploads.example`). Entries are
 trimmed, scheme and host are converted to lowercase, and one trailing slash is
 removed. Entries with paths, credentials, queries or fragments are refused.
 HTTP is allowed only for the exact API origin when the API uses a permitted
@@ -52,6 +56,21 @@ Read stable API error codes and structured details. Keep
 `mileage_confirmation_required`. Review `submitted_mileage`, `expected_floor`
 and `floor_sources` before explicitly supplying `confirmed_mileage_floor`.
 Never invent a confirmation or retry an unknown mutation outcome.
+
+## Attach a photo to an existing defect
+
+Use the existing defect ID. Do not create the defect again. Sign in with
+`uploads.presign.v1` and `defects.photos.create.v1`, and request
+`nova:read nova:write`. Then run:
+
+```sh
+nova upload photo ./damage.png --kind defect --parent-id FD-0001 --commit
+```
+
+Check that the result has `committed: true`. Use the defect photo list or open
+the same defect in the app to check the attachment. A storage key alone does
+not mean that the photo is attached. Read the record before another attempt
+if the outcome is unknown.
 
 ## Español
 
@@ -76,3 +95,12 @@ tool; it retains the existing local-file workflow.
 En MCP, la lista `photo_file` y los archivos de fotos de finalización requieren
 la carpeta indicada con `--file-root`. Las claves guardadas no requieren esa
 carpeta. Este paquete conserva la carga de archivos locales.
+
+En producción y staging, cada perfil de API de Nova permite su propio depósito
+de fotos sin configurar `NOVA_UPLOAD_ORIGINS`. Para una instalación diferente,
+configura los orígenes exactos autorizados por su operador. Para adjuntar una
+foto a un defecto existente, usa su ID con `--kind defect --commit` y los
+permisos `uploads.presign.v1` y `defects.photos.create.v1`. Comprueba que el
+resultado tenga `committed: true` y consulta las fotos del defecto. No crees
+el defecto de nuevo. Si el resultado es desconocido, consulta el registro antes
+de otro intento.

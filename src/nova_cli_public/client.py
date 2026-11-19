@@ -20,6 +20,13 @@ from nova_cli_public.read_routes import PDF_ROUTES, PUBLIC_READS, READ_POST_ROUT
 from nova_cli_public.tokens import KeyringTokenStore
 from nova_cli_public.write_routes import admitted_write
 
+# Public upload destinations for the official Nova API environments only.
+# Custom deployments use the operator's explicit NOVA_UPLOAD_ORIGINS setting.
+NOVA_UPLOAD_ORIGINS = {
+    "https://app.nova4a.com": "https://nova-fora-prod-objects-258083583532.s3.us-east-1.amazonaws.com",
+    "https://staging.nova4a.com": "https://nova-fora-staging-objects-017719539850.s3.us-east-1.amazonaws.com",
+}
+
 PDF_MAX_BYTES = 10 * 1024 * 1024
 PDF_ERROR_MAX_BYTES = 64 * 1024
 
@@ -299,6 +306,8 @@ class ApiClient:
             api = urllib.parse.urlsplit(normalize_api_url(self.profile.api))
             api_origin = f'{api.scheme}://{api.netloc.lower()}'
             allowed = {api_origin}
+            if api_origin in NOVA_UPLOAD_ORIGINS:
+                allowed.add(NOVA_UPLOAD_ORIGINS[api_origin])
             for entry in os.environ.get('NOVA_UPLOAD_ORIGINS', '').split(','):
                 if not entry.strip():
                     continue
