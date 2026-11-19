@@ -314,6 +314,7 @@ def cmd_defect_create(args: argparse.Namespace) -> Any:
         "notes",
         "reported_at",
         "vendor_workshop_id",
+        "accept_out_of_fmc_cost",
         "external_vendor_id",
         "dsp_contact_user_id",
         "service_station_code",
