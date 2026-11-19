@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from nova_cli_public.errors import ApiError
 
 READ, WRITE, REMOVE, NAME = 'get_admin_bundle', 'waive_bundle_fee', 'remove_bundle', 'set_bundle_internal_name'
+PRICING = 'set_bundle_pricing'
 UNKNOWN = 'The outcome is unknown. Read the bundle before trying again. / El resultado no se conoce. Consulta el paquete antes de intentar de nuevo.'
 
 
@@ -22,6 +23,26 @@ class Waiver(Query):
 
 class InternalName(Query):
     internal_name: str | None = Field(max_length=120)
+
+
+class Pricing(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    first_percent: int = Field(ge=0, le=100)
+    second_percent: int = Field(ge=0, le=100)
+    tail_percent: int = Field(ge=0, le=100)
+    transport_fee: float = Field(ge=0, le=100000, allow_inf_nan=False, multiple_of=0.01)
+
+
+class PricingOverride(Pricing, Query):
+    revision: int = Field(gt=0)
+
+
+class PricedBundle(BaseModel):
+    model_config = ConfigDict(strict=True)
+    ref: str
+    revision: int = Field(gt=0)
+    total_price_cents: int = Field(ge=0)
+    pricing: Pricing
 
 
 class NamedBundle(BaseModel):
@@ -43,14 +64,14 @@ class Removal(BaseModel):
     status: Literal['discarded']
 
 
-MODELS, OUTPUTS, WRITES = {READ: Query, WRITE: Waiver, REMOVE: Query, NAME: InternalName}, {READ: Result, WRITE: Result, REMOVE: Removal, NAME: NamedBundle}, {WRITE, REMOVE, NAME}
+MODELS, OUTPUTS, WRITES = {READ: Query, WRITE: Waiver, REMOVE: Query, NAME: InternalName, PRICING: PricingOverride}, {READ: Result, WRITE: Result, REMOVE: Removal, NAME: NamedBundle, PRICING: PricedBundle}, {WRITE, REMOVE, NAME, PRICING}
 
 
 def execute(client, name, arguments):
     query = MODELS[name].model_validate(arguments)
     path = f'/defect-bundle-offers/staff/{query.ref}'
     try:
-        value = client.request('GET', path) if name == READ else client.request('POST', path + ('/internal-name' if name == NAME else '/discard' if name == REMOVE else '/waive-fee'),
+        value = client.request('GET', path) if name == READ else client.request('POST', path + ('/pricing' if name == PRICING else '/internal-name' if name == NAME else '/discard' if name == REMOVE else '/waive-fee'),
             json_body=query.model_dump(exclude={'ref'}, exclude_none=name != NAME), retry_auth=False)
     except ApiError as exc:
         if name in WRITES and (exc.status is None or exc.status >= 500 or 300 <= exc.status < 400):
@@ -59,6 +80,9 @@ def execute(client, name, arguments):
     try:
         result = OUTPUTS[name].model_validate(value)
         json.dumps(value, allow_nan=False)
+        if name == PRICING and (result.revision not in (query.revision, query.revision + 1)
+                or result.pricing.model_dump() != query.model_dump(exclude={'ref', 'revision'})):
+            raise ValueError('Pricing not confirmed')
         if result.ref != query.ref or (name == WRITE and not result.fee_waived) or (name == NAME and result.internal_name != ((query.internal_name or '').strip() or None)):
             raise ValueError('Waiver not confirmed')
     except (ValueError, TypeError):
@@ -74,6 +98,13 @@ def command(args):
 
 
 COMMANDS = [
+    {'command': 'bundle pricing', 'tool': PRICING, 'grant': 'capacity.pricing.update.v1',
+     'description': 'Set the three percentage bands and transport cost per van for one unsent AMR draft. Site admin only. Read the current revision first. / Establece los tres porcentajes por tramo y el costo de transporte por van de un borrador AMR sin enviar. Solo para administradores del sitio. Consulta primero la revisión actual.',
+     'arguments': [(['ref'], {}), (['--revision'], {'required': True, 'type': 'int'}),
+                   (['--first-percent'], {'required': True, 'type': 'int'}), (['--second-percent'], {'required': True, 'type': 'int'}),
+                   (['--tail-percent'], {'required': True, 'type': 'int'}), (['--transport-fee'], {'required': True, 'type': 'float'})],
+     'groups': [], 'handler': command, 'defaults': {'bundle_fee_tool': PRICING},
+     'scope': 'nova:read nova:write', 'effect': 'remote_write'},
     {'command': 'bundle name', 'tool': NAME, 'grant': 'capacity.internal_name.update.v1',
      'description': 'Set or clear a private internal bundle name. Site admin only. / Asigna o borra un nombre interno privado. Solo para administradores del sitio.',
      'arguments': [(['ref'], {}), (['internal_name'], {'help': 'Use an empty string to clear. / Usa una cadena vacía para borrar.'})],

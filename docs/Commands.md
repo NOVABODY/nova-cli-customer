@@ -27,6 +27,7 @@ client support; the server checks current account access.
 | `nova bundle-shop confirm-no-charge` | `confirm_bundle_no_charge` | remote_write | `nova:read nova:write` |
 | `nova bundle-shop contact` | `request_bundle_contact` | remote_write | `nova:read nova:write` |
 
+| `nova bundle pricing` | `set_bundle_pricing` | remote_write | `nova:read nova:write` |
 | `nova bundle name` | `set_bundle_internal_name` | remote_write | `nova:read nova:write` |
 | `nova bundle remove` | `remove_bundle` | remote_write | `nova:read nova:write` |
 | `nova bundle-fee get` | `get_admin_bundle` | remote_read | `nova:read` |
@@ -548,6 +549,23 @@ MCP locales usan los mismos campos y permisos. Si no se conoce el resultado de u
 cambio, consulta la evidencia antes de otro intento.
 
 Evidence uploads accept up to 10 files. Each file and all files combined must be at most 50 MiB after base64 decoding. / Las cargas de evidencia admiten hasta 10 archivos. Cada archivo y todos los archivos juntos deben tener como máximo 50 MiB después de decodificar base64.
+
+
+## AMR draft prices
+
+A site admin can set the three percentage bands and transport cost per van for
+one unsent AMR draft. Read `nova bundle-fee get REF` first. Use its revision:
+
+```sh
+nova bundle pricing DFS-B-2026-0008 --revision 1 --first-percent 5 --second-percent 3 --tail-percent 2 --transport-fee 50
+```
+
+Local MCP uses `set_bundle_pricing` with the same named fields. Each percentage
+is a whole number from 0 to 100. Transport cost is USD per van with at most two
+decimal places. The saved base fee stays fixed. Saving changes only that draft
+and requires new photo review before automated sending. Sent and accepted prices
+stay fixed. A stale revision requires a new read and review. If the result is
+unknown, read the bundle before trying again. Explicit write consent is required.
 
 ## Inspection schedules
 
