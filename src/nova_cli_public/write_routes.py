@@ -3,6 +3,15 @@
 import re
 
 WRITE_ROUTES = {
+    ("POST", r"/dashboards/platform-inspections"): "inspection_schedules.create.v1",
+    ("POST", r"/dashboards/platform-inspections/[0-9]{1,10}/cancel"): "inspection_schedules.cancel.v1",
+    ("POST", r"/dashboards/platform-inspections/recurrences"): "inspection_schedules.recurrences.create.v1",
+    ("PATCH", r"/dashboards/platform-inspections/recurrences/[0-9]{1,10}"): "inspection_schedules.recurrences.update.v1",
+    ("POST", r"/dashboards/vendor-home/[0-9]{1,10}/dvic-schedules"): "inspection_schedules.create.v1",
+    ("POST", r"/dashboards/vendor-home/[0-9]{1,10}/dvic-schedules/[0-9]{1,10}/cancel"): "inspection_schedules.cancel.v1",
+    ("POST", r"/dashboards/vendor-home/[0-9]{1,10}/dvic-schedule-recurrences"): "inspection_schedules.recurrences.create.v1",
+    ("PATCH", r"/dashboards/vendor-home/[0-9]{1,10}/dvic-schedule-recurrences/[0-9]{1,10}"): "inspection_schedules.recurrences.update.v1",
+
     ("PATCH", r"/organizations/(?:V-)?[0-9]{1,14}/cmr-auto-accept"): "vendor.cmr_auto_accept.update.v1",
     ('POST', r'/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/reject'): 'capacity.bundles.reject.v1',
     ('POST', r'/defect-bundle-offers/staff/[A-Za-z0-9][A-Za-z0-9-]{0,39}/discard'): 'capacity.offers.remove.v1',

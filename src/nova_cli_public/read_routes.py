@@ -3,6 +3,8 @@
 import re
 
 PDF_ROUTES = {
+
+
     r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[1-9][0-9]*/fmc\.pdf": "capacity.fmc_packet.get.v1",
     r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/invoice": "body_repair.documents.invoice.read.v1",
     r"/body-repair/requests/[A-Za-z0-9_-]{1,64}/quote": "body_repair.documents.quote.read.v1",
@@ -10,6 +12,11 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/dashboards/inspection-stations": "inspection_schedules.stations.list.v1",
+    r"/dashboards/platform-inspections": "inspection_schedules.list.v1",
+    r"/dashboards/platform-inspections/recurrences": "inspection_schedules.recurrences.list.v1",
+    r"/dashboards/vendor-home/[0-9]{1,10}/dvic-schedules": "inspection_schedules.list.v1",
+    r"/dashboards/vendor-home/[0-9]{1,10}/dvic-schedule-recurrences": "inspection_schedules.recurrences.list.v1",
     r"/organizations/(?:V-)?[0-9]{1,14}/cmr-auto-accept": "vendor.cmr_auto_accept.get.v1",
     r"/dashboards/reports/vehicle-availability": "reports.vehicle_availability.get.v1",
 
