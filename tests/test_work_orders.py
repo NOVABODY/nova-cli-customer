@@ -89,3 +89,38 @@ def test_intake_selection_reaches_local_mcp_write_transport(tool, arguments, pat
     client.request.return_value = {'id': 'WO-1', 'status': 'processing'}
     DelegatedService(client).run(tool, arguments)
     client.request.assert_called_once_with('POST', path, json_body=payload)
+
+
+@pytest.mark.parametrize('tool,arguments', [('accept_work_order', {'wo_id': 'WO-1'}),
+    ('decline_work_order', {'wo_id': 'WO-1', 'decline_reason_code': 'capacity_full'})])
+def test_unassigned_intake_accept_and_decline_preserve_null_workshop_and_ro(tool, arguments):
+    from unittest.mock import create_autospec
+
+    from nova_cli_public.client import ApiClient
+
+    client = create_autospec(ApiClient, instance=True)
+    value = {'id': 'WO-1', 'status': 'processing' if tool == 'accept_work_order' else 'canceled',
+             'vendor_organization_id': 10, 'vendor_workshop_id': None, 'status_tracking_mode': None, 'primary_ro': None}
+    client.request.return_value = value
+    assert DelegatedService(client).run(tool, arguments) == value
+    assert client.request.call_count == 1
+
+
+@pytest.mark.parametrize('words,payload', [
+    (['assignment', 'set', 'WO-1', '--proposed-workshop-id', '2'], {'proposed_workshop_id': 2}),
+    (['schedule', 'WO-1', '--vendor-workshop-id', '2', '--ro-number', 'WEST-1'], {'vendor_workshop_id': 2, 'ro_number': 'WEST-1'}),
+    (['accept', 'WO-1'], {}),
+    (['decline', 'WO-1', '--decline-reason-code', 'capacity_full'], {'decline_reason_code': 'capacity_full'}),
+])
+def test_cli_intake_commands_reuse_existing_write_operations(monkeypatch, capsys, words, payload):
+    from unittest.mock import create_autospec
+
+    from nova_cli_public.client import ApiClient
+
+    client = create_autospec(ApiClient, instance=True)
+    client.request.return_value = {'id': 'WO-1', 'vendor_workshop_id': None, 'primary_ro': None}
+    monkeypatch.setattr(cli, 'client_from_args', lambda args: client)
+    assert cli.main(['work-order', *words, '--json']) == 0
+    capsys.readouterr()
+    assert client.request.call_count == 1
+    assert client.request.call_args.kwargs['json_body'] == payload
