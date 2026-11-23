@@ -991,18 +991,6 @@ recalculating them. Existing v6 added-base and older pricing rules remain readab
 This reader update must be released before the API starts producing v7 offers.
 
 
-### Admin open quotes
-
-`get_open_quotes_report` reads `/dashboards/reports/open-quotes` with
-`kind` (`body`, `body_revision`, `cmr`), literal `search`, `offset` and `limit`
-(maximum 200). Site administrators only. The customer CLI uses
-`nova report open-quotes --kind cmr`. Requires API operation
-`reports.open_quotes.get.v1` and fresh explicit read consent. The API owns
-authorization, expiry and totals. CMR amounts include only undecided lines;
-body revisions show the proposed replacement total. Competing offers remain
-separate, so the sum is not unique repair value. Release the API and issuer
-registration before this adapter.
-
 ### Vendor workshops (candidate API change)
 
 For enabled multi-workshop vendors, `nova work-order list --vendor-workshop-ids
@@ -1020,3 +1008,15 @@ para seleccionar talleres autorizados. El administrador del proveedor puede
 guardar `proposed_workshop_id` en la asignación y usar `vendor_workshop_id` al
 programar. El seguimiento externo requiere un RO real. La preparación y la
 aceptación no muestran la entrada sin taller a los asesores de servicio.
+
+### Admin open quotes
+
+`get_open_quotes_report` reads `/dashboards/reports/open-quotes` with
+`kind` (`body`, `body_revision`, `cmr`), literal `search`, `offset` and `limit`
+(maximum 200). Site administrators only. The customer CLI uses
+`nova report open-quotes --kind cmr`. Requires API operation
+`reports.open_quotes.get.v1` and fresh explicit read consent. The API owns
+authorization, expiry and totals. CMR amounts include only undecided lines;
+body revisions show the proposed replacement total. Competing offers remain
+separate, so the sum is not unique repair value. Release the API and issuer
+registration before this adapter.
