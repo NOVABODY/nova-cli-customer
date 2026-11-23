@@ -26,7 +26,6 @@ client support; the server checks current account access.
 | `nova bundle-shop pickup` | `update_bundle_pickup` | remote_write | `nova:read nova:write` |
 | `nova bundle-shop confirm-no-charge` | `confirm_bundle_no_charge` | remote_write | `nova:read nova:write` |
 | `nova bundle-shop contact` | `request_bundle_contact` | remote_write | `nova:read nova:write` |
-
 | `nova bundle pricing` | `set_bundle_pricing` | remote_write | `nova:read nova:write` |
 | `nova bundle name` | `set_bundle_internal_name` | remote_write | `nova:read nova:write` |
 | `nova bundle remove` | `remove_bundle` | remote_write | `nova:read nova:write` |
@@ -583,3 +582,23 @@ Selecciona una o más estaciones para una visita o un programa recurrente. Usa `
 | `nova inspection-schedule recurrences` | `list_inspection_recurrences` | remote_read | `nova:read` |
 | `nova inspection-schedule create-recurrence` | `create_inspection_recurrence` | remote_write | `nova:read nova:write` |
 | `nova inspection-schedule update-recurrence` | `update_inspection_recurrence` | remote_write | `nova:read nova:write` |
+
+
+## Vendor bundle defaults and generation
+
+| Command | MCP tool | Effects | Required scope |
+| --- | --- | --- | --- |
+| `nova bundle pricing-vendors` | `list_bundle_pricing_vendors` | remote_read | `nova:read` |
+| `nova bundle vendor-pricing` | `set_vendor_bundle_pricing` | remote_write | `nova:read nova:write` |
+| `nova bundle create` | `create_admin_bundle` | remote_write | `nova:read nova:write` |
+| `nova bundle profiles` | `list_bundle_profiles` | remote_read | `nova:read` |
+| `nova bundle profile-save` | `save_bundle_profile` | remote_write | `nova:read nova:write` |
+| `nova bundle propose` | `propose_bundle_offers` | remote_write | `nova:read nova:write` |
+| `nova bundle profile-run` | `run_bundle_profile` | remote_write | `nova:read nova:write` |
+
+Vendor defaults and generator writes take a typed JSON object in `--request`.
+Use `nova bundle pricing-vendors` to read public vendor references. Set
+`pricing: null` in `bundle vendor-pricing` to restore System Settings. Select
+`--pricing-vendor-id V-001` instead of the four values in `bundle pricing`.
+All recipients see the same saved price. Default changes affect future bundles.
+Read current state before another attempt after an uncertain write.

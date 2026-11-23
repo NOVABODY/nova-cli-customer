@@ -12,6 +12,9 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    '/defect-bundle-offers/staff/pricing-vendors': 'capacity.vendor_pricing.list.v1',
+    '/defect-bundle-offers/staff/profiles': 'capacity.profiles.list.v1',
+
     r"/dashboards/reports/open-quotes": "reports.open_quotes.get.v1",
     r"/dashboards/inspection-stations": "inspection_schedules.stations.list.v1",
     r"/dashboards/platform-inspections": "inspection_schedules.list.v1",

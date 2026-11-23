@@ -119,3 +119,16 @@ def test_name_discovery_matches_issuer_admission():
     assert entry['required_operation'] == 'capacity.internal_name.update.v1'
     assert entry['required_scope'] == 'nova:read nova:write'
     assert admitted_write('POST', '/defect-bundle-offers/staff/B-TEST/internal-name')
+
+
+def test_pricing_vendor_source_uses_one_source_and_confirms_its_identity(monkeypatch):
+    from nova_cli_public.client import ApiClient
+    api = create_autospec(ApiClient, instance=True)
+    api.request.return_value = {'ref': 'B-TEST', 'revision': 3, 'total_price_cents': 15000,
+        'pricing': {'first_percent': 20, 'second_percent': 12, 'tail_percent': 8, 'transport_fee': 123.45},
+        'pricing_vendor': {'id': 'V-001', 'name': 'Synthetic shop'}}
+    monkeypatch.setattr(legacy_reads, 'client_from_args', lambda args: api)
+    args = cli.build_parser().parse_args(['bundle', 'pricing', 'B-TEST', '--revision', '2', '--pricing-vendor-id', 'V-001'])
+    assert args.handler(args)['pricing_vendor']['id'] == 'V-001'
+    api.request.assert_called_once_with('POST', '/defect-bundle-offers/staff/B-TEST/pricing',
+        json_body={'revision': 2, 'pricing_vendor_id': 'V-001'}, retry_auth=False)
