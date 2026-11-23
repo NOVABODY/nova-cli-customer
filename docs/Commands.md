@@ -181,6 +181,7 @@ client support; the server checks current account access.
 | `nova repair-request cancel` | `cancel_repair_request` | remote_write | `nova:read nova:write` |
 | `nova repair-request dismiss-rental-routing` | `dismiss_rental_routing` | remote_write | `nova:read nova:write` |
 | `nova repair-request preview-external-vendor-options` | `preview_repair_request_external_vendor_options` | remote_read | `nova:read` |
+| `nova report open-quotes` | `get_open_quotes_report` | remote_read | `nova:read` |
 | `nova report work-order-completion` | `get_work_order_completion_report` | remote_read | `nova:read` |
 | `nova report repair-metrics` | `get_repair_metrics_report` | remote_read | `nova:read` |
 | `nova report inspection-compliance` | `get_inspection_compliance_report` | remote_read | `nova:read` |

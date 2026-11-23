@@ -41,6 +41,7 @@ DETAILS = {
     **{'report ' + name: ('Read the ' + name.replace('-', ' ') + ' report.', ['remote_read'],
         'nova report ' + name) for name in ('work-order-completion', 'repair-metrics', 'inspection-compliance')},
 
+    "report open-quotes": ("Read open body and CMR quotes. Site administrators only.", ["remote_read"], "nova report open-quotes --kind cmr"),
     "fleet-updates list": ("Read Fleet Updates.", ["remote_read"], "nova fleet-updates list --group decide"),
     "fleet-issue resolve": ("Resolve a fleet issue with a native action.", ["remote_write"], "nova fleet-issue resolve 7 keep"),
 
