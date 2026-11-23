@@ -2,7 +2,7 @@
 import json
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from nova_cli_public.errors import ApiError
 
@@ -33,8 +33,23 @@ class Pricing(BaseModel):
     transport_fee: float = Field(ge=0, le=100000, allow_inf_nan=False, multiple_of=0.01)
 
 
-class PricingOverride(Pricing, Query):
+class PricingOverride(Query):
     revision: int = Field(gt=0)
+    pricing_vendor_id: str | None = Field(default=None, pattern=r'^(?:V-)?[0-9]{1,14}$')
+    first_percent: int | None = Field(default=None, ge=0, le=100)
+    second_percent: int | None = Field(default=None, ge=0, le=100)
+    tail_percent: int | None = Field(default=None, ge=0, le=100)
+    transport_fee: float | None = Field(default=None, ge=0, le=100000, allow_inf_nan=False, multiple_of=0.01)
+
+    @model_validator(mode='after')
+    def one_source(self):
+        explicit = (self.first_percent, self.second_percent, self.tail_percent, self.transport_fee)
+        if self.pricing_vendor_id is not None:
+            if any(value is not None for value in explicit):
+                raise ValueError('Choose one pricing source. / Elige una fuente de precios.')
+        elif any(value is None for value in explicit):
+            raise ValueError('Set all four prices. / Establece los cuatro precios.')
+        return self
 
 
 class PricedBundle(BaseModel):
@@ -43,6 +58,7 @@ class PricedBundle(BaseModel):
     revision: int = Field(gt=0)
     total_price_cents: int = Field(ge=0)
     pricing: Pricing
+    pricing_vendor: dict | None = None
 
 
 class NamedBundle(BaseModel):
@@ -81,7 +97,8 @@ def execute(client, name, arguments):
         result = OUTPUTS[name].model_validate(value)
         json.dumps(value, allow_nan=False)
         if name == PRICING and (result.revision not in (query.revision, query.revision + 1)
-                or result.pricing.model_dump() != query.model_dump(exclude={'ref', 'revision'})):
+                or (query.pricing_vendor_id is None and result.pricing.model_dump() != query.model_dump(exclude={'ref', 'revision', 'pricing_vendor_id'}, exclude_none=True))
+                or (query.pricing_vendor_id is not None and str((result.pricing_vendor or {}).get('id', '')).removeprefix('V-').lstrip('0') != query.pricing_vendor_id.removeprefix('V-').lstrip('0'))):
             raise ValueError('Pricing not confirmed')
         if result.ref != query.ref or (name == WRITE and not result.fee_waived) or (name == NAME and result.internal_name != ((query.internal_name or '').strip() or None)):
             raise ValueError('Waiver not confirmed')
@@ -100,9 +117,9 @@ def command(args):
 COMMANDS = [
     {'command': 'bundle pricing', 'tool': PRICING, 'grant': 'capacity.pricing.update.v1',
      'description': 'Set the three percentage bands and transport cost per van for one unsent AMR draft. Site admin only. Read the current revision first. / Establece los tres porcentajes por tramo y el costo de transporte por van de un borrador AMR sin enviar. Solo para administradores del sitio. Consulta primero la revisión actual.',
-     'arguments': [(['ref'], {}), (['--revision'], {'required': True, 'type': 'int'}),
-                   (['--first-percent'], {'required': True, 'type': 'int'}), (['--second-percent'], {'required': True, 'type': 'int'}),
-                   (['--tail-percent'], {'required': True, 'type': 'int'}), (['--transport-fee'], {'required': True, 'type': 'float'})],
+     'arguments': [(['ref'], {}), (['--revision'], {'required': True, 'type': 'int'}), (['--pricing-vendor-id'], {}),
+                   (['--first-percent'], { 'type': 'int'}), (['--second-percent'], { 'type': 'int'}),
+                   (['--tail-percent'], { 'type': 'int'}), (['--transport-fee'], { 'type': 'float'})],
      'groups': [], 'handler': command, 'defaults': {'bundle_fee_tool': PRICING},
      'scope': 'nova:read nova:write', 'effect': 'remote_write'},
     {'command': 'bundle name', 'tool': NAME, 'grant': 'capacity.internal_name.update.v1',

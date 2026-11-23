@@ -3,6 +3,12 @@
 import re
 
 WRITE_ROUTES = {
+    ('PUT', '/defect-bundle-offers/staff/pricing-vendors/(?:V-)?[0-9]{1,14}'): 'capacity.vendor_pricing.update.v1',
+    ('POST', '/defect-bundle-offers/staff'): 'capacity.offers.create.v1',
+    ('POST', '/defect-bundle-offers/staff/profiles'): 'capacity.profiles.create.v1',
+    ('POST', '/defect-bundle-offers/staff/propose'): 'capacity.offers.propose.v1',
+    ('POST', '/defect-bundle-offers/staff/profiles/[1-9][0-9]*/run'): 'capacity.profiles.run.v1',
+
     ("POST", r"/dashboards/platform-inspections"): "inspection_schedules.create.v1",
     ("POST", r"/dashboards/platform-inspections/[0-9]{1,10}/cancel"): "inspection_schedules.cancel.v1",
     ("POST", r"/dashboards/platform-inspections/recurrences"): "inspection_schedules.recurrences.create.v1",
