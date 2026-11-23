@@ -12,7 +12,7 @@ from nova_cli_public.client import ApiClient
 from nova_cli_public.config import Profile
 from nova_cli_public.reads import CustomerReadService
 
-VALUE = {'as_of': '2026-11-23T12:00:00Z', 'total': 0, 'amount_cents': 0, 'currency': 'USD', 'items': []}
+VALUE = {'as_of': '2026-11-23T12:00:00Z', 'total': 0, 'amount_cents': 0, 'pending_amount_cents': 0, 'approved_amount_cents': 0, 'currency': 'USD', 'items': []}
 
 
 def test_cli_and_stdio_preserve_filter_contract_with_real_transport(monkeypatch):
@@ -27,15 +27,15 @@ def test_cli_and_stdio_preserve_filter_contract_with_real_transport(monkeypatch)
     client = ApiClient(Profile('test', 'https://nova.example/api'), object(), opener=Opener())
     client.access_token = 'synthetic-access'
     monkeypatch.setattr(legacy_reads, 'client_from_args', lambda args: client)
-    parsed = cli.build_parser().parse_args(['report', 'open-quotes', '--kind', 'cmr', '--search', '%_', '--offset', '25'])
+    parsed = cli.build_parser().parse_args(['report', 'open-quotes', '--kind', 'cmr', '--stage', 'approved_work', '--search', '%_', '--offset', '25'])
     assert parsed.handler(parsed) == VALUE
     service = CustomerReadService(client)
-    assert service.run('get_open_quotes_report', {'kind': 'cmr', 'search': '%_', 'offset': 25}) == VALUE
+    assert service.run('get_open_quotes_report', {'kind': 'cmr', 'stage': 'approved_work', 'search': '%_', 'offset': 25}) == VALUE
     assert service.output_schema('get_open_quotes_report')['properties']['items']['type'] == 'array'
     for request in calls:
         assert request.method == 'GET' and request.data is None
         assert urlsplit(request.full_url).path == '/api/dashboards/reports/open-quotes'
-        assert parse_qs(urlsplit(request.full_url).query) == {'kind': ['cmr'], 'search': ['%_'], 'offset': ['25'], 'limit': ['25']}
+        assert parse_qs(urlsplit(request.full_url).query) == {'kind': ['cmr'], 'stage': ['approved_work'], 'search': ['%_'], 'offset': ['25'], 'limit': ['25']}
 
 
 @pytest.mark.parametrize('args', [{'kind': 'all'}, {'limit': 201}, {'offset': -1}, {'url': 'https://elsewhere.example'}, {'limit': True}])

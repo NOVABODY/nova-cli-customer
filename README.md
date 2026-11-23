@@ -993,12 +993,16 @@ This reader update must be released before the API starts producing v7 offers.
 
 ### Admin open quotes
 
-`get_open_quotes_report` reads `/dashboards/reports/open-quotes` with
-`kind` (`body`, `body_revision`, `cmr`), literal `search`, `offset` and `limit`
-(maximum 200). Site administrators only. The customer CLI uses
-`nova report open-quotes --kind cmr`. Requires API operation
-`reports.open_quotes.get.v1` and fresh explicit read consent. The API owns
-authorization, expiry and totals. CMR amounts include only undecided lines;
-body revisions show the proposed replacement total. Competing offers remain
-separate, so the sum is not unique repair value. Release the API and issuer
-registration before this adapter.
+`get_open_quotes_report` reads `/dashboards/reports/open-quotes`. The customer
+CLI uses `nova report open-quotes --stage approved_work`. Filters are `kind`
+(`body`, `body_revision`, `cmr`), `stage` (`awaiting_decision`, `approved_work`),
+literal `search`, `offset` and `limit` (maximum 200). Site administrators only.
+The API owns authorization, expiry and totals. Requires operation
+`reports.open_quotes.get.v1` and fresh explicit read consent.
+
+Approved quotes remain open until work is complete. A partly decided CMR quote
+can match both stage filters, but appears once in the combined report. Rejected
+and canceled lines are excluded. A pending body revision appears on the accepted
+quote row; its proposed replacement total is separate and is not added to the
+approved amount. Competing shop offers remain separate. Release the API and
+issuer registration before this adapter.
