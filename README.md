@@ -1002,3 +1002,21 @@ authorization, expiry and totals. CMR amounts include only undecided lines;
 body revisions show the proposed replacement total. Competing offers remain
 separate, so the sum is not unique repair value. Release the API and issuer
 registration before this adapter.
+
+### Vendor workshops (candidate API change)
+
+For enabled multi-workshop vendors, `nova work-order list --vendor-workshop-ids
+1,2` selects the current authorized workshops. The single `--vendor-workshop-id`
+filter still works. An owning vendor admin can save an unassigned intake proposal
+with `nova work-order assignment set WO-1 --proposed-workshop-id 2`, then commit
+it with `nova work-order schedule WO-1 --vendor-workshop-id 2 --scheduled-at
+2026-11-24T10:00:00-05:00 --ro-number WEST-100`. Use a permitted time from the
+current defaults. External tracking requires a real RO at scheduling. Saving a
+proposal or accepting intake does not release it to workshop writers. The local
+MCP tools expose these same optional fields; API authorization remains final.
+
+Para proveedores con varios talleres activados, usa `--vendor-workshop-ids 1,2`
+para seleccionar talleres autorizados. El administrador del proveedor puede
+guardar `proposed_workshop_id` en la asignación y usar `vendor_workshop_id` al
+programar. El seguimiento externo requiere un RO real. La preparación y la
+aceptación no muestran la entrada sin taller a los asesores de servicio.

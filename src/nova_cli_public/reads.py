@@ -320,6 +320,8 @@ def input_model(entry, *, mcp=False):
         if entry['tool'] == 'list_defect_photos' and name == 'defect_id':
             value_type = Annotated[str, AfterValidator(_inspection_reference)]
             constraints['max_length'] = 100
+        if name == "vendor_workshop_ids":
+            constraints.update(max_length=2000, pattern=r"^(?:VW-)?[0-9]+(?:,(?:VW-)?[0-9]+){0,99}$")
         if name == "quote":
             constraints = {"pattern": r"^(?:BRQ-)?[0-9]+$"}
         if name == "request_ref":
