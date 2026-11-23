@@ -15,6 +15,7 @@ Count = Annotated[int, Field(ge=0)]
 class Filters(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
     kind: Kind | None = None
+    stage: Literal['awaiting_decision', 'approved_work'] | None = None
     search: Annotated[str, Field(max_length=200)] = ''
     offset: Count = 0
     limit: Annotated[int, Field(ge=1, le=200)] = 25
@@ -23,6 +24,7 @@ class Filters(BaseModel):
 class Row(BaseModel):
     model_config = ConfigDict(extra='allow', strict=True)
     kind: Kind
+    stage: Literal['awaiting_decision', 'approved_work', 'mixed', 'revision_pending']
     reference: str
     dsp_name: str
     shop_name: str
@@ -31,6 +33,9 @@ class Row(BaseModel):
     submitted_at: str
     expires_at: str | None
     amount_cents: Count
+    pending_amount_cents: Count
+    approved_amount_cents: Count
+    proposed_amount_cents: Count | None
     pending_lines: Count | None
     href: str
 
@@ -40,6 +45,8 @@ class Report(BaseModel):
     as_of: str
     total: Count
     amount_cents: Count
+    pending_amount_cents: Count
+    approved_amount_cents: Count
     currency: Literal['USD']
     items: list[Row]
 
@@ -56,5 +63,6 @@ def run(args):
 COMMANDS = [{'command': 'report open-quotes', 'tool': TOOL, 'description': DESCRIPTION,
     'grant': GRANT, 'groups': [], 'handler': run,
     'arguments': [(['--kind'], {'choices': ['body', 'body_revision', 'cmr'], 'default': None}),
+                  (['--stage'], {'choices': ['awaiting_decision', 'approved_work'], 'default': None}),
                   (['--search'], {'default': ''}), (['--offset'], {'type': 'int', 'default': 0}),
                   (['--limit'], {'type': 'int', 'default': 25})]}]
