@@ -1006,3 +1006,28 @@ and canceled lines are excluded. A pending body revision appears on the accepted
 quote row; its proposed replacement total is separate and is not added to the
 approved amount. Competing shop offers remain separate. Release the API and
 issuer registration before this adapter.
+
+### Site-admin vendor defect reports
+
+`get_vendor_defect_report`, `get_vendor_defect_report_options`, and
+`export_vendor_defect_report` require fresh explicit
+`reports.vendor_defects.get.v1` read consent from a site administrator. Customer
+connections remain denied. Use report options to select an enrolled shop or an
+external vendor. Set `date_basis=sent` for provider-accepted external emails;
+enrolled-shop `relationship=assigned` uses defect report dates. `critical`
+selects saved report-time criticality. JSON counts cover the full population
+even with `max_rows`; CSV/Excel exports omit that display cap and embed original
+bytes up to 2 MiB. No email is sent. A failed or oversized export returns an error.
+
+Coordinate release with NOVABODY/nova-john-app issue #5163 and its API/issuer
+registration change. Built artifacts and synthetic host tests do not prove
+published packages, deployed registrations, hosted images or live authority.
+Do not close the issue until installed local/hosted and live success/denial
+proof is recorded. Existing browser/API/CLI delivery retains its approved exception.
+
+The matching CLI commands are `nova report vendor-defects`,
+`nova report vendor-defects-options`, and `nova report vendor-defects-export`.
+The report and export require `--date-from` and `--date-to`; exports also
+require `--format csv|xlsx --out FILE`. Existing files are not overwritten.
+To request this operation, use the existing explicit `nova auth login
+--operations reports.vendor_defects.get.v1` consent flow with a site-admin account.

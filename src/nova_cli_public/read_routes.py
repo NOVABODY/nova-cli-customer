@@ -12,6 +12,7 @@ PDF_ROUTES = {
 }
 
 READ_ROUTES = {
+    r"/defects/report(?:/options|/export\.csv|/export\.xlsx)?": "reports.vendor_defects.get.v1",
     '/defect-bundle-offers/staff/pricing-vendors': 'capacity.vendor_pricing.list.v1',
     '/defect-bundle-offers/staff/profiles': 'capacity.profiles.list.v1',
 

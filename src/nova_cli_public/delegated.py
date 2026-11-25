@@ -16,6 +16,9 @@ from urllib.parse import parse_qsl, urlencode, urlsplit
 
 from nova_cli_public.errors import AuthError, TokenStoreUnavailable, UsageError
 from nova_cli_public.locking import profile_lock
+from nova_cli_public.read_routes import READ_POST_ROUTES, READ_ROUTES
+from nova_cli_public.shop_ratings import GRANTS as RATING_GRANTS
+from nova_cli_public.write_routes import WRITE_ROUTES
 
 CLIENT_ID = "nova-cli"
 
@@ -130,9 +133,6 @@ def status(client):
         return {"credential_stored": bool(_read(client)), "server_verified": False}
 
 
-from nova_cli_public.read_routes import READ_POST_ROUTES, READ_ROUTES
-from nova_cli_public.shop_ratings import GRANTS as RATING_GRANTS
-from nova_cli_public.write_routes import WRITE_ROUTES
 
 WRITE_OPERATIONS = set(WRITE_ROUTES.values()) | set(RATING_GRANTS.values())
 

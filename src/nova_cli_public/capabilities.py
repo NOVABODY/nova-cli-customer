@@ -232,12 +232,12 @@ def manifest(parser, selected=None):
                 entry["api_routes"] = [{"method": "POST", "path_pattern": "/vendor-scorecard/feedback"}]
             if not operation.get("mcp", True):
                 entry.update(mcp_tool=None, tool_input_schema=None, output_schema=None)
-            if operation.get("document_kind") or operation.get("image_read") or tool == 'get_bundle_fmc_packet_pdf':
+            if operation.get("document_kind") or operation.get("image_read") or tool in ('get_bundle_fmc_packet_pdf', 'export_vendor_defect_report'):
                 entry['mcp_effects'] = ['remote_read']
             entry["input_schema"] = input_model(operation).model_json_schema()
             entry["effects"] = [operation.get("effect", "remote_read")] + (
                 ["local_file_write"]
-                if tool in ("download_defect_photos", "pull_defects", "pull_vehicle_reports", "download_body_repair_quote", "download_body_repair_scope", "download_body_repair_invoice", "download_body_repair_documentation", "download_body_repair_pave_image", "get_bundle_fmc_packet_pdf")
+                if tool in ("export_vendor_defect_report", "download_defect_photos", "pull_defects", "pull_vehicle_reports", "download_body_repair_quote", "download_body_repair_scope", "download_body_repair_invoice", "download_body_repair_documentation", "download_body_repair_pave_image", "get_bundle_fmc_packet_pdf")
                 else []
             )
         if name.startswith("events "):
