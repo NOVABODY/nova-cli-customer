@@ -143,7 +143,7 @@ def create_server(service, *, file_root=None, announcements=None):
                     content=[types.TextContent(type="text", text=message)])
             from nova_cli_public.bundle_shop_steps import MODELS as SHOP_STEPS
             from nova_cli_public.bundle_shop_steps import PDF
-            if name in SHOP_STEPS or name == 'upload_capacity_evidence':
+            if name in SHOP_STEPS or name in ('upload_capacity_evidence', 'preview_bundle_defect_removal', 'remove_bundle_defect'):
                 message = str(exc)
                 if name == PDF and exc.code == 'document_too_large':
                     message = 'This PDF exceeds 1 MiB. Use bundle-shop fmc-pdf REF UNIT --out packet.pdf. / Este PDF supera 1 MiB. Usa bundle-shop fmc-pdf REF UNIT --out packet.pdf.'
