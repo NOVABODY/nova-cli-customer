@@ -67,6 +67,8 @@ client support; the server checks current account access.
 | `nova capacity-evidence file` | `read_capacity_evidence_file` | remote_read | `nova:read` |
 | `nova capacity-evidence review` | `review_capacity_evidence` | remote_write | `nova:read nova:write` |
 | `nova capacity-evidence upload` | `upload_capacity_evidence` | remote_write | `nova:read nova:write` |
+| `nova capacity-evidence removal-preview` | `preview_bundle_defect_removal` | remote_read | `nova:read` |
+| `nova capacity-evidence remove-defect` | `remove_bundle_defect` | remote_write | `nova:read nova:write` |
 | `nova bundle-schedules list` | `list_bundle_schedules` | remote_read | `nova:read` |
 | `nova bundle-schedules decide` | `decide_bundle_schedule` | remote_write | `nova:read nova:write` |
 | `nova bundle-sharing get` | `get_bundle_sharing` | remote_read | `nova:read` |
@@ -602,3 +604,27 @@ Use `nova bundle pricing-vendors` to read public vendor references. Set
 `--pricing-vendor-id V-001` instead of the four values in `bundle pricing`.
 All recipients see the same saved price. Default changes affect future bundles.
 Read current state before another attempt after an uncertain write.
+
+
+### Remove an undecided AMR defect
+
+Use `capacity-evidence removal-preview --ref REF --unit N --number N` to read
+eligibility, the fee change, and the review notice. Show the notice and obtain
+explicit confirmation before `capacity-evidence remove-defect`, supplying the
+same `--revision`, `--notice-version` and a unique `--request-id`.
+Removal needs no FMC file. It releases only this repair and its saved fee;
+it does not improve the 50% no-charge exit test. Removed defects remain gray
+at the end of the defect list with the removal actor and time. Nova Fora staff
+reserve the right to review the van after repairs to confirm that the defect
+was left as-is. Read the bundle after an unknown outcome before another attempt.
+
+Para retirar un defecto AMR sin decisión, consulta primero
+`capacity-evidence removal-preview --ref REF --unit N --number N`.
+Muestra el aviso y obtiene confirmación explícita. Usa la misma revisión y
+versión del aviso, y un ID de solicitud único, con
+`capacity-evidence remove-defect`. No requiere un archivo de la FMC. Retira
+solo esta reparación y su cargo guardado; no mejora el requisito del 50% para
+salir sin cargo. El defecto permanece gris al final de la lista con quién lo
+retiró y cuándo. El personal de Nova Fora se reserva el derecho de revisar la
+van después de las reparaciones para confirmar que el defecto se dejó sin
+cambios. Consulta el paquete si el resultado no se conoce antes de otro intento.

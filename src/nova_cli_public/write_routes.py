@@ -54,6 +54,7 @@ WRITE_ROUTES = {
     ("POST", r"/defect-bundle-offers/staff/[A-Za-z0-9][A-Za-z0-9-]{0,39}/waive-fee"): "capacity.fee.waive.v1",
     ("POST", r"/defects/(?:FD-)?[0-9]{1,14}/accept"): "defects.accept.v1",
     ("POST", r"/defects/(?:FD-)?[0-9]{1,14}/reject"): "defects.reject.v1",
+    ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[0-9]+/defects/[0-9]+/remove"): "capacity.defects.remove.v1",
     ("POST", r"/defect-bundle-offers/staff/evidence/[0-9]+/review"): "capacity.evidence.review.v1",
     ("POST", r"/bundle-offers/[A-Za-z0-9][A-Za-z0-9-]{0,79}/vans/[0-9]+/evidence-content"): "capacity.evidence.upload.v1",
     ("POST", r"/vehicles/(?:VAN-)?[0-9]{1,14}/pave-scan-requests"): "vehicles.pave_scan_requests.create.v1",
