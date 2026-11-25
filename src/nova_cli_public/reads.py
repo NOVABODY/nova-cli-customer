@@ -131,6 +131,7 @@ def register_commands(root_subparsers):
                     )
                 )
         leaf = parsers[parts]
+        leaf.description = entry.get("description")
         add_arguments(leaf, entry)
         leaf.set_defaults(
             handler=entry["handler"], read_command=entry["command"], **entry.get("defaults", {})
