@@ -186,6 +186,9 @@ client support; the server checks current account access.
 | `nova report inspection-compliance` | `get_inspection_compliance_report` | remote_read | `nova:read` |
 | `nova report inspector-performance` | `list_inspector_performance` | remote_read | `nova:read` |
 | `nova report driver-da-quality` | `list_driver_da_quality` | remote_read | `nova:read` |
+| `nova report vendor-defects` | `get_vendor_defect_report` | remote_read | `nova:read` |
+| `nova report vendor-defects-options` | `get_vendor_defect_report_options` | remote_read | `nova:read` |
+| `nova report vendor-defects-export` | `export_vendor_defect_report` | remote_read, local_file_write | `nova:read` |
 | `nova vendor-scorecard pending-feedback` | `list_pending_vendor_feedback` | remote_read | `nova:read` |
 | `nova vendor-scorecard problem-reports` | `list_vendor_problem_reports` | remote_read | `nova:read` |
 | `nova vendor-scorecard get` | `get_vendor_scorecard` | remote_read | `nova:read` |
