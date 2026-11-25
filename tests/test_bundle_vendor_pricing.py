@@ -23,6 +23,7 @@ CASES = [
     ('set_vendor_bundle_pricing', {'organization_id': 'V-001', 'pricing': PRICING}, 'PUT', '/pricing-vendors/V-001', VENDOR),
     ('set_vendor_bundle_pricing', {'organization_id': 'V-001', 'pricing': None}, 'PUT', '/pricing-vendors/V-001', {**VENDOR, 'pricing': None}),
     ('create_admin_bundle', {'station_code': 'CAP1', 'vehicle_ids': ['VAN-001'], 'pricing_vendor_id': 'V-001'}, 'POST', '', BUNDLE),
+    ('create_admin_bundle', {'station_code': 'CAP1', 'vehicle_ids': ['VAN-001'], 'requested_vendor_id': 8}, 'POST', '', BUNDLE),
     ('list_bundle_profiles', {}, 'GET', '/profiles', {'rows': [PROFILE]}),
     ('save_bundle_profile', {**CHOICES, 'name': 'Synthetic profile'}, 'POST', '/profiles', PROFILE),
     ('propose_bundle_offers', CHOICES, 'POST', '/propose', {'rows': [BUNDLE]}),

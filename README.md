@@ -1006,3 +1006,5 @@ and canceled lines are excluded. A pending body revision appears on the accepted
 quote row; its proposed replacement total is separate and is not added to the
 approved amount. Competing shop offers remain separate. Release the API and
 issuer registration before this adapter.
+
+See [Bundle routing](docs/BundleRouting.md) for vendor-bound queue results and draft destinations.
