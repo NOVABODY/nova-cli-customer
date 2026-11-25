@@ -183,3 +183,28 @@ def test_evidence_upload_enforces_combined_decoded_budget(monkeypatch):
 def test_evidence_schema_allows_fifty_mib_files():
     from nova_cli_public import capacity_evidence as evidence
     assert evidence.Attachment.model_json_schema()['properties']['content_base64']['maxLength'] == 69905068
+
+
+def test_confirmed_removal_uses_the_real_customer_transport_without_write_retry(monkeypatch):
+    value = {'number': 2, 'removed': True, 'resulting_fee_cents': 8000}
+    api, calls = transport_client(value)
+    monkeypatch.setattr(legacy_reads, 'client_from_args', lambda args: api)
+    args = cli.build_parser().parse_args(['capacity-evidence', 'remove-defect', '--ref', 'B-1', '--unit', '1',
+        '--number', '2', '--revision', 'a' * 64, '--notice-version', 'amr-removal-v1', '--request-id', 'confirmed'])
+    assert args.handler(args) == value
+    assert len(calls) == 1
+    assert calls[0][:2] == ('POST', '/bundle-offers/B-1/vans/1/defects/2/remove')
+    assert calls[0][2]['json_body']['notice_version'] == 'amr-removal-v1'
+
+
+def test_local_mcp_exposes_and_executes_the_same_confirmed_removal():
+    api, calls = transport_client({'number': 2, 'removed': True})
+    async def check():
+        async with create_connected_server_and_client_session(create_server(CustomerReadService(api))) as sdk:
+            catalog = await sdk.list_tools()
+            assert {'preview_bundle_defect_removal', 'remove_bundle_defect'} <= {tool.name for tool in catalog.tools}
+            result = await sdk.call_tool('remove_bundle_defect', {'ref': 'B-1', 'unit': 1, 'number': 2,
+                'revision': 'a' * 64, 'notice_version': 'amr-removal-v1', 'request_id': 'confirmed'})
+            assert not result.isError and result.structuredContent['removed'] is True
+    asyncio.run(check())
+    assert len(calls) == 1

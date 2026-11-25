@@ -1031,3 +1031,5 @@ The report and export require `--date-from` and `--date-to`; exports also
 require `--format csv|xlsx --out FILE`. Existing files are not overwritten.
 To request this operation, use the existing explicit `nova auth login
 --operations reports.vendor_defects.get.v1` consent flow with a site-admin account.
+
+See [Bundle routing](docs/BundleRouting.md) for vendor-bound queue results and draft destinations.
