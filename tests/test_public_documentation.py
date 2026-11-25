@@ -28,9 +28,12 @@ def test_command_reference_matches_offline_customer_discovery(capsys):
     from nova_cli_public import cli
     assert cli.main(["capabilities", "--json"]) == 0
     commands = json.loads(capsys.readouterr().out)["commands"]
-    documented = {row[0]: row[1:] for row in re.findall(
+    rows = re.findall(
         r"^\| `nova ([^`]+)` \| (.*?) \| (.*?) \| (.*?) \|$",
-        (ROOT / "docs/Commands.md").read_text(), re.MULTILINE)}
+        (ROOT / "docs/Commands.md").read_text(), re.MULTILINE)
+    vendor_rows = [row[0] for row in rows if row[0].startswith("report vendor-defects")]
+    assert len(vendor_rows) == len(set(vendor_rows)), "Vendor report commands appear once"
+    documented = {row[0]: row[1:] for row in rows}
     expected = {row["command"]: (
         "`" + row["mcp_tool"] + "`" if row.get("mcp_tool") else "CLI setup",
         ", ".join(row["effects"]),

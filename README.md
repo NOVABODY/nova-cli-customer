@@ -1019,12 +1019,6 @@ selects saved report-time criticality. JSON counts cover the full population
 even with `max_rows`; CSV/Excel exports omit that display cap and embed original
 bytes up to 2 MiB. No email is sent. A failed or oversized export returns an error.
 
-Coordinate release with NOVABODY/nova-john-app issue #5163 and its API/issuer
-registration change. Built artifacts and synthetic host tests do not prove
-published packages, deployed registrations, hosted images or live authority.
-Do not close the issue until installed local/hosted and live success/denial
-proof is recorded. Existing browser/API/CLI delivery retains its approved exception.
-
 The matching CLI commands are `nova report vendor-defects`,
 `nova report vendor-defects-options`, and `nova report vendor-defects-export`.
 The report and export require `--date-from` and `--date-to`; exports also
