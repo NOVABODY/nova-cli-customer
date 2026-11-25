@@ -21,6 +21,7 @@ class Defaults(Empty):
 
 
 class Draft(Empty):
+    requested_vendor_id: int | None = Field(default=None, ge=1, le=2147483647, description="Bundle destination, separate from pricing. / Destino del paquete, independiente de los precios.")
     station_code: str = Field(min_length=1, max_length=30)
     vehicle_ids: list[str] = Field(min_length=1)
     include_dcd: bool = True

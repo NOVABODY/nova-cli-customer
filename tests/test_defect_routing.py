@@ -64,3 +64,19 @@ def test_unmatched_route_receipt_is_unknown(monkeypatch, value):
     with pytest.raises(ApiError) as error:
         CustomerReadService(client).run('route_repair_request', {'rr_id': 'RR-7', 'vendor_workshop_id': 3})
     assert error.value.code == 'outcome_unknown' and len(client.calls) == 1
+
+
+def test_cli_and_local_mcp_preserve_bundle_queue_receipt(monkeypatch):
+    from unittest.mock import create_autospec
+
+    from nova_cli_public.client import ApiClient
+    receipt = {'id': 'RR-7', 'status': 'open', 'work_order_ids': [],
+               'routing_outcome': 'bundle_queue', 'bundle_workshop_id': 3, 'bundle_routing_origin': 'manual'}
+    api = create_autospec(ApiClient, instance=True)
+    api.request.return_value = receipt
+    monkeypatch.setattr(legacy_reads, 'client_from_args', lambda args: api)
+    args = cli.build_parser().parse_args(['defect-routing', 'resume', 'RR-7', '--vendor-workshop-id', '3'])
+    assert args.handler(args) == receipt
+    assert CustomerReadService(api).run('route_repair_request', {'rr_id': 'RR-7', 'vendor_workshop_id': 3}) == receipt
+    assert api.request.call_count == 2
+    api.request.assert_called_with('POST', '/repair-requests/RR-7/route', query={'mode': 'resume'}, json_body={'vendor_workshop_id': 3})
