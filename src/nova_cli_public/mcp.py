@@ -29,6 +29,7 @@ from nova_cli_public.reads import BY_TOOL, FILE_TOOLS, LOCAL_READ_TOOLS, WRITE_T
 from nova_cli_public.reads import CustomerReadService as DelegatedService
 from nova_cli_public.skills import INSTRUCTIONS as SKILL_INSTRUCTIONS
 from nova_cli_public.tokens import KeyringTokenStore
+from nova_cli_public.work_order_prices import without_estimates
 
 
 def create_server(service, *, file_root=None, announcements=None):
@@ -122,6 +123,8 @@ def create_server(service, *, file_root=None, announcements=None):
                 return types.CallToolResult(structuredContent=descriptor, content=[types.EmbeddedResource(
                     type="resource", resource=types.BlobResourceContents(uri=descriptor['uri'],
                         mimeType=descriptor["mime_type"], blob=base64.b64encode(data.data).decode('ascii')))])
+            if (BY_TOOL.get(name, {}).get("grant") or "").startswith(("work_orders.", "cmr_quotes.")):
+                data = without_estimates(data)
             return types.CallToolResult(
                 structuredContent=data,
                 isError=name in ('preview_fleet_import', 'apply_fleet_import') and data.get('ok') is False,

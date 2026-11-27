@@ -198,3 +198,26 @@ def test_locked_credential_store_has_specific_recovery_guidance():
     assert result.root.structuredContent == {"error": {"code": "credential_store_unavailable"}}
     assert "Unlock" in result.root.content[0].text
     assert "PRIVATE" not in result.model_dump_json()
+
+
+@pytest.mark.parametrize('tool,args', [('get_work_order', {'wo_id': 'WO-0001'}), ('list_work_orders', {})])
+def test_work_order_mcp_results_omit_unsubmitted_prices(tool, args):
+    from mcp.shared.memory import create_connected_server_and_client_session
+
+    class PricesReader(Reader):
+        def request(self, method, path, *, query=None):
+            record = super().request(method, path, query=query)
+            row = record['items'][0] if 'items' in record else record
+            row.update(total_amount='120.60', line_items=[{'id': 3, 'estimated_price': '120.60',
+                'final_price': None, 'status': 'pending'}])
+            return record
+
+    async def check():
+        async with create_connected_server_and_client_session(create_server(DelegatedService(PricesReader()))) as session:
+            result = await session.call_tool(tool, args)
+            assert not result.isError
+            row = result.structuredContent['items'][0] if tool == 'list_work_orders' else result.structuredContent
+            assert 'total_amount' not in row
+            assert row['line_items'] == [{'id': 3, 'status': 'pending'}]
+            assert '120.60' not in result.content[0].text
+    asyncio.run(check())

@@ -1027,3 +1027,23 @@ To request this operation, use the existing explicit `nova auth login
 --operations reports.vendor_defects.get.v1` consent flow with a site-admin account.
 
 See [Bundle routing](docs/BundleRouting.md) for vendor-bound queue results and draft destinations.
+
+
+### Work-order prices in MCP
+
+MCP work-order results omit line estimates, final-price fields, defect cost
+estimates and estimate-derived totals. Use `list_cmr_quotes` or `get_cmr_quote`
+to read submitted CMR quote amounts. Use `status: all` and the defect filter to include immediately authorized rush
+quotes. The default pending list does not include all submitted quotes. Updating a line estimate does not submit a quote. Ordinary CLI and
+API output retain their existing fields.
+
+Los resultados MCP de órdenes de trabajo omiten las estimaciones de línea, los
+precios finales, los costos estimados de defectos y los totales derivados de
+estimaciones. Usa `list_cmr_quotes` o `get_cmr_quote` para consultar los importes
+de cotizaciones CMR enviadas. Usa `status: all` y el filtro de defectos para incluir las cotizaciones urgentes
+autorizadas de inmediato. La lista pendiente no incluye todas las cotizaciones. Cambiar una estimación de línea no envía una cotización. Las salidas
+normales de CLI y API conservan sus campos actuales.
+
+CMR submission requires integer `parts_cents` and `labor_cents`; Nova derives the
+combined amount. El envío de CMR requiere `parts_cents` y `labor_cents` enteros;
+Nova calcula el importe total.

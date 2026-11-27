@@ -16,7 +16,7 @@ KEY = '12345678-1234-4234-8234-123456789abc'
 QUOTE = {'id': 9, 'source': 'service_writer', 'vehicle_id': 2, 'status': 'submitted',
     'lines': [{'defect_id': 7, 'amount_cents': 1250, 'decision': None}], 'native_extension': True}
 EXPIRED = {**QUOTE, 'status': 'expired', 'lines': [{**QUOTE['lines'][0], 'decision': 'expired', 'dismissed_at': '2026-11-16T12:00:00Z'}]}
-SUBMIT = {'vehicle_id': 'VAN-2', 'lines': [{'defect_id': 'FD-7', 'amount_cents': 1250}], 'idempotency_key': KEY}
+SUBMIT = {'vehicle_id': 'VAN-2', 'lines': [{'defect_id': 'FD-7', 'parts_cents': 0, 'labor_cents': 1250, 'amount_cents': 1250}], 'idempotency_key': KEY}
 
 
 @pytest.mark.parametrize('action,tool,values,path,result', [
@@ -62,13 +62,13 @@ def test_cli_and_mcp_send_the_same_quote_operation_once(monkeypatch, action, too
         assert first.kwargs['retry_auth'] is False
         assert KEY in str(first.kwargs)
     if action == 'submit':
-        assert first.kwargs['json_body'] == {'source': 'service_writer', 'vehicle_id': 2, 'lines': [{'defect_id': 7, 'amount_cents': 1250}]}
+        assert first.kwargs['json_body'] == {'source': 'service_writer', 'vehicle_id': 2, 'lines': [{'defect_id': 7, 'parts_cents': 0, 'labor_cents': 1250, 'amount_cents': 1250}]}
     if action == 'decide':
         assert first.kwargs['json_body'] == {'decision': 'approved', 'expected_amount_cents': 1250}
 
 
 @pytest.mark.parametrize('change', [{'vehicle_id': True}, {'vehicle_id': 'VAN-0'}, {'lines': []},
-    {'lines': [{'defect_id': 7, 'amount_cents': True}]}, {'idempotency_key': 'bad'}, {'force': True}])
+    {'lines': [{'defect_id': 7, 'parts_cents': 0, 'labor_cents': True, 'amount_cents': True}]}, {'idempotency_key': 'bad'}, {'force': True}])
 def test_invalid_quote_never_reaches_transport(change):
     from nova_cli_public import cmr_quotes
     api = SimpleNamespace(request=Mock())
@@ -131,3 +131,44 @@ def test_quote_discovery_names_consent_and_does_not_admit_other_routes():
     assert admitted_read('/cmr-quotes/9') and admitted_write('POST', '/cmr-quotes/9/lines/7/decision')
     assert not admitted_write('DELETE', '/cmr-quotes/9')
     assert not admitted_write('POST', '/cmr-quotes/9/collect-directly')
+
+
+@pytest.mark.parametrize('parts,labor', [(0, 12345), (12000, 345)])
+def test_cmr_submit_accepts_parts_and_labor_with_a_derived_total(parts, labor):
+    from nova_cli_public.cmr_quotes import Submit
+
+    request = Submit(vehicle_id=2, work_order_id=3,
+        lines=[{'defect_id': 7, 'parts_cents': parts, 'labor_cents': labor}])
+    assert request.lines[0].amount_cents == 12345
+    payload = request.model_dump(exclude_none=True)['lines'][0]
+    assert payload['parts_cents'] == parts and payload['labor_cents'] == labor
+
+
+@pytest.mark.parametrize('line', [
+    {'defect_id': 7, 'amount_cents': 1250},
+    {'defect_id': 7, 'parts_cents': 1000},
+    {'defect_id': 7, 'parts_cents': True, 'labor_cents': 0},
+    {'defect_id': 7, 'parts_cents': 99999999, 'labor_cents': 1},
+    {'defect_id': 7, 'parts_cents': 1000, 'labor_cents': 250, 'amount_cents': 1200},
+])
+def test_cmr_submit_rejects_missing_or_invalid_price_breakdown(line):
+    from pydantic import ValidationError
+
+    from nova_cli_public.cmr_quotes import Submit
+
+    with pytest.raises(ValidationError):
+        Submit(vehicle_id=2, work_order_id=3, lines=[line])
+
+
+def test_mcp_quote_keeps_submitted_amount_and_omits_planning_range():
+    value = {**QUOTE, 'lines': [{**QUOTE['lines'][0], 'estimate_min_cents': 1000, 'estimate_max_cents': 2000}]}
+    api = SimpleNamespace(profile=SimpleNamespace(auth='service'), request=Mock(return_value=value))
+
+    async def check():
+        async with create_connected_server_and_client_session(create_server(CustomerReadService(api))) as sdk:
+            reply = await sdk.call_tool('get_cmr_quote', {'quote_id': 9})
+            assert not reply.isError
+            assert reply.structuredContent['lines'] == QUOTE['lines']
+            assert 'estimate_min_cents' not in reply.content[0].text
+            assert 'estimate_max_cents' not in reply.content[0].text
+    asyncio.run(check())
