@@ -193,6 +193,7 @@ READ_COMMANDS = [
             (["--limit"], {"type": "int"}),
             (["--status"], {}),
             (["--vendor-workshop-id"], {}),
+            (["--vendor-workshop-ids"], {"help": "Selected workshop IDs, separated by commas. / ID de talleres seleccionados, separados por comas."}),
             (["--dsp-id"], {}),
             (["--vehicle-id"], {}),
         ],
@@ -205,6 +206,7 @@ READ_COMMANDS = [
                 [
                     "status",
                     "vendor_workshop_id",
+                    "vendor_workshop_ids",
                     "dsp_id",
                     "vehicle_id",
                     "limit",

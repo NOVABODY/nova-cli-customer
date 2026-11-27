@@ -172,6 +172,8 @@ def assignment_body(args: argparse.Namespace) -> dict[str, Any]:
 
 def cmd_work_order_assignment(args: argparse.Namespace) -> Any:
     body = assignment_body(args)
+    if getattr(args, "proposed_workshop_id", None) is not None:
+        body["proposed_workshop_id"] = args.proposed_workshop_id
     if not body:
         raise UsageError(
             "Provide an assignment field or an explicit --clear-team/--clear-technician."
@@ -183,6 +185,8 @@ def cmd_work_order_assignment(args: argparse.Namespace) -> Any:
 
 def cmd_work_order_schedule(args: argparse.Namespace) -> Any:
     body = assignment_body(args)
+    if getattr(args, "vendor_workshop_id", None) is not None:
+        body["vendor_workshop_id"] = args.vendor_workshop_id
     if args.scheduled_at is not None:
         try:
             slot = datetime.fromisoformat(args.scheduled_at)

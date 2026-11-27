@@ -106,6 +106,7 @@ WRITE_COMMANDS = [
         "effect": "remote_write",
         "arguments": [
             (["wo_id"], {}),
+            (["--proposed-workshop-id"], {"type": "positive_id", "help": "Provisional intake workshop; scheduling commits it. / Taller provisional; se asigna al programar."}),
             (["--team-id"], {"type": "positive_id"}),
             (["--clear-team"], {"default": False, "action": "store_true"}),
             (["--technician-id"], {"type": "positive_id"}),
@@ -126,6 +127,7 @@ WRITE_COMMANDS = [
         "effect": "remote_write",
         "arguments": [
             (["wo_id"], {}),
+            (["--vendor-workshop-id"], {"type": "positive_id", "help": "Assign unassigned intake at scheduling. / Asigna el taller al programar la entrada sin asignar."}),
             (["--scheduled-at"], {"help": "ISO 8601 time with explicit UTC offset."}),
             (
                 ["--include-defect-id"],
