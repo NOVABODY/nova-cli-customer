@@ -39,7 +39,7 @@ class Decision(History):
     dsp_contact_user_id: int | None = Field(default=None, gt=0)
     override_eligibility: bool | None = None
     accept_dsp_responsibility: bool | None = None
-    accept_out_of_fmc_cost: bool | None = Field(default=None, description="Confirm that this defect stays AMR and the DSP may pay the full repair cost. Only set after explicit approval. / Confirma que este defecto sigue siendo AMR y que el DSP puede pagar el costo total. Usa esta opción solo después de la aprobación explícita.")
+    accept_out_of_fmc_cost: bool | None = Field(default=None, description="Accept the full repair cost for the DSP at the selected out-of-FMC shop for one AMR or PM defect. Set this only after explicit consent. / Acepta el costo total de la reparación para el DSP en el taller seleccionado fuera de la FMC para un defecto AMR o PM. Activa esta opción solo con consentimiento explícito.")
     service_station_code: str | None = Field(default=None, max_length=20)
     reject_reason_code: str | None = Field(default=None, max_length=40)
 
