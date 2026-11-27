@@ -1047,3 +1047,22 @@ normales de CLI y API conservan sus campos actuales.
 CMR submission requires integer `parts_cents` and `labor_cents`; Nova derives the
 combined amount. El envío de CMR requiere `parts_cents` y `labor_cents` enteros;
 Nova calcula el importe total.
+
+### Send a rental repair to a shop at DSP cost
+
+For one AMR or PM defect, select `vendor_workshop_id` and set
+`accept_out_of_fmc_cost: true` only after the DSP accepts the full repair cost.
+This can release pending or rejected rental approval. It does not record
+rental-company approval or change the defect category. The API checks the
+caller's role, tenant, consent and the shop's other eligibility rules. For rush
+work, also set `is_rush: true` and `rush_acknowledged: true` after the rush
+warning is accepted. Read the existing request before retrying an uncertain write.
+
+Para un defecto AMR o PM, selecciona `vendor_workshop_id` y usa
+`accept_out_of_fmc_cost: true` solo después de que el DSP acepte el costo total.
+Esto permite enviar una reparación pendiente o rechazada por la compañía de
+alquiler. No registra su aprobación ni cambia la categoría del defecto. La API
+comprueba el rol, la organización, el consentimiento y la elegibilidad del taller.
+Para trabajo urgente, usa también `is_rush: true` y `rush_acknowledged: true`
+después de aceptar el aviso. Consulta la solicitud antes de repetir una operación
+cuyo resultado no conoces.
