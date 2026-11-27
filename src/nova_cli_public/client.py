@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from http.client import HTTPException
 from typing import Any
 
-from nova_cli_public import __version__, claim_archive, delegated, pave_images
+from nova_cli_public import __version__, claim_archive, delegated, pave_images, report_exports
 from nova_cli_public.config import Profile, normalize_api_url
 from nova_cli_public.errors import ApiError, UsageError
 from nova_cli_public.read_routes import PDF_ROUTES, PUBLIC_READS, READ_POST_ROUTES, admitted_read
@@ -125,6 +125,7 @@ class ApiClient:
         headers: Mapping[str, str] | None = None,
         raw_body: bytes | None = None,
         raw_content_type: str | None = None,
+        report_format: str | None = None,
         pdf: bool = False,
         pdf_max_bytes: int = PDF_MAX_BYTES,
         archive: bool = False,
@@ -134,6 +135,10 @@ class ApiClient:
         timeout: float | None = None,
         max_bytes: int | None = None,
     ) -> Response:
+        if report_format is not None:
+            report_exports.target(method, path, json_body, raw_body, report_format)
+            if pdf or archive or image:
+                raise UsageError('Use one document format. / Usa un formato de documento.')
         if image:
             if pdf or archive:
                 raise UsageError('Use one document format. / Usa un formato de documento.')
@@ -155,10 +160,10 @@ class ApiClient:
             raise UsageError("Use only one of json_body or raw_body.")
         url = self._url(path, query)
         request_headers = {
-            "Accept": ", ".join(pave_images.MIMES) if image else claim_archive.MIME if archive else "application/pdf" if pdf else "application/json",
+            "Accept": report_exports.MIMES[report_format] if report_format else ", ".join(pave_images.MIMES) if image else claim_archive.MIME if archive else "application/pdf" if pdf else "application/json",
             "User-Agent": f"nova-cli/{__version__}",
         }
-        if pdf or archive or image:
+        if pdf or archive or image or report_format:
             request_headers["Accept-Encoding"] = "identity"
         data = None
         if json_body is not None:
@@ -173,6 +178,8 @@ class ApiClient:
         req = urllib.request.Request(url, data=data, headers=request_headers, method=method.upper())
         try:
             with self.opener.open(req, timeout=self.timeout if timeout is None else timeout) as resp:
+                if report_format:
+                    return Response(resp.status, dict(resp.headers.items()), report_exports.read(resp, report_format))
                 if image:
                     return Response(resp.status, dict(resp.headers.items()), _pdf_bytes(resp, image_max_bytes, image=True))
                 if archive:
@@ -188,14 +195,14 @@ class ApiClient:
                     body=_decode_body(raw, resp.headers.get("Content-Type", "")),
                 )
         except urllib.error.HTTPError as exc:
-            if pdf or archive or image:
+            if pdf or archive or image or report_format:
                 try:
                     raw = exc.read(PDF_ERROR_MAX_BYTES + 1)
                 finally:
                     exc.close()
             else:
                 raw = exc.read() if max_bytes is None else exc.read(max_bytes + 1)
-            if pdf or archive or image:
+            if pdf or archive or image or report_format:
                 body = {}
                 if len(raw) <= PDF_ERROR_MAX_BYTES and 'application/json' in exc.headers.get('Content-Type', '').lower():
                     try:
@@ -337,7 +344,7 @@ class ApiClient:
                 code="outcome_unknown",
             ) from None
 
-    def request(self, method, path, *, idempotency_key=None, expected_statuses=None, max_bytes=None, json_body=None, query=None, retry_auth=True, raw_body=None, raw_content_type=None, pdf=False, pdf_max_bytes=PDF_MAX_BYTES, archive=False, archive_max_bytes=claim_archive.MAX_BYTES, image=False, image_max_bytes=claim_archive.MAX_BYTES):
+    def request(self, method, path, *, idempotency_key=None, expected_statuses=None, max_bytes=None, json_body=None, query=None, retry_auth=True, raw_body=None, raw_content_type=None, report_format=None, pdf=False, pdf_max_bytes=PDF_MAX_BYTES, archive=False, archive_max_bytes=claim_archive.MAX_BYTES, image=False, image_max_bytes=claim_archive.MAX_BYTES):
         if image:
             if pdf or archive:
                 raise UsageError('Use one document format. / Usa un formato de documento.')
@@ -354,6 +361,8 @@ class ApiClient:
                 idempotency_key = str(uuid.UUID(idempotency_key))
             except (ValueError, TypeError, AttributeError):
                 raise UsageError('Use a UUID idempotency key. / Usa una clave de idempotencia UUID.') from None
+        if report_format is not None:
+            report_exports.target(method, path, json_body, raw_body, report_format)
         mutation = admitted_write(method, path)
         if not (mutation or (method == "GET" and admitted_read(path)) or (method == "POST" and path in READ_POST_ROUTES)):
             raise UsageError("This command is not available in the public CLI.")
@@ -367,7 +376,7 @@ class ApiClient:
                 json_body=json_body,
                 raw_body=raw_body, raw_content_type=raw_content_type,
                 query=query, **({"max_bytes": max_bytes} if max_bytes is not None else {}),
-                headers={"Authorization": f"Bearer {self.access_token}", **({"Idempotency-Key": idempotency_key} if idempotency_key else {})}, pdf=pdf, pdf_max_bytes=pdf_max_bytes, archive=archive, archive_max_bytes=archive_max_bytes, image=image, image_max_bytes=image_max_bytes,
+                headers={"Authorization": f"Bearer {self.access_token}", **({"Idempotency-Key": idempotency_key} if idempotency_key else {})}, report_format=report_format, pdf=pdf, pdf_max_bytes=pdf_max_bytes, archive=archive, archive_max_bytes=archive_max_bytes, image=image, image_max_bytes=image_max_bytes,
             )
             if expected_statuses is not None and response.status not in expected_statuses:
                 raise ApiError('Unexpected response status. / Estado de respuesta inesperado.', status=response.status, code='outcome_unknown')
@@ -380,7 +389,7 @@ class ApiClient:
                 ) from None
             if not mutation and exc.status == 401 and retry_auth:
                 self.refresh()
-                return self.request(method, path, idempotency_key=idempotency_key, expected_statuses=expected_statuses, max_bytes=max_bytes, json_body=json_body, raw_body=raw_body, raw_content_type=raw_content_type, query=query, retry_auth=False, pdf=pdf, pdf_max_bytes=pdf_max_bytes, archive=archive, archive_max_bytes=archive_max_bytes, image=image, image_max_bytes=image_max_bytes)
+                return self.request(method, path, idempotency_key=idempotency_key, expected_statuses=expected_statuses, max_bytes=max_bytes, json_body=json_body, raw_body=raw_body, raw_content_type=raw_content_type, query=query, retry_auth=False, report_format=report_format, pdf=pdf, pdf_max_bytes=pdf_max_bytes, archive=archive, archive_max_bytes=archive_max_bytes, image=image, image_max_bytes=image_max_bytes)
             raise
 
 
