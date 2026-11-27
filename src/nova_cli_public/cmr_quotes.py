@@ -4,7 +4,14 @@ import re
 import uuid
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
 from nova_cli_public.errors import ApiError, UsageError
 
@@ -40,8 +47,20 @@ def _id(prefix):
 
 class Line(Closed):
     defect_id: Record
-    amount_cents: Cents
+    parts_cents: Cents
+    labor_cents: Cents
+    amount_cents: Cents = 0
     note: Note | None = None
+
+    @model_validator(mode='after')
+    def derive_amount(self):
+        total = self.parts_cents + self.labor_cents
+        if total > 99999999:
+            raise ValueError('The price is too high. / El precio es demasiado alto.')
+        if 'amount_cents' in self.model_fields_set and self.amount_cents != total:
+            raise ValueError('The price must equal parts plus labor. / El precio debe ser igual a piezas más mano de obra.')
+        self.amount_cents = total
+        return self
 
     @field_validator('defect_id', mode='before')
     @classmethod
@@ -225,7 +244,7 @@ SPECS = [
     ('decide', 'decide_cmr_quote_line', 'decide', [(['quote_id'], {'type': 'int'}), (['--defect-id'], {'required': True}),
         (['--decision'], {'required': True, 'choices': ['approved', 'rejected']}), (['--expected-amount-cents'], {'type': 'int', 'required': True})]),
 ]
-DESCRIPTIONS = {name: 'Read or change a CMR/CNMR quote. Amounts are integer cents. Payment setup stays in Nova. After an unknown outcome, read the quote; reuse the same idempotency key for the same request. / Consulta o cambia una cotización CMR/CNMR. Los importes son centavos enteros. El pago se configura en Nova. Tras un resultado desconocido, consulta la cotización; reutiliza la misma clave de idempotencia para la misma solicitud.' for name in MODELS}
+DESCRIPTIONS = {name: 'Read or change a CMR/CNMR quote. Submit integer parts_cents and labor_cents. Read rush quotes with status all. Payment setup stays in Nova. After an unknown outcome, read the quote; reuse the same idempotency key for the same request. / Consulta o cambia una cotización CMR/CNMR. Envía parts_cents y labor_cents enteros. Consulta cotizaciones urgentes con status all. El pago se configura en Nova. Tras un resultado desconocido, consulta la cotización; reutiliza la misma clave de idempotencia para la misma solicitud.' for name in MODELS}
 
 
 COMMANDS = [
